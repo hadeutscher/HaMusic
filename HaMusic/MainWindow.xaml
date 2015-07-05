@@ -1,0 +1,60 @@
+﻿<RibbonWindow x:Class="HaMusic.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="HaMusic" Height="350" Width="525" Closing="RibbonWindow_Closing"
+        WindowState="Maximized" Icon="HaLogo.ico" Loaded="RibbonWindow_Loaded">
+    <RibbonWindow.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding Open.Command}" />
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding Connect.Command}" />
+    </RibbonWindow.InputBindings>
+    <Grid>
+        <Grid.Resources>
+            <Style TargetType="RibbonButton">
+                <Setter Property="Label" Value="{Binding Label}" />
+                <Setter Property="Command" Value="{Binding Command}" />
+                <Setter Property="LargeImageSource" Value="{Binding LargeImage}" />
+            </Style>
+            <Style TargetType="RibbonApplicationMenuItem">
+                <Setter Property="Header" Value="{Binding Label}" />
+                <Setter Property="Command" Value="{Binding Command}" />
+                <Setter Property="ImageSource" Value="{Binding LargeImage}" />
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Ribbon x:Name="ribbon" >
+            <Ribbon.ApplicationMenu>
+                <RibbonApplicationMenu>
+                    <RibbonApplicationMenuItem x:Name="connectBtn" DataContext="{Binding Connect}" />
+                </RibbonApplicationMenu>
+            </Ribbon.ApplicationMenu>
+            <RibbonTab Header="Main" >
+                <RibbonGroup Header="Main">
+                    <RibbonButton x:Name="openBtn" DataContext="{Binding Open}" />
+                    <RibbonButton x:Name="clearBtn" DataContext="{Binding Clear}" />
+                    <RibbonButton x:Name="ppBtn" DataContext="{Binding PlayPause}" />
+                    <RibbonButton x:Name="stopBtn" DataContext="{Binding Stop}" />
+                </RibbonGroup>
+                <RibbonGroup Header="Controls">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Label Content="Volume: " Grid.Column="0" Grid.Row="0" />
+                        <Label Content="Seek: " Grid.Column="0" Grid.Row="1" />
+                        <Slider x:Name="volumeSlider" Maximum="100" Width="100" ValueChanged="volumeSlider_ValueChanged" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
+                        <Slider x:Name="songSlider" Maximum="100" Width="500" ValueChanged="songSlider_ValueChanged"  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
+                    </Grid>
+                </RibbonGroup>
+            </RibbonTab>
+        </Ribbon>
+        <ListView x:Name="items" Grid.Row="1" ItemsSource="{Binding Songs}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True" />
+    </Grid>
+</RibbonWindow>

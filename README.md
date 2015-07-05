@@ -1,0 +1,1 @@
+A music player server/client infrastructure for remote playback of music

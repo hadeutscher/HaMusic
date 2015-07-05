@@ -1,0 +1,12 @@
+﻿<Window x:Class="HaMusic.AddressSelector"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Select Server" Height="108" Width="300"
+        WindowStartupLocation="CenterScreen" WindowStyle="ToolWindow"
+        KeyDown="Window_KeyDown" ResizeMode="NoResize">
+    <Grid>
+        <TextBox x:Name="addressBox" HorizontalAlignment="Left" Height="27" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="272" />
+        <Button Content="OK" HorizontalAlignment="Left" Height="27" Margin="10,42,0,0" VerticalAlignment="Top" Width="133" Command="{Binding OKCommand}" />
+        <Button Content="Cancel" HorizontalAlignment="Left" Height="27" Margin="148,42,0,0" VerticalAlignment="Top" Width="133" Command="{Binding CancelCommand}" />
+    </Grid>
+</Window>
