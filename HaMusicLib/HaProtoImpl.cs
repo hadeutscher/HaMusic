@@ -43,35 +43,28 @@ namespace HaMusicLib
             GETSTATE
         }
 
+        private static byte[] ReceiveAll(this Socket s, int len)
+        {
+            int bRead = 0;
+            byte[] result = new byte[len];
+            while (bRead < len)
+            {
+                s.Receive(result, bRead, len - bRead, SocketFlags.None);
+            }
+            return result;
+        }
+
         private static int ReceiveBlock(Socket s, out string data)
         {
             // Type
-            byte[] typeBuf = new byte[4];
-            int i = s.Receive(typeBuf);
-            if (i == 0)
-                throw new SocketException();
-            int type = BitConverter.ToInt32(typeBuf, 0);
+            int type = BitConverter.ToInt32(s.ReceiveAll(4), 0);
             
             // Length
-            byte[] lenBuf = new byte[4];
-            i = s.Receive(lenBuf);
-            if (i == 0)
-                throw new SocketException();
-            int len = BitConverter.ToInt32(lenBuf, 0);
+            int len = BitConverter.ToInt32(s.ReceiveAll(4), 0);
 
             // Value
-            if (len != 0)
-            {
-                byte[] databuf = new byte[len];
-                i = s.Receive(databuf);
-                if (i == 0)
-                    throw new SocketException();
-                data = Encoding.UTF8.GetString(databuf);
-            }
-            else
-            {
-                data = "";
-            }
+            data = len > 0 ? Encoding.UTF8.GetString(s.ReceiveAll(len)) : "";
+
             return type;
         }
 
