@@ -20,7 +20,6 @@ namespace HaMusicServer
         private IWavePlayer player;
         private WaveStream stream;
         private string currPath = "";
-        private bool internalStop = false;
         private MainForm mf;
         private int vol;
 
@@ -41,8 +40,6 @@ namespace HaMusicServer
 
         void player_PlaybackStopped(object sender, StoppedEventArgs e)
         {
-            if (internalStop)
-                return;
             lock (mf.playlist)
                 mf.Index++;
         }

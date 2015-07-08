@@ -24,6 +24,7 @@ namespace HaMusicServer
 
         public Client(MainForm mf, Socket s, Action<string> log)
         {
+            s.SendTimeout = 1000;
             this.s = s;
             this.t = new Thread(new ThreadStart(Proc));
             this.log = log;

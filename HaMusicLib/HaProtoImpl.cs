@@ -49,7 +49,7 @@ namespace HaMusicLib
             byte[] result = new byte[len];
             while (bRead < len)
             {
-                s.Receive(result, bRead, len - bRead, SocketFlags.None);
+                bRead += s.Receive(result, bRead, len - bRead, SocketFlags.None);
             }
             return result;
         }
@@ -83,19 +83,34 @@ namespace HaMusicLib
             byte[] typeBuf = BitConverter.GetBytes(type);
             byte[] dataBuf = Encoding.UTF8.GetBytes(x.ToCharArray());
             byte[] lenBuf = BitConverter.GetBytes(dataBuf.Length);
-            s.Send(typeBuf);
-            s.Send(lenBuf);
-            s.Send(dataBuf);
+
+            s.Send(new List<ArraySegment<byte>> { new ArraySegment<byte>(typeBuf), new ArraySegment<byte>(lenBuf), new ArraySegment<byte>(dataBuf) });
+        }
+
+        private static void SafeSendBlock(Socket s, string x, int type)
+        {
+            try
+            {
+                SendBlock(s, x, type);
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    s.Close();
+                }
+                catch { }
+            }
         }
 
         public static void S2CSend(Socket s, string x, ServerToClient type)
         {
-            SendBlock(s, x, (int)type);
+            SafeSendBlock(s, x, (int)type);
         }
 
         public static void C2SSend(Socket s, string x, ClientToServer type)
         {
-            SendBlock(s, x, (int)type);
+            SafeSendBlock(s, x, (int)type);
         }
     }
 }

@@ -96,15 +96,7 @@ namespace HaMusicServer
                 {
                     if (clients[i] == exempt)
                         continue;
-                    try
-                    {
-                        HaProtoImpl.S2CSend(clients[i].Socket, data, type);
-                    }
-                    catch (Exception)
-                    {
-                        clients.RemoveAt(i);
-                        i--;
-                    }
+                    HaProtoImpl.S2CSend(clients[i].Socket, data, type);
                 }
             }
         }

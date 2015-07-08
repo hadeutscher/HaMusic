@@ -44,7 +44,7 @@
             // 
             // broadcastTimer
             // 
-            this.broadcastTimer.Interval = 500;
+            this.broadcastTimer.Interval = 1000;
             this.broadcastTimer.Tick += new System.EventHandler(this.broadcastTimer_Tick);
             // 
             // MainForm

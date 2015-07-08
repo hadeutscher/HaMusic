@@ -31,10 +31,11 @@ namespace HaMusic
     /// </summary>
     public partial class MainWindow : RibbonWindow
     {
-        private Socket s;
+        private Socket globalSocket = null;
         private Controls data;
-        private Thread t;
+        private Thread connThread = null;
         private int index = -1;
+        private Object connectLock = new Object();
 
         public MainWindow()
         {
@@ -60,7 +61,39 @@ namespace HaMusic
             OpenFileDialog ofd = new OpenFileDialog() { Filter = "All Files|*.*", Multiselect = true };
             if (ofd.ShowDialog() != true)
                 return;
-            ofd.FileNames.ToList().ForEach(x => HaProtoImpl.C2SSend(s, x, HaProtoImpl.ClientToServer.ADD));
+            ofd.FileNames.ToList().ForEach(x => HaProtoImpl.C2SSend(globalSocket, x, HaProtoImpl.ClientToServer.ADD));
+        }
+
+        private void ConnectThreadProc(string address)
+        {
+            // Lock to make sure we don't connect twice simultaneously
+            lock (connectLock)
+            {
+                try
+                {
+                    // Try to close globalSocket, if it doesn't exist or was already closed it's w/e
+                    globalSocket.Close();
+                }
+                catch { }
+                if (connThread != null)
+                {
+                    // If we have a previous thread, make sure it died already
+                    connThread.Join();
+                }
+                try
+                {
+                    // Create a socket and a handler thread
+                    globalSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    globalSocket.Connect(address, 5151);
+                    connThread = new Thread(new ThreadStart(delegate() { SockProc(globalSocket); }));
+                    connThread.Start();
+                    Dispatcher.Invoke(delegate() { SetEnabled(true); });
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Could not connect", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         public void ConnectExecuted()
@@ -68,32 +101,21 @@ namespace HaMusic
             AddressSelector selector = new AddressSelector();
             if (selector.ShowDialog() != true)
                 return;
-            try
-            {
-                s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                s.Connect(selector.Result, 5151);
-                t = new Thread(new ThreadStart(SockProc));
-                t.Start();
-                SetEnabled(true);
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("Could not connect", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            new Thread(new ThreadStart(delegate() { ConnectThreadProc(selector.Result); })).Start();
         }
 
-        private void SockProc()
+        private void SockProc(Socket sock)
         {
             try
             {
-                HaProtoImpl.C2SSend(s, "", HaProtoImpl.ClientToServer.GETPL);
-                HaProtoImpl.C2SSend(s, "", HaProtoImpl.ClientToServer.GETIDX);
-                HaProtoImpl.C2SSend(s, "", HaProtoImpl.ClientToServer.GETVOL);
-                HaProtoImpl.C2SSend(s, "", HaProtoImpl.ClientToServer.GETSTATE);
+                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETPL);
+                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETIDX);
+                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETVOL);
+                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETSTATE);
                 while (true)
                 {
                     string buf;
-                    HaProtoImpl.ServerToClient type = HaProtoImpl.S2CReceive(s, out buf);
+                    HaProtoImpl.ServerToClient type = HaProtoImpl.S2CReceive(sock, out buf);
                     switch (type)
                     {
                         case HaProtoImpl.ServerToClient.PL_INFO:
@@ -152,6 +174,12 @@ namespace HaMusic
             }
             catch (Exception)
             {
+                try
+                {
+                    // Try to close the socket, if it's already closed than w/e
+                    sock.Close();
+                }
+                catch { }
                 Dispatcher.Invoke(delegate()
                 {
                     SetEnabled(false);
@@ -161,7 +189,7 @@ namespace HaMusic
 
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            HaProtoImpl.C2SSend(s, items.SelectedIndex.ToString(), HaProtoImpl.ClientToServer.SETIDX);
+            HaProtoImpl.C2SSend(globalSocket, items.SelectedIndex.ToString(), HaProtoImpl.ClientToServer.SETIDX);
         }
 
         private void items_KeyDown(object sender, KeyEventArgs e)
@@ -177,7 +205,7 @@ namespace HaMusic
                         indexes.Sort();
                         indexes.Reverse();
                         foreach (int index in indexes)
-                            HaProtoImpl.C2SSend(s, index.ToString(), HaProtoImpl.ClientToServer.REMOVE);
+                            HaProtoImpl.C2SSend(globalSocket, index.ToString(), HaProtoImpl.ClientToServer.REMOVE);
                     }
                     break;
                 case Key.OemPlus:
@@ -185,7 +213,7 @@ namespace HaMusic
                     {
                         if (items.SelectedIndex == -1 || items.SelectedIndex == items.Items.Count - 1)
                             return;
-                        HaProtoImpl.C2SSend(s, items.SelectedIndex++.ToString(), HaProtoImpl.ClientToServer.DOWN);
+                        HaProtoImpl.C2SSend(globalSocket, items.SelectedIndex++.ToString(), HaProtoImpl.ClientToServer.DOWN);
                     }
                     break;
                 case Key.OemMinus:
@@ -193,7 +221,7 @@ namespace HaMusic
                     {
                         if (items.SelectedIndex == -1 || items.SelectedIndex == 0)
                             return;
-                        HaProtoImpl.C2SSend(s, items.SelectedIndex--.ToString(), HaProtoImpl.ClientToServer.UP);
+                        HaProtoImpl.C2SSend(globalSocket, items.SelectedIndex--.ToString(), HaProtoImpl.ClientToServer.UP);
                     }
                     break;
             }
@@ -201,25 +229,26 @@ namespace HaMusic
 
         private void RibbonWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (t != null)
-                t.Abort();
-            if (s != null)
-                s.Close();
+            try
+            {
+                globalSocket.Close();
+            }
+            catch { }
         }
 
         public void ClearExecuted()
         {
-            HaProtoImpl.C2SSend(s, "", HaProtoImpl.ClientToServer.CLEAR);
+            HaProtoImpl.C2SSend(globalSocket, "", HaProtoImpl.ClientToServer.CLEAR);
         }
 
         public void PlayPauseExecuted()
         {
-            HaProtoImpl.C2SSend(s, "", data.Playing ? HaProtoImpl.ClientToServer.PAUSE : HaProtoImpl.ClientToServer.PLAY);
+            HaProtoImpl.C2SSend(globalSocket, "", data.Playing ? HaProtoImpl.ClientToServer.PAUSE : HaProtoImpl.ClientToServer.PLAY);
         }
 
         public void StopExecuted()
         {
-            HaProtoImpl.C2SSend(s, "-1", HaProtoImpl.ClientToServer.SETIDX);
+            HaProtoImpl.C2SSend(globalSocket, "-1", HaProtoImpl.ClientToServer.SETIDX);
         }
 
         private bool internalVolumeChanging = false;
@@ -228,7 +257,7 @@ namespace HaMusic
         {
             if (internalVolumeChanging)
                 return;
-            HaProtoImpl.C2SSend(s, ((int)volumeSlider.Value).ToString(), HaProtoImpl.ClientToServer.SETVOL);
+            HaProtoImpl.C2SSend(globalSocket, ((int)volumeSlider.Value).ToString(), HaProtoImpl.ClientToServer.SETVOL);
         }
 
         private bool internalSongChanging = false;
@@ -236,7 +265,7 @@ namespace HaMusic
         {
             if (internalSongChanging)
                 return;
-            HaProtoImpl.C2SSend(s, ((int)songSlider.Value).ToString(), HaProtoImpl.ClientToServer.SEEK);
+            HaProtoImpl.C2SSend(globalSocket, ((int)songSlider.Value).ToString(), HaProtoImpl.ClientToServer.SEEK);
         }
 
         private void items_DragEnter(object sender, DragEventArgs e)
@@ -250,7 +279,7 @@ namespace HaMusic
         private void items_Drop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            files.ToList().ForEach(x => HaProtoImpl.C2SSend(s, x, HaProtoImpl.ClientToServer.ADD));
+            files.ToList().ForEach(x => HaProtoImpl.C2SSend(globalSocket, x, HaProtoImpl.ClientToServer.ADD));
         }
 
         private void RibbonWindow_Loaded(object sender, RoutedEventArgs e)
