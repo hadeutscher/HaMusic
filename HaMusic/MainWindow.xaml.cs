@@ -201,7 +201,7 @@ namespace HaMusic
                     {
                         List<int> indexes = new List<int>();
                         foreach (object item in items.SelectedItems)
-                            indexes.Add(items.Items.IndexOf(items));
+                            indexes.Add(items.Items.IndexOf(item));
                         indexes.Sort();
                         indexes.Reverse();
                         foreach (int index in indexes)
