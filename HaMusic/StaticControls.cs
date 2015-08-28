@@ -4,14 +4,10 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using Microsoft.TeamFoundation.MVVM;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace HaMusic
@@ -71,31 +67,31 @@ namespace HaMusic
             _connect = new MvvmControl()
             {
                 Label = "Connect",
-                Command = new RelayCommand(delegate(object o) { parent.ConnectExecuted(); }),
+                Command = new RelayCommand(delegate { parent.ConnectExecuted(); }),
                 LargeImage = new Uri("/HaMusic;component/Images/connect.png", UriKind.Relative)
             };
             _open = new MvvmControl()
             {
                 Label = "Open",
-                Command = new RelayCommand(delegate(object o) { parent.OpenExecuted(); }),
+                Command = new RelayCommand(delegate { parent.OpenExecuted(); }),
                 LargeImage = new Uri("/HaMusic;component/Images/open.png", UriKind.Relative)
             };
             _clear = new MvvmControl()
             {
                 Label = "Clear",
-                Command = new RelayCommand(delegate(object o) { parent.ClearExecuted(); }),
+                Command = new RelayCommand(delegate { parent.ClearExecuted(); }),
                 LargeImage = new Uri("/HaMusic;component/Images/clear.png", UriKind.Relative)
             };
             _playPause = new MvvmControl()
             {
                 Label = "Play/Pause",
-                Command = new RelayCommand(delegate(object o) { parent.PlayPauseExecuted(); }),
+                Command = new RelayCommand(delegate { parent.PlayPauseExecuted(); }),
                 LargeImage = playUri
             };
             _stop = new MvvmControl()
             {
                 Label = "Stop",
-                Command = new RelayCommand(delegate(object o) { parent.StopExecuted(); }),
+                Command = new RelayCommand(delegate { parent.StopExecuted(); }),
                 LargeImage = new Uri("/HaMusic;component/Images/stop.png", UriKind.Relative)
             };
         }
