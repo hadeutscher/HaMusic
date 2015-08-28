@@ -10,19 +10,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Ribbon;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace HaMusic
 {
@@ -54,6 +46,8 @@ namespace HaMusic
             volumeSlider.IsEnabled = b;
             songSlider.IsEnabled = b;
             items.IsEnabled = b;
+            nextBtn.IsEnabled = b;
+            moveType.IsEnabled = b;
         }
 
         public void OpenExecuted()
@@ -104,6 +98,11 @@ namespace HaMusic
             new Thread(new ThreadStart(delegate() { ConnectThreadProc(selector.Result); })).Start();
         }
 
+        public void NextExecuted()
+        {
+            HaProtoImpl.C2SSend(globalSocket, "", HaProtoImpl.ClientToServer.SKIP);
+        }
+
         private void SockProc(Socket sock)
         {
             try
@@ -112,6 +111,7 @@ namespace HaMusic
                 HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETIDX);
                 HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETVOL);
                 HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETSTATE);
+                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETMOVE);
                 while (true)
                 {
                     string buf;
@@ -167,6 +167,14 @@ namespace HaMusic
                                 internalVolumeChanging = true;
                                 volumeSlider.Value = int.Parse(buf);
                                 internalVolumeChanging = false;
+                            });
+                            break;
+                        case HaProtoImpl.ServerToClient.MOVE_INFO:
+                            Dispatcher.Invoke(delegate ()
+                            {
+                                internalMoveChanging = true;
+                                data.SelectedMove = int.Parse(buf);
+                                internalMoveChanging = false;
                             });
                             break;
                     }
@@ -238,7 +246,8 @@ namespace HaMusic
 
         public void ClearExecuted()
         {
-            HaProtoImpl.C2SSend(globalSocket, "", HaProtoImpl.ClientToServer.CLEAR);
+            if (MessageBox.Show("Are you sure?", "Clear", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                HaProtoImpl.C2SSend(globalSocket, "", HaProtoImpl.ClientToServer.CLEAR);
         }
 
         public void PlayPauseExecuted()
@@ -285,6 +294,14 @@ namespace HaMusic
         private void RibbonWindow_Loaded(object sender, RoutedEventArgs e)
         {
             ConnectExecuted();
+        }
+
+        private bool internalMoveChanging = false;
+        private void moveType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (internalMoveChanging)
+                return;
+            HaProtoImpl.C2SSend(globalSocket, ((int)data.SelectedMove).ToString(), HaProtoImpl.ClientToServer.SETMOVE);
         }
     }
 }

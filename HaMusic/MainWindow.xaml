@@ -36,6 +36,8 @@
                     <RibbonButton x:Name="clearBtn" DataContext="{Binding Clear}" />
                     <RibbonButton x:Name="ppBtn" DataContext="{Binding PlayPause}" />
                     <RibbonButton x:Name="stopBtn" DataContext="{Binding Stop}" />
+                    <RibbonButton x:Name="nextBtn" DataContext="{Binding Next}" />
+                    <ListBox x:Name="moveType" VerticalAlignment="Center" SelectedIndex="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
                 <RibbonGroup Header="Controls">
                     <Grid>

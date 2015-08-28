@@ -6,12 +6,7 @@
 
 using NAudio.Wave;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace HaMusicServer
 {
@@ -41,7 +36,9 @@ namespace HaMusicServer
         void player_PlaybackStopped(object sender, StoppedEventArgs e)
         {
             lock (mf.playlist)
-                mf.Index++;
+            {
+                mf.SetIndex(mf.mover.AdvanceIndex(), true);
+            }
         }
 
         private void SetVolumeInternal(int vol)
@@ -150,7 +147,7 @@ namespace HaMusicServer
             }
         }
 
-        public void OnIndexChanged()
+        public void OnIndexChanged(bool forceReplay)
         {
             string path = "";
             bool advance_idx = false;
@@ -159,11 +156,12 @@ namespace HaMusicServer
                 if (mf.Index < mf.playlist.Count && mf.Index >= 0)
                 {
                     path = mf.playlist[mf.Index];
+                    mf.mover.MarkPlayed(path);
                 }
             }
             mf.Invoke((Action)delegate
             {
-                if (path != currPath)
+                if (path != currPath || forceReplay)
                 {
                     CleanPlayerAndStream(true);
                     if (path != "")
@@ -187,11 +185,15 @@ namespace HaMusicServer
             });
             if (advance_idx)
             {
+                mf.mover.IncreaseErrors();
                 lock (mf.playlist)
                 {
-                    mf.SetIndexInternal(mf.Index + 1);
+                    mf.SetIndexInternal(mf.mover.AdvanceIndex());
                 }
-                this.OnIndexChanged();
+                this.OnIndexChanged(true); // We failed once, might as well try to force a replay in case we are randing/shuffling
+            } else
+            {
+                mf.mover.ResetErrors();
             }
         }
 
@@ -201,6 +203,11 @@ namespace HaMusicServer
         {
             if (PausePlayChanged != null)
                 PausePlayChanged.Invoke(this, IsPlayingInternal());
+        }
+
+        public void Close()
+        {
+            CleanPlayerAndStream(false);
         }
     }
 }

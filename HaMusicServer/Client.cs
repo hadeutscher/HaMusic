@@ -7,11 +7,9 @@
 using HaMusicLib;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace HaMusicServer
 {
@@ -21,10 +19,13 @@ namespace HaMusicServer
         Thread t;
         Action<string> log;
         MainForm mf;
+        string id;
+        Dictionary<HaProtoImpl.ServerToClient, string> packetCache = new Dictionary<HaProtoImpl.ServerToClient, string>();
 
         public Client(MainForm mf, Socket s, Action<string> log)
         {
             s.SendTimeout = 1000;
+            id = ((IPEndPoint)s.RemoteEndPoint).Address.ToString();
             this.s = s;
             this.t = new Thread(new ThreadStart(Proc));
             this.log = log;
@@ -35,21 +36,23 @@ namespace HaMusicServer
         {
             try
             {
+                log(string.Format("{0} Connected", id));
                 while (true)
                 {
                     string data;
                     HaProtoImpl.ClientToServer type = HaProtoImpl.C2SReceive(s, out data);
                     int vol;
-                    log("Got command " + type.ToString() + " + " + data);
-                    bool updatePlaylist = false;
+                    log(string.Format("{0}: {1} + {2}", id, type.ToString(), data));
                     switch (type)
                     {
                         case HaProtoImpl.ClientToServer.ADD:
                             lock (mf.playlist)
                             {
-                                if (mf.Index == mf.playlist.Count)
-                                    updatePlaylist = true;
                                 mf.playlist.Add(data);
+                                if (mf.Index == mf.playlist.Count - 1)
+                                {
+                                    mf.OnPlaylistChanged();
+                                }
                             }
                             mf.BroadcastMessage(HaProtoImpl.ServerToClient.PL_INFO, mf.GetPlaylistStr());
                             break;
@@ -59,23 +62,23 @@ namespace HaMusicServer
                                 int i = int.Parse(data);
                                 mf.playlist.RemoveAt(i);
                                 if (mf.Index == i)
-                                    mf.Index = -1;
+                                    mf.SetIndex(-1);
                                 else if (mf.Index > i)
-                                    mf.Index--;
+                                    mf.SetIndex(mf.Index - 1);
                             }
                             mf.BroadcastMessage(HaProtoImpl.ServerToClient.PL_INFO, mf.GetPlaylistStr());
                             break;
                         case HaProtoImpl.ClientToServer.SETIDX:
                             lock (mf.playlist)
                             {
-                                mf.Index = int.Parse(data);
+                                mf.SetIndex(int.Parse(data), true);
                             }
                             break;
                         case HaProtoImpl.ClientToServer.CLEAR:
                             lock (mf.playlist)
                             {
                                 mf.playlist.Clear();
-                                mf.Index = -1;
+                                mf.SetIndex(-1);
                             }
                             mf.BroadcastMessage(HaProtoImpl.ServerToClient.PL_INFO, mf.GetPlaylistStr());
                             break;
@@ -103,9 +106,9 @@ namespace HaMusicServer
                                 mf.playlist.RemoveAt(i);
                                 mf.playlist.Insert(i - 1, x);
                                 if (mf.Index == i)
-                                    mf.Index = i - 1;
+                                    mf.SetIndex(i - 1);
                                 else if (mf.Index == i - 1)
-                                    mf.Index = i;
+                                    mf.SetIndex(i);
                             }
                             mf.BroadcastMessage(HaProtoImpl.ServerToClient.PL_INFO, mf.GetPlaylistStr());
                             break;
@@ -119,9 +122,9 @@ namespace HaMusicServer
                                 mf.playlist.RemoveAt(i);
                                 mf.playlist.Insert(i + 1, x);
                                 if (mf.Index == i)
-                                    mf.Index = i + 1;
+                                    mf.SetIndex(i + 1);
                                 else if (mf.Index == i + 1)
-                                    mf.Index = i;
+                                    mf.SetIndex(i);
                             }
                             mf.BroadcastMessage(HaProtoImpl.ServerToClient.PL_INFO, mf.GetPlaylistStr());
                             break;
@@ -142,18 +145,46 @@ namespace HaMusicServer
                             mf.BroadcastPlayPauseInfo(mf.Playing);
                             break;
                         case HaProtoImpl.ClientToServer.GETSTATE:
-                            mf.BroadcastPlayPauseInfo(mf.Playing);
+                            HaProtoImpl.S2CSend(s, mf.Playing ? "1" : "0", HaProtoImpl.ServerToClient.PLAY_PAUSE_INFO);
+                            break;
+                        case HaProtoImpl.ClientToServer.GETMOVE:
+                            HaProtoImpl.S2CSend(s, ((int)mf.mover.Mode).ToString(), HaProtoImpl.ServerToClient.MOVE_INFO);
+                            break;
+                        case HaProtoImpl.ClientToServer.SETMOVE:
+                            mf.mover.Mode = (HaProtoImpl.MoveType)int.Parse(data);
+                            mf.BroadcastMessage(HaProtoImpl.ServerToClient.MOVE_INFO, data);
+                            break;
+                        case HaProtoImpl.ClientToServer.SKIP:
+                            lock (mf.playlist)
+                            {
+                                mf.SetIndex(mf.mover.AdvanceIndex(), true);
+                            }
                             break;
                     }
-                    if (updatePlaylist)
-                        mf.OnPlaylistChanged();
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                log(string.Format("Exception in {0} : {1}", id, e.Message));
+                try
+                {
+                    // Try to close the socket, if it's already closed than w/e
+                    s.Close();
+                }
+                catch { }
                 mf.OnThreadExit(this);
                 return;
             }
+        }
+
+        public bool InCache(HaProtoImpl.ServerToClient opcode, string data)
+        {
+            return packetCache.ContainsKey(opcode) && packetCache[opcode] == data;
+        }
+
+        public void SetCache(HaProtoImpl.ServerToClient opcode, string data)
+        {
+            packetCache[opcode] = data;
         }
 
         public Thread Thread { get { return t; } }

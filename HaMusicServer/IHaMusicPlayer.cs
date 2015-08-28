@@ -20,7 +20,8 @@ namespace HaMusicServer
         Tuple<int, int> GetPos();
         void SetPlaying(bool playing);
         bool IsPlaying();
-        void OnIndexChanged();
+        void OnIndexChanged(bool forceReplay);
         event EventHandler<bool> PausePlayChanged;
+        void Close();
     }
 }

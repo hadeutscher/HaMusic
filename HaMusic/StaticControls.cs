@@ -94,6 +94,12 @@ namespace HaMusic
                 Command = new RelayCommand(delegate { parent.StopExecuted(); }),
                 LargeImage = new Uri("/HaMusic;component/Images/stop.png", UriKind.Relative)
             };
+            _next = new MvvmControl()
+            {
+                Label = "Next",
+                Command = new RelayCommand(delegate { parent.NextExecuted(); }),
+                LargeImage = new Uri("/HaMusic;component/Images/next.png", UriKind.Relative)
+            };
         }
 
         private MvvmControl _open;
@@ -126,6 +132,12 @@ namespace HaMusic
             get { return _stop; }
         }
 
+        private MvvmControl _next;
+        public MvvmControl Next
+        {
+            get { return _next; }
+        }
+
         private ObservableCollection<string> _songs;
         public ObservableCollection<string> Songs
         {
@@ -144,6 +156,27 @@ namespace HaMusic
                 SetField(ref _playing, value, "Playing");
                 PlayPause.Label = _playing ? "Pause" : "Play";
                 PlayPause.LargeImage = _playing ? pauseUri : playUri;
+            }
+        }
+
+        public ObservableCollection<string> MoveTypes
+        {
+            get
+            {
+                return new ObservableCollection<string> { "Next", "Random", "Shuffle" };
+            }
+        }
+
+        int _selectedMove = 0;
+        public int SelectedMove
+        {
+            get
+            {
+                return _selectedMove;
+            }
+            set
+            {
+                SetField(ref _selectedMove, value, "SelectedMove");
             }
         }
     }

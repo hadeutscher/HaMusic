@@ -57,6 +57,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="IHaMusicPlayer.cs" />
+    <Compile Include="Mover.cs" />
     <Compile Include="NAudioPlayer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

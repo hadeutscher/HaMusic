@@ -6,10 +6,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaMusicLib
 {
@@ -21,7 +19,8 @@ namespace HaMusicLib
             IDX_INFO,
             VOL_INFO,
             MEDIA_SEEK_INFO,
-            PLAY_PAUSE_INFO
+            PLAY_PAUSE_INFO,
+            MOVE_INFO
         }
 
         public enum ClientToServer
@@ -40,16 +39,31 @@ namespace HaMusicLib
             GETPOS,
             PAUSE,
             PLAY,
-            GETSTATE
+            GETSTATE,
+            GETMOVE,
+            SETMOVE,
+            SKIP
+        }
+
+        public enum MoveType
+        {
+            NEXT,
+            RANDOM,
+            SHUFFLE
         }
 
         private static byte[] ReceiveAll(this Socket s, int len)
         {
-            int bRead = 0;
+            int totalRead = 0, bRead = 0;
             byte[] result = new byte[len];
-            while (bRead < len)
+            while (totalRead < len)
             {
-                bRead += s.Receive(result, bRead, len - bRead, SocketFlags.None);
+                bRead = s.Receive(result, bRead, len - bRead, SocketFlags.None);
+                if (bRead <= 0)
+                {
+                    throw new SocketException();
+                }
+                totalRead += bRead;
             }
             return result;
         }

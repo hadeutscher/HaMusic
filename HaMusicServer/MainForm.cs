@@ -7,15 +7,12 @@
 using HaMusicLib;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HaMusicServer
@@ -26,12 +23,14 @@ namespace HaMusicServer
         private int index = 0;
         private List<Client> clients = new List<Client>();
         private IHaMusicPlayer player;
+        public Mover mover;
         public List<string> playlist = new List<string>();
         public bool manualStop = false;
 
         public MainForm()
         {
             InitializeComponent();
+            mover = new Mover(this);
             listenerThread = new Thread(new ThreadStart(ListenerMain));
             player = new NAudioPlayer(this, 50);
             player.PausePlayChanged += player_PausePlayChanged;
@@ -88,15 +87,20 @@ namespace HaMusicServer
             BroadcastMessage(HaProtoImpl.ServerToClient.PLAY_PAUSE_INFO, playing ? "1" : "0");
         }
 
-        public void BroadcastMessage(HaProtoImpl.ServerToClient type, string data, Client exempt = null)
+        public void BroadcastMessage(HaProtoImpl.ServerToClient type, string data, Client exempt = null, bool caching = false)
         {
             lock (clients)
             {
                 for (int i = 0; i < clients.Count; i++)
                 {
-                    if (clients[i] == exempt)
+                    Client c = clients[i];
+                    if (c == exempt)
                         continue;
-                    HaProtoImpl.S2CSend(clients[i].Socket, data, type);
+                    if (caching && c.InCache(type, data))
+                        continue;
+                    HaProtoImpl.S2CSend(c.Socket, data, type);
+                    if (caching)
+                        c.SetCache(type, data);
                 }
             }
         }
@@ -120,14 +124,15 @@ namespace HaMusicServer
             {
                 return index;
             }
-            set
-            {
-                if (index == value)
-                    return;
-                index = value;
-                player.OnIndexChanged();
-                BroadcastMessage(HaProtoImpl.ServerToClient.IDX_INFO, index.ToString());
-            }
+        }
+
+        public void SetIndex(int value, bool forceReplay = false)
+        {
+            if (index == value && !forceReplay)
+                return;
+            index = value;
+            player.OnIndexChanged(forceReplay);
+            BroadcastMessage(HaProtoImpl.ServerToClient.IDX_INFO, index.ToString());
         }
 
         public void SetIndexInternal(int index)
@@ -137,7 +142,7 @@ namespace HaMusicServer
 
         public void OnPlaylistChanged()
         {
-            player.OnIndexChanged();
+            player.OnIndexChanged(true);
         }
 
         public bool Playing
@@ -182,7 +187,7 @@ namespace HaMusicServer
             int pos = posInfo.Item1;
             int max = posInfo.Item2;
             if (pos != -1)
-                BroadcastMessage(HaProtoImpl.ServerToClient.MEDIA_SEEK_INFO, pos.ToString() + "," + max.ToString(), exempt);
+                BroadcastMessage(HaProtoImpl.ServerToClient.MEDIA_SEEK_INFO, pos.ToString() + "," + max.ToString(), exempt, true);
         }
 
         public void SendPositionToClient(Client c)
@@ -197,6 +202,23 @@ namespace HaMusicServer
         private void broadcastTimer_Tick(object sender, EventArgs e)
         {
             BroadcastPosition();
+        }
+
+        private void MainForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.S && e.Control)
+            {
+                SaveFileDialog sfd = new SaveFileDialog() { Title = "Select save location", Filter = "Text files (*.txt)|*.txt" };
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    File.WriteAllLines(sfd.FileName, logBox.Items.Cast<string>());
+                }
+            }
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            player.Close();
         }
     }
 }
