@@ -170,8 +170,8 @@ namespace HaMusicLib
                 {
                     Playlist pl = dataSource.Playlists.FastGet(uid);
                     int i = 0;
-                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem(x))
-                                                           : paths.Select(x => new PlaylistItem(x) { UID = pathUids[i++] }))
+                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
+                                                           : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
                     {
                         pl.PlaylistItems.Add(pi);
                         if (IsServer())

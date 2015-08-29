@@ -66,7 +66,7 @@ namespace HaMusicServer
                         case HaProtoImpl.Opcode.RENPL:
                         case HaProtoImpl.Opcode.SETMOVE:
                             packet = HaProtoImpl.ApplyPacketToDatabase(type, data, mainForm.DataSource, out announceIndexChanges);
-                            mainForm.BroadcastMessage(type, packet, this);
+                            mainForm.BroadcastMessage(type, packet);
                             break;
                         case HaProtoImpl.Opcode.SKIP:
                             long uid;

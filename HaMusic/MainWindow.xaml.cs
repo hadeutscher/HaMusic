@@ -27,7 +27,6 @@ namespace HaMusic
         private Controls data;
         private Thread connThread = null;
         private Object connectLock = new Object();
-        private ServerDataSource dataSource = new ServerDataSource();
 
         public MainWindow()
         {
@@ -99,6 +98,11 @@ namespace HaMusic
             new Thread(new ThreadStart(delegate() { ConnectThreadProc(selector.Result); })).Start();
         }
 
+        public void NewPlaylistExecuted()
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADDPL, new HaProtoImpl.ADDPL());
+        }
+
         public void NextExecuted()
         {
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SKIP, new HaProtoImpl.SKIP());
@@ -114,42 +118,53 @@ namespace HaMusic
                     byte[] buf;
                     HaProtoImpl.Opcode type = HaProtoImpl.Receive(sock, out buf);
                     bool foo;
-                    switch (type)
+                    Dispatcher.Invoke(delegate ()
                     {
-                        case HaProtoImpl.Opcode.GETDB:
-                            // Why would anyone try to get the client's DB?
-                            throw new NotSupportedException();
-                        case HaProtoImpl.Opcode.SETDB:
-                            HaProtoImpl.SETDB setdb = HaProtoImpl.SETDB.Parse(buf);
-                            dataSource = setdb.dataSource;
-                            break;
-                        case HaProtoImpl.Opcode.ADD:
-                        case HaProtoImpl.Opcode.REMOVE:
-                        case HaProtoImpl.Opcode.CLEAR:
-                        case HaProtoImpl.Opcode.SETSONG:
-                        case HaProtoImpl.Opcode.ADDPL:
-                        case HaProtoImpl.Opcode.DELPL:
-                        case HaProtoImpl.Opcode.RENPL:
-                        case HaProtoImpl.Opcode.SETMOVE:
-                            HaProtoImpl.ApplyPacketToDatabase(type, buf, dataSource, out foo);
-                            break;
-                        case HaProtoImpl.Opcode.SKIP:
-                            // We should not be receiving SKIP packets, the server should translate them to SETSONG
-                            throw new NotSupportedException();
-                        case HaProtoImpl.Opcode.SETVOL:
-                            data.Volume = HaProtoImpl.SETVOL.Parse(buf).volume;
-                            break;
-                        case HaProtoImpl.Opcode.SEEK:
-                            HaProtoImpl.SEEK seek = HaProtoImpl.SEEK.Parse(buf);
-                            data.Position = seek.pos;
-                            data.Maximum = seek.max;
-                            break;
-                        case HaProtoImpl.Opcode.SETPLAYING:
-                            data.Playing = HaProtoImpl.SETPLAYING.Parse(buf).playing;
-                            break;
-                        default:
-                            throw new NotSupportedException();
-                    }
+                        switch (type)
+                        {
+                            case HaProtoImpl.Opcode.GETDB:
+                                // Why would anyone try to get the client's DB?
+                                throw new NotSupportedException();
+                            case HaProtoImpl.Opcode.SETDB:
+                                HaProtoImpl.SETDB setdb = HaProtoImpl.SETDB.Parse(buf);
+                                data.ServerDataSource = setdb.dataSource;
+                                break;
+                            case HaProtoImpl.Opcode.ADD:
+                            case HaProtoImpl.Opcode.REMOVE:
+                            case HaProtoImpl.Opcode.CLEAR:
+                            case HaProtoImpl.Opcode.SETSONG:
+                            case HaProtoImpl.Opcode.ADDPL:
+                            case HaProtoImpl.Opcode.DELPL:
+                            case HaProtoImpl.Opcode.RENPL:
+                                HaProtoImpl.ApplyPacketToDatabase(type, buf, data.ServerDataSource, out foo);
+                                break;
+                            case HaProtoImpl.Opcode.SETMOVE:
+                                internalMoveChanging = true;
+                                HaProtoImpl.ApplyPacketToDatabase(type, buf, data.ServerDataSource, out foo);
+                                internalMoveChanging = false;
+                                break;
+                            case HaProtoImpl.Opcode.SKIP:
+                                // We should not be receiving SKIP packets, the server should translate them to SETSONG
+                                throw new NotSupportedException();
+                            case HaProtoImpl.Opcode.SETVOL:
+                                internalSongChanging = true;
+                                data.Volume = HaProtoImpl.SETVOL.Parse(buf).volume;
+                                internalSongChanging = false;
+                                break;
+                            case HaProtoImpl.Opcode.SEEK:
+                                HaProtoImpl.SEEK seek = HaProtoImpl.SEEK.Parse(buf);
+                                internalSongChanging = true;
+                                data.Position = seek.pos;
+                                data.Maximum = seek.max;
+                                internalSongChanging = false;
+                                break;
+                            case HaProtoImpl.Opcode.SETPLAYING:
+                                data.Playing = HaProtoImpl.SETPLAYING.Parse(buf).playing;
+                                break;
+                            default:
+                                throw new NotSupportedException();
+                        }
+                    });
                     /*switch (type)
                     {
 
@@ -217,7 +232,7 @@ namespace HaMusic
                     }*/
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 try
                 {
@@ -236,7 +251,7 @@ namespace HaMusic
         {
             lock (data)
             {
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = data.ServerDataSource.CurrentItem == null ? -1 : data.ServerDataSource.CurrentItem.UID });
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)((TextBlock)e.OriginalSource).DataContext).UID });
             }
         }
 
@@ -248,7 +263,7 @@ namespace HaMusic
                     lock (data)
                     {
                         List<long> uids = new List<long>();
-                        foreach (object item in items.SelectedItems)
+                        foreach (object item in items.SelectedContent)
                             uids.Add(((PlaylistItem)item).UID);
                         HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = 0, items = uids });
                     }
@@ -281,10 +296,15 @@ namespace HaMusic
             catch { }
         }
 
+        private long GetSelectedPlaylist()
+        {
+            return ((Playlist)items.SelectedContent).UID;
+        }
+
         public void ClearExecuted()
         {
             if (MessageBox.Show("Are you sure?", "Clear", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = 0 });
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = GetSelectedPlaylist() });
         }
 
         public void PlayPauseExecuted()
@@ -330,7 +350,7 @@ namespace HaMusic
 
         public void addSongs(IEnumerable<string> paths)
         {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = 0, paths = paths.ToList() });
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = GetSelectedPlaylist(), paths = paths.ToList() });
         }
 
         private void RibbonWindow_Loaded(object sender, RoutedEventArgs e)

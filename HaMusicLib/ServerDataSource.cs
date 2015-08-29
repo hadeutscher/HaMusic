@@ -1,4 +1,10 @@
-﻿using System.Collections.Generic;
+﻿/* Copyright (C) 2015 haha01haha01
+
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+using System.Collections.Generic;
 using ProtoBuf;
 using System.IO;
 using HaMusicLib;
@@ -8,7 +14,7 @@ using System;
 namespace HaMusicLib
 {
     [ProtoContract]
-    public class ServerDataSource
+    public class ServerDataSource : PropertyNotifierBase
     {
         public object Lock = new object();
         private FastAccessList<long, Playlist> playlists = new FastAccessList<long, Playlist>(x => x.UID);
@@ -60,7 +66,7 @@ namespace HaMusicLib
 
             set
             {
-                playlists = value;
+                SetField(ref playlists, value, "Playlists");
             }
         }
 
@@ -74,15 +80,22 @@ namespace HaMusicLib
 
             set
             {
-                currentItem = value;
+                SetField(ref currentItem, value, "CurrentItem");
             }
         }
 
         [ProtoMember(3)]
         public HaProtoImpl.MoveType Mode
         {
-            get { return mode; }
-            set { mode = value; OnModeChanged(); }
+            get
+            {
+                return mode;
+            }
+            set
+            {
+                SetField(ref mode, value, "Mode");
+                OnModeChanged();
+            }
         }
 
         public Playlist GetPlaylistForItem(long uid)

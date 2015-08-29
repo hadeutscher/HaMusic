@@ -49,6 +49,7 @@
     <Compile Include="Playlist.cs" />
     <Compile Include="PlaylistItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyNotifierBase.cs" />
     <Compile Include="ServerDataSource.cs" />
   </ItemGroup>
   <ItemGroup>

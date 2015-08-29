@@ -13,26 +13,6 @@ using System.Windows.Input;
 
 namespace HaMusic
 {
-    public abstract class PropertyNotifierBase : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string name)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(name));
-        }
-
-        protected bool SetField<T>(ref T field, T value, string name)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value))
-                return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
-        }
-    }
-
     public class MvvmControl : PropertyNotifierBase
     {
         private string _label;
@@ -101,6 +81,12 @@ namespace HaMusic
                 Command = new RelayCommand(delegate { parent.NextExecuted(); }),
                 LargeImage = new Uri("/HaMusic;component/Images/next.png", UriKind.Relative)
             };
+            _newpl = new MvvmControl()
+            {
+                Label = "New Playlist",
+                Command = new RelayCommand(delegate { parent.NewPlaylistExecuted(); }),
+                LargeImage = new Uri("/HaMusic;component/Images/next.png", UriKind.Relative)
+            };
         }
 
         private MvvmControl _open;
@@ -137,6 +123,12 @@ namespace HaMusic
         public MvvmControl Next
         {
             get { return _next; }
+        }
+
+        private MvvmControl _newpl;
+        public MvvmControl NewPlaylist
+        {
+            get { return _newpl; }
         }
 
         private ObservableCollection<string> _songs;

@@ -37,6 +37,7 @@
                     <RibbonButton x:Name="ppBtn" DataContext="{Binding PlayPause}" />
                     <RibbonButton x:Name="stopBtn" DataContext="{Binding Stop}" />
                     <RibbonButton x:Name="nextBtn" DataContext="{Binding Next}" />
+                    <RibbonButton x:Name="newplBtn" DataContext="{Binding NewPlaylist}" />
                     <ListBox x:Name="moveType" VerticalAlignment="Center" SelectedIndex="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
                 <RibbonGroup Header="Controls">
@@ -51,8 +52,8 @@
                         </Grid.RowDefinitions>
                         <Label Content="Volume: " Grid.Column="0" Grid.Row="0" />
                         <Label Content="Seek: " Grid.Column="0" Grid.Row="1" />
-                        <Slider x:Name="volumeSlider" Maximum="100" Width="100" ValueChanged="volumeSlider_ValueChanged" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
-                        <Slider x:Name="songSlider" Maximum="100" Width="500" ValueChanged="songSlider_ValueChanged"  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
+                        <Slider x:Name="volumeSlider" Maximum="100" Width="100" Value="{Binding Volume}" ValueChanged="volumeSlider_ValueChanged" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
+                        <Slider x:Name="songSlider" Width="500" Value="{Binding Position}" Maximum="{Binding Maximum}" ValueChanged="songSlider_ValueChanged"  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
                     </Grid>
                 </RibbonGroup>
             </RibbonTab>
@@ -60,7 +61,7 @@
         <TabControl x:Name="items" Grid.Row="1" ItemsSource="{Binding ServerDataSource.Playlists}">
             <TabControl.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding}" />
+                    <TextBlock Text="{Binding Name}" />
                 </DataTemplate>
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
@@ -68,7 +69,7 @@
                     <ListView ItemsSource="{Binding PlaylistItems}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}" />
+                                <TextBlock Text="{Binding Item}" />
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>

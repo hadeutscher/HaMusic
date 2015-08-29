@@ -1,7 +1,14 @@
-﻿using HaMusicLib;
+﻿/* Copyright (C) 2015 haha01haha01
+
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+using HaMusicLib;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -10,7 +17,7 @@ using System.Threading.Tasks;
 namespace HaMusicLib
 {
     [ProtoContract]
-    public class Playlist
+    public class Playlist : PropertyNotifierBase
     {
         private static long nextUid = 0;
 
@@ -20,7 +27,7 @@ namespace HaMusicLib
 
         public Playlist()
         {
-            this.name = string.Format("Playlist {0}", Interlocked.Increment(ref nextUid));
+            this.name = string.Format("Playlist {0}", uid = Interlocked.Increment(ref nextUid));
         }
 
         [ProtoMember(1)]
@@ -33,7 +40,7 @@ namespace HaMusicLib
 
             set
             {
-                uid = value;
+                SetField(ref uid, value, "UID");
             }
         }
 
@@ -47,7 +54,7 @@ namespace HaMusicLib
 
             set
             {
-                playlistItems = value;
+                SetField(ref playlistItems, value, "PlaylistItems");
             }
         }
 
@@ -61,7 +68,7 @@ namespace HaMusicLib
 
             set
             {
-                name = value;
+                SetField(ref name, value, "Name");
             }
         }
     }
