@@ -1,13 +1,16 @@
-﻿using System.Threading;
+﻿using ProtoBuf;
+using System.Threading;
 
-namespace HaMusicServer
+namespace HaMusicLib
 {
+    [ProtoContract]
     public class PlaylistItem
     {
         private static long nextUid = 0;
 
         private long uid;
         private string item;
+        private bool played = false;
 
         public PlaylistItem(string item)
         {
@@ -15,6 +18,7 @@ namespace HaMusicServer
             this.item = item;
         }
 
+        [ProtoMember(1)]
         public long UID
         {
             get
@@ -28,6 +32,7 @@ namespace HaMusicServer
             }
         }
 
+        [ProtoMember(2)]
         public string Item
         {
             get
@@ -38,6 +43,19 @@ namespace HaMusicServer
             set
             {
                 item = value;
+            }
+        }
+
+        public bool Played
+        {
+            get
+            {
+                return played;
+            }
+
+            set
+            {
+                played = value;
             }
         }
     }

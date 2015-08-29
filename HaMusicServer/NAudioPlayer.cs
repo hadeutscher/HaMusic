@@ -14,16 +14,15 @@ namespace HaMusicServer
     {
         private IWavePlayer player;
         private WaveStream stream;
-        private string currPath = "";
-        private MainForm mf;
+        private MainForm mainForm;
         private int vol;
 
-        public NAudioPlayer(MainForm mf, int vol)
+        public NAudioPlayer(MainForm mainForm, int vol)
         {
             this.vol = vol;
             this.player = null;
             this.stream = null;
-            this.mf = mf;
+            this.mainForm = mainForm;
         }
 
         private void MakePlayerInternal()
@@ -35,10 +34,11 @@ namespace HaMusicServer
 
         void player_PlaybackStopped(object sender, StoppedEventArgs e)
         {
-            lock (mf.playlist)
+            lock (mainForm.DataSource.Lock)
             {
-                mf.SetIndex(mf.mover.AdvanceIndex(), true);
+                mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
             }
+            mainForm.AnnounceIndexChange();
         }
 
         private void SetVolumeInternal(int vol)
@@ -55,7 +55,7 @@ namespace HaMusicServer
         public void SetVolume(int vol)
         {
             this.vol = vol;
-            mf.Invoke((Action)delegate
+            mainForm.InvokeIfRequired((Action)delegate
             {
                 if (player != null)
                 {
@@ -71,7 +71,7 @@ namespace HaMusicServer
 
         public void Seek(int time)
         {
-            mf.Invoke((Action)delegate
+            mainForm.InvokeIfRequired((Action)delegate
             {
                 if (stream == null)
                     return;
@@ -81,7 +81,7 @@ namespace HaMusicServer
 
         public Tuple<int, int> GetPos()
         {
-            return (Tuple<int, int>)mf.Invoke((Func<Tuple<int, int>>)delegate
+            return (Tuple<int, int>)mainForm.InvokeIfRequired((Func<Tuple<int, int>>)delegate
             {
                 int pos, max;
                 if (player == null || player.PlaybackState == PlaybackState.Stopped || stream == null)
@@ -99,7 +99,7 @@ namespace HaMusicServer
 
         public void SetPlaying(bool playing)
         {
-            mf.Invoke((Action)delegate
+            mainForm.InvokeIfRequired((Action)delegate
             {
                 if (player == null)
                     return;
@@ -117,7 +117,7 @@ namespace HaMusicServer
 
         public bool IsPlaying()
         {
-            return (bool)mf.Invoke((Func<bool>)delegate
+            return (bool)mainForm.Invoke((Func<bool>)delegate
             {
                 return IsPlayingInternal();
             });
@@ -147,53 +147,50 @@ namespace HaMusicServer
             }
         }
 
-        public void OnIndexChanged(bool forceReplay)
+        public void OnIndexChanged()
         {
             string path = "";
             bool advance_idx = false;
-            lock (mf.playlist)
+            lock (mainForm.DataSource.Lock)
             {
-                if (mf.Index < mf.playlist.Count && mf.Index >= 0)
+                if (mainForm.DataSource.CurrentItem != null)
                 {
-                    path = mf.playlist[mf.Index];
-                    mf.mover.MarkPlayed(path);
+                    mainForm.DataSource.CurrentItem.Played = true;
+                    path = mainForm.DataSource.CurrentItem.Item;
                 }
             }
-            mf.Invoke((Action)delegate
+            mainForm.InvokeIfRequired((Action)delegate
             {
-                if (path != currPath || forceReplay)
+                CleanPlayerAndStream(true);
+                if (path != "")
                 {
-                    CleanPlayerAndStream(true);
-                    if (path != "")
+                    try
                     {
-                        try
-                        {
-                            MakePlayerInternal();
-                            stream = CreateStream(path);
-                            player.Init(stream);
-                            player.Play();
-                        }
-                        catch (Exception)
-                        {
-                            CleanPlayerAndStream(false);
-                            advance_idx = true;
-                        }
+                        MakePlayerInternal();
+                        stream = CreateStream(path);
+                        player.Init(stream);
+                        player.Play();
+                    }
+                    catch (Exception)
+                    {
+                        CleanPlayerAndStream(false);
+                        advance_idx = true;
                     }
                 }
-                currPath = path;
                 UpdatePausePlay();
             });
             if (advance_idx)
             {
-                mf.mover.IncreaseErrors();
-                lock (mf.playlist)
+                lock (mainForm.DataSource.Lock)
                 {
-                    mf.SetIndexInternal(mf.mover.AdvanceIndex());
+                    mainForm.Mover.IncreaseErrors();
+                    mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
                 }
-                this.OnIndexChanged(true); // We failed once, might as well try to force a replay in case we are randing/shuffling
-            } else
+                this.OnIndexChanged(); // Try again with next item
+            }
+            else
             {
-                mf.mover.ResetErrors();
+                mainForm.Mover.ResetErrors();
             }
         }
 

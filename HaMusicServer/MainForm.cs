@@ -20,17 +20,17 @@ namespace HaMusicServer
     public partial class MainForm : Form
     {
         private Thread listenerThread;
-        private int index = 0;
         private List<Client> clients = new List<Client>();
         private IHaMusicPlayer player;
-        public Mover mover;
-        public List<string> playlist = new List<string>();
-        public bool manualStop = false;
+        private Mover mover;
+        private ServerDataSource dataSource;
 
         public MainForm()
         {
+            HaProtoImpl.Entity = HaProtoImpl.HaMusicEntity.Server;
             InitializeComponent();
-            mover = new Mover(this);
+            DataSource = new ServerDataSource();
+            Mover = new Mover(DataSource);
             listenerThread = new Thread(new ThreadStart(ListenerMain));
             player = new NAudioPlayer(this, 50);
             player.PausePlayChanged += player_PausePlayChanged;
@@ -84,10 +84,10 @@ namespace HaMusicServer
 
         public void BroadcastPlayPauseInfo(bool playing)
         {
-            BroadcastMessage(HaProtoImpl.ServerToClient.PLAY_PAUSE_INFO, playing ? "1" : "0");
+            BroadcastMessage(HaProtoImpl.Opcode.SETPLAYING, new HaProtoImpl.SETPLAYING() { playing = playing });
         }
 
-        public void BroadcastMessage(HaProtoImpl.ServerToClient type, string data, Client exempt = null, bool caching = false)
+        public void BroadcastMessage(HaProtoImpl.Opcode type, byte[] data, Client exempt = null, bool caching = false)
         {
             lock (clients)
             {
@@ -98,51 +98,35 @@ namespace HaMusicServer
                         continue;
                     if (caching && c.InCache(type, data))
                         continue;
-                    HaProtoImpl.S2CSend(c.Socket, data, type);
+                    HaProtoImpl.Send(c.Socket, type, data);
                     if (caching)
                         c.SetCache(type, data);
                 }
             }
         }
 
-        public string GetPlaylistStr()
+        public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, Client exempt = null, bool caching = false)
         {
-            lock (playlist)
-            {
-                string packet = "";
-                foreach (string file in playlist)
-                {
-                    packet += file + "\r\n";
-                }
-                return packet;
-            }
+            BroadcastMessage(type, packet.Build(), exempt, caching);
         }
 
-        public int Index
+        public void BroadcastPosition()
         {
-            get
-            {
-                return index;
-            }
+            Tuple<int, int> posInfo = player.GetPos();
+            int pos = posInfo.Item1;
+            int max = posInfo.Item2;
+            if (pos != -1)
+                BroadcastMessage(HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = pos, max = max }, null, true);
         }
 
-        public void SetIndex(int value, bool forceReplay = false)
+        private void broadcastTimer_Tick(object sender, EventArgs e)
         {
-            if (index == value && !forceReplay)
-                return;
-            index = value;
-            player.OnIndexChanged(forceReplay);
-            BroadcastMessage(HaProtoImpl.ServerToClient.IDX_INFO, index.ToString());
+            BroadcastPosition();
         }
 
-        public void SetIndexInternal(int index)
+        public void AnnounceIndexChange()
         {
-            this.index = index;
-        }
-
-        public void OnPlaylistChanged()
-        {
-            player.OnIndexChanged(true);
+            player.OnIndexChanged();
         }
 
         public bool Playing
@@ -169,6 +153,32 @@ namespace HaMusicServer
             }
         }
 
+        public Mover Mover
+        {
+            get
+            {
+                return mover;
+            }
+
+            set
+            {
+                mover = value;
+            }
+        }
+
+        public ServerDataSource DataSource
+        {
+            get
+            {
+                return dataSource;
+            }
+
+            set
+            {
+                dataSource = value;
+            }
+        }
+
         public int Position
         {
             get
@@ -179,29 +189,6 @@ namespace HaMusicServer
             {
                 player.Seek(value);
             }
-        }
-
-        public void BroadcastPosition(Client exempt = null)
-        {
-            Tuple<int, int> posInfo = player.GetPos();
-            int pos = posInfo.Item1;
-            int max = posInfo.Item2;
-            if (pos != -1)
-                BroadcastMessage(HaProtoImpl.ServerToClient.MEDIA_SEEK_INFO, pos.ToString() + "," + max.ToString(), exempt, true);
-        }
-
-        public void SendPositionToClient(Client c)
-        {
-            Tuple<int, int> posInfo = player.GetPos();
-            int pos = posInfo.Item1;
-            int max = posInfo.Item2;
-            if (pos != -1)
-                HaProtoImpl.S2CSend(c.Socket, pos.ToString() + "," + max.ToString(), HaProtoImpl.ServerToClient.MEDIA_SEEK_INFO);
-        }
-
-        private void broadcastTimer_Tick(object sender, EventArgs e)
-        {
-            BroadcastPosition();
         }
 
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
@@ -219,6 +206,22 @@ namespace HaMusicServer
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             player.Close();
+        }
+
+        public object InvokeIfRequired(Delegate method)
+        {
+            if (InvokeRequired)
+                return Invoke(method);
+            else
+                return method.DynamicInvoke();
+        }
+
+        public void BeginInvokeIfRequired(Delegate method)
+        {
+            if (InvokeRequired)
+                BeginInvoke(method);
+            else
+                method.DynamicInvoke();
         }
     }
 }

@@ -4,6 +4,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+using HaMusicLib;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -167,16 +168,55 @@ namespace HaMusic
             }
         }
 
-        int _selectedMove = 0;
-        public int SelectedMove
+        private ServerDataSource _sds = new ServerDataSource();
+        public ServerDataSource ServerDataSource
         {
             get
             {
-                return _selectedMove;
+                return _sds;
             }
             set
             {
-                SetField(ref _selectedMove, value, "SelectedMove");
+                SetField(ref _sds, value, "ServerDataSource");
+            }
+        }
+
+        private int _vol = 50;
+        public int Volume
+        {
+            get
+            {
+                return _vol;
+            }
+            set
+            {
+                SetField(ref _vol, value, "Volume");
+            }
+        }
+
+        private int _pos = 0;
+        public int Position
+        {
+            get
+            {
+                return _pos;
+            }
+            set
+            {
+                SetField(ref _pos, value, "Position");
+            }
+        }
+
+        private int _max = 0;
+        public int Maximum
+        {
+            get
+            {
+                return _max;
+            }
+            set
+            {
+                SetField(ref _max, value, "Maximum");
             }
         }
     }

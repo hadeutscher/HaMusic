@@ -26,11 +26,12 @@ namespace HaMusic
         private Socket globalSocket = null;
         private Controls data;
         private Thread connThread = null;
-        private int index = -1;
         private Object connectLock = new Object();
+        private ServerDataSource dataSource = new ServerDataSource();
 
         public MainWindow()
         {
+            HaProtoImpl.Entity = HaProtoImpl.HaMusicEntity.Client;
             InitializeComponent();
             data = new Controls(this);
             DataContext = data;
@@ -55,7 +56,7 @@ namespace HaMusic
             OpenFileDialog ofd = new OpenFileDialog() { Filter = "All Files|*.*", Multiselect = true };
             if (ofd.ShowDialog() != true)
                 return;
-            ofd.FileNames.ToList().ForEach(x => HaProtoImpl.C2SSend(globalSocket, x, HaProtoImpl.ClientToServer.ADD));
+            addSongs(ofd.FileNames);
         }
 
         private void ConnectThreadProc(string address)
@@ -100,24 +101,60 @@ namespace HaMusic
 
         public void NextExecuted()
         {
-            HaProtoImpl.C2SSend(globalSocket, "", HaProtoImpl.ClientToServer.SKIP);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SKIP, new HaProtoImpl.SKIP());
         }
 
         private void SockProc(Socket sock)
         {
             try
             {
-                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETPL);
-                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETIDX);
-                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETVOL);
-                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETSTATE);
-                HaProtoImpl.C2SSend(sock, "", HaProtoImpl.ClientToServer.GETMOVE);
+                HaProtoImpl.Send(sock, HaProtoImpl.Opcode.GETDB, new HaProtoImpl.GETDB());
                 while (true)
                 {
-                    string buf;
-                    HaProtoImpl.ServerToClient type = HaProtoImpl.S2CReceive(sock, out buf);
+                    byte[] buf;
+                    HaProtoImpl.Opcode type = HaProtoImpl.Receive(sock, out buf);
+                    bool foo;
                     switch (type)
                     {
+                        case HaProtoImpl.Opcode.GETDB:
+                            // Why would anyone try to get the client's DB?
+                            throw new NotSupportedException();
+                        case HaProtoImpl.Opcode.SETDB:
+                            HaProtoImpl.SETDB setdb = HaProtoImpl.SETDB.Parse(buf);
+                            dataSource = setdb.dataSource;
+                            break;
+                        case HaProtoImpl.Opcode.ADD:
+                        case HaProtoImpl.Opcode.REMOVE:
+                        case HaProtoImpl.Opcode.CLEAR:
+                        case HaProtoImpl.Opcode.SETSONG:
+                        case HaProtoImpl.Opcode.ADDPL:
+                        case HaProtoImpl.Opcode.DELPL:
+                        case HaProtoImpl.Opcode.RENPL:
+                        case HaProtoImpl.Opcode.SETMOVE:
+                            HaProtoImpl.ApplyPacketToDatabase(type, buf, dataSource, out foo);
+                            break;
+                        case HaProtoImpl.Opcode.SKIP:
+                            // We should not be receiving SKIP packets, the server should translate them to SETSONG
+                            throw new NotSupportedException();
+                        case HaProtoImpl.Opcode.SETVOL:
+                            data.Volume = HaProtoImpl.SETVOL.Parse(buf).volume;
+                            break;
+                        case HaProtoImpl.Opcode.SEEK:
+                            HaProtoImpl.SEEK seek = HaProtoImpl.SEEK.Parse(buf);
+                            data.Position = seek.pos;
+                            data.Maximum = seek.max;
+                            break;
+                        case HaProtoImpl.Opcode.SETPLAYING:
+                            data.Playing = HaProtoImpl.SETPLAYING.Parse(buf).playing;
+                            break;
+                        default:
+                            throw new NotSupportedException();
+                    }
+                    /*switch (type)
+                    {
+
+
+
                         case HaProtoImpl.ServerToClient.PL_INFO:
                             Dispatcher.Invoke(delegate()
                             {
@@ -177,7 +214,7 @@ namespace HaMusic
                                 internalMoveChanging = false;
                             });
                             break;
-                    }
+                    }*/
                 }
             }
             catch (Exception)
@@ -197,26 +234,26 @@ namespace HaMusic
 
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            HaProtoImpl.C2SSend(globalSocket, items.SelectedIndex.ToString(), HaProtoImpl.ClientToServer.SETIDX);
+            lock (data)
+            {
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = data.ServerDataSource.CurrentItem == null ? -1 : data.ServerDataSource.CurrentItem.UID });
+            }
         }
 
         private void items_KeyDown(object sender, KeyEventArgs e)
         {
             switch (e.Key)
             {
-                case Key.Delete:
+                /*case Key.Delete:
                     lock (data)
                     {
-                        List<int> indexes = new List<int>();
+                        List<long> uids = new List<long>();
                         foreach (object item in items.SelectedItems)
-                            indexes.Add(items.Items.IndexOf(item));
-                        indexes.Sort();
-                        indexes.Reverse();
-                        foreach (int index in indexes)
-                            HaProtoImpl.C2SSend(globalSocket, index.ToString(), HaProtoImpl.ClientToServer.REMOVE);
+                            uids.Add(((PlaylistItem)item).UID);
+                        HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = 0, items = uids });
                     }
-                    break;
-                case Key.OemPlus:
+                    break;*/
+                /*case Key.OemPlus:
                     lock (data)
                     {
                         if (items.SelectedIndex == -1 || items.SelectedIndex == items.Items.Count - 1)
@@ -231,7 +268,7 @@ namespace HaMusic
                             return;
                         HaProtoImpl.C2SSend(globalSocket, items.SelectedIndex--.ToString(), HaProtoImpl.ClientToServer.UP);
                     }
-                    break;
+                    break;*/
             }
         }
 
@@ -247,17 +284,17 @@ namespace HaMusic
         public void ClearExecuted()
         {
             if (MessageBox.Show("Are you sure?", "Clear", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                HaProtoImpl.C2SSend(globalSocket, "", HaProtoImpl.ClientToServer.CLEAR);
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = 0 });
         }
 
         public void PlayPauseExecuted()
         {
-            HaProtoImpl.C2SSend(globalSocket, "", data.Playing ? HaProtoImpl.ClientToServer.PAUSE : HaProtoImpl.ClientToServer.PLAY);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETPLAYING, new HaProtoImpl.SETPLAYING() { playing = data.Playing });
         }
 
         public void StopExecuted()
         {
-            HaProtoImpl.C2SSend(globalSocket, "-1", HaProtoImpl.ClientToServer.SETIDX);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = -1 });
         }
 
         private bool internalVolumeChanging = false;
@@ -266,7 +303,7 @@ namespace HaMusic
         {
             if (internalVolumeChanging)
                 return;
-            HaProtoImpl.C2SSend(globalSocket, ((int)volumeSlider.Value).ToString(), HaProtoImpl.ClientToServer.SETVOL);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETVOL, new HaProtoImpl.SETVOL() { volume = data.Volume });
         }
 
         private bool internalSongChanging = false;
@@ -274,7 +311,7 @@ namespace HaMusic
         {
             if (internalSongChanging)
                 return;
-            HaProtoImpl.C2SSend(globalSocket, ((int)songSlider.Value).ToString(), HaProtoImpl.ClientToServer.SEEK);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = data.Position });
         }
 
         private void items_DragEnter(object sender, DragEventArgs e)
@@ -288,7 +325,12 @@ namespace HaMusic
         private void items_Drop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            files.ToList().ForEach(x => HaProtoImpl.C2SSend(globalSocket, x, HaProtoImpl.ClientToServer.ADD));
+            addSongs(files);
+        }
+
+        public void addSongs(IEnumerable<string> paths)
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = 0, paths = paths.ToList() });
         }
 
         private void RibbonWindow_Loaded(object sender, RoutedEventArgs e)
@@ -301,7 +343,7 @@ namespace HaMusic
         {
             if (internalMoveChanging)
                 return;
-            HaProtoImpl.C2SSend(globalSocket, ((int)data.SelectedMove).ToString(), HaProtoImpl.ClientToServer.SETMOVE);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETMOVE, new HaProtoImpl.SETMOVE() { move = data.ServerDataSource.Mode });
         }
     }
 }

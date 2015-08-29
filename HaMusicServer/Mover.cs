@@ -11,23 +11,41 @@ using System.Security.Cryptography;
 
 namespace HaMusicServer
 {
+    // All mover actions may lock the data source
     public class Mover
     {
-        private MainForm mf;
-        private HashSet<string> shuffleSet = new HashSet<string>();
-        private HaProtoImpl.MoveType mode = HaProtoImpl.MoveType.NEXT;
+        private ServerDataSource dataSource;
         private static RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
         private int consecErrors = 0;
 
-        public Mover(MainForm mf)
+        public Mover(ServerDataSource ds)
         {
-            this.mf = mf;
+            this.dataSource = ds;
+            ds.ModeChanged += Ds_ModeChanged;
         }
 
-        public HaProtoImpl.MoveType Mode
+        private void Ds_ModeChanged()
         {
-            get { return mode; }
-            set { mode = value; shuffleSet.Clear(); }
+            resetShuffle();
+        }
+
+        private void resetShuffle()
+        {
+            lock (dataSource.Lock)
+            {
+                foreach (Playlist pl in dataSource.Playlists)
+                {
+                    resetShuffle(pl);
+                }
+            }
+        }
+
+        private void resetShuffle(Playlist pl)
+        {
+            foreach (PlaylistItem pi in pl.PlaylistItems)
+            {
+                pi.Played = false;
+            }
         }
 
         public void IncreaseErrors()
@@ -48,11 +66,11 @@ namespace HaMusicServer
             return loBound + (long)(randLong % (ulong)(hiBound - loBound));
         }
 
-        private int getRandomMove()
+        private int getRandomMove(Playlist pl)
         {
             List<int> candidates = new List<int>();
-            int currIdx = mf.Index;
-            for (int i = 0; i < mf.playlist.Count; i++)
+            int currIdx = pl.PlaylistItems.IndexOf(dataSource.CurrentItem);
+            for (int i = 0; i < pl.PlaylistItems.Count; i++)
             {
                 if (i != currIdx)
                     candidates.Add(i);
@@ -67,26 +85,36 @@ namespace HaMusicServer
             }
         }
 
-        public int AdvanceIndex()
+        private PlaylistItem indexToItem(int index, Playlist pl)
         {
-            lock (mf.playlist)
+            return index < pl.PlaylistItems.Count ? pl.PlaylistItems[index] : null;
+        }
+
+        public PlaylistItem Next()
+        {
+            lock (dataSource.Lock)
             {
-                if (consecErrors > mf.playlist.Count || mf.playlist.Count == 0)
+                if (dataSource.CurrentItem == null)
+                {
+                    return null;
+                }
+                Playlist pl = dataSource.GetPlaylistForItem(dataSource.CurrentItem.UID);
+                if (consecErrors > pl.PlaylistItems.Count || pl.PlaylistItems.Count == 0)
                 {
                     // Too many errors in a row, or nothing to play, just stop
-                    return -1;
+                    return null;
                 }
-                switch (mode)
+                switch (dataSource.Mode)
                 {
                     case HaProtoImpl.MoveType.NEXT:
-                        return mf.Index + 1;
+                        return indexToItem(pl.PlaylistItems.IndexOf(dataSource.CurrentItem) + 1, pl);
                     case HaProtoImpl.MoveType.RANDOM:
-                        return getRandomMove();
+                        return indexToItem(getRandomMove(pl), pl);
                     case HaProtoImpl.MoveType.SHUFFLE:
                         List<int> candidates = new List<int>();
-                        for (int i = 0; i < mf.playlist.Count; i++)
+                        for (int i = 0; i < pl.PlaylistItems.Count; i++)
                         {
-                            if (!shuffleSet.Contains(mf.playlist[i]))
+                            if (!pl.PlaylistItems[i].Played)
                             {
                                 candidates.Add(i);
                             }
@@ -98,22 +126,14 @@ namespace HaMusicServer
                         }
                         else
                         {
-                            shuffleSet.Clear();
-                            winner = getRandomMove(); // Fallback to random when we just cleared the shuffle set
+                            resetShuffle(pl);
+                            winner = getRandomMove(pl); // Fallback to random when we just cleared the shuffle set
                         }
                         // Winner will be marked as playing when it gets pulled from the playlist by the media player
-                        return winner;
+                        return indexToItem(winner, pl);
                     default:
-                        return -1;
+                        return null;
                 }
-            }
-        }
-
-        public void MarkPlayed(string file)
-        {
-            lock (mf.playlist)
-            {
-                shuffleSet.Add(file);
             }
         }
     }
