@@ -404,6 +404,10 @@ namespace HaMusicLib
                 bool result = false;
                 lock (dataSource.Lock)
                 {
+                    if (dataSource.Playlists.Count < 2)
+                    {
+                        return result;
+                    }
                     Playlist pl = dataSource.Playlists.FastGet(uid);
                     if (dataSource.CurrentItem != null && pl.PlaylistItems.ContainsKey(dataSource.CurrentItem.UID))
                     {
@@ -682,14 +686,14 @@ namespace HaMusicLib
             }
         }
 
-        public static void Send(Socket s, Opcode type, byte[] x)
-        {
-            SafeSendBlock(s, x, (int)type);
-        }
-
         public static void Send(Socket s, Opcode type, HaProtoImpl.HaProtoPacket x)
         {
             Send(s, type, x.Build());
+        }
+
+        public static void Send(Socket s, Opcode type, byte[] x)
+        {
+            SafeSendBlock(s, x, (int)type);
         }
     }
 }

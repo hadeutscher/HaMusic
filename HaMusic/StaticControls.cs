@@ -9,10 +9,52 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace HaMusic
 {
+    public class BindingConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            return values.Length == 2 && values[0] is long && values[1] is long && (long)values[0] == (long)values[1];
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class EnumConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter,
+                          System.Globalization.CultureInfo culture)
+        {
+            int returnValue = 0;
+            if (parameter is Type)
+            {
+                returnValue = (int)Enum.Parse((Type)parameter, value.ToString());
+            }
+            return returnValue;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+                              System.Globalization.CultureInfo culture)
+        {
+            Enum enumValue = default(Enum);
+            if (parameter is Type)
+            {
+                enumValue = (Enum)Enum.Parse((Type)parameter, value.ToString());
+            }
+            return enumValue;
+        }
+    }
+
     public class MvvmControl : PropertyNotifierBase
     {
         private string _label;
@@ -39,116 +81,126 @@ namespace HaMusic
 
     public class Controls : PropertyNotifierBase
     {
-        private Uri playUri = new Uri("/HaMusic;component/Images/play.png", UriKind.Relative);
-        private Uri pauseUri = new Uri("/HaMusic;component/Images/pause.png", UriKind.Relative);
+        private readonly static Uri playUri = new Uri("/HaMusic;component/Images/play.png", UriKind.Relative);
+        private readonly static Uri pauseUri = new Uri("/HaMusic;component/Images/pause.png", UriKind.Relative);
+        private MainWindow parent;
 
         public Controls(MainWindow parent)
         {
-            _songs = new ObservableCollection<string>();
-            _connect = new MvvmControl()
+            this.parent = parent;
+
+            PropertyChanged += Controls_PropertyChanged;
+        }
+
+        private ICommand _connectCommand;
+        public ICommand ConnectCommand
+        {
+            get
             {
-                Label = "Connect",
-                Command = new RelayCommand(delegate { parent.ConnectExecuted(); }),
-                LargeImage = new Uri("/HaMusic;component/Images/connect.png", UriKind.Relative)
-            };
-            _open = new MvvmControl()
-            {
-                Label = "Open",
-                Command = new RelayCommand(delegate { parent.OpenExecuted(); }),
-                LargeImage = new Uri("/HaMusic;component/Images/open.png", UriKind.Relative)
-            };
-            _clear = new MvvmControl()
-            {
-                Label = "Clear",
-                Command = new RelayCommand(delegate { parent.ClearExecuted(); }),
-                LargeImage = new Uri("/HaMusic;component/Images/clear.png", UriKind.Relative)
-            };
-            _playPause = new MvvmControl()
-            {
-                Label = "Play/Pause",
-                Command = new RelayCommand(delegate { parent.PlayPauseExecuted(); }),
-                LargeImage = playUri
-            };
-            _stop = new MvvmControl()
-            {
-                Label = "Stop",
-                Command = new RelayCommand(delegate { parent.StopExecuted(); }),
-                LargeImage = new Uri("/HaMusic;component/Images/stop.png", UriKind.Relative)
-            };
-            _next = new MvvmControl()
-            {
-                Label = "Next",
-                Command = new RelayCommand(delegate { parent.NextExecuted(); }),
-                LargeImage = new Uri("/HaMusic;component/Images/next.png", UriKind.Relative)
-            };
-            _newpl = new MvvmControl()
-            {
-                Label = "New Playlist",
-                Command = new RelayCommand(delegate { parent.NewPlaylistExecuted(); }),
-                LargeImage = new Uri("/HaMusic;component/Images/next.png", UriKind.Relative)
-            };
-        }
-
-        private MvvmControl _open;
-        public MvvmControl Open
-        {
-            get { return _open; }
-        }
-
-        private MvvmControl _connect;
-        public MvvmControl Connect
-        {
-            get { return _connect; }
-        }
-
-        private MvvmControl _clear;
-        public MvvmControl Clear
-        {
-            get { return _clear; }
-        }
-
-        private MvvmControl _playPause;
-        public MvvmControl PlayPause
-        {
-            get { return _playPause; }
-        }
-
-        private MvvmControl _stop;
-        public MvvmControl Stop
-        {
-            get { return _stop; }
-        }
-
-        private MvvmControl _next;
-        public MvvmControl Next
-        {
-            get { return _next; }
-        }
-
-        private MvvmControl _newpl;
-        public MvvmControl NewPlaylist
-        {
-            get { return _newpl; }
-        }
-
-        private ObservableCollection<string> _songs;
-        public ObservableCollection<string> Songs
-        {
-            get { return _songs; }
-        }
-
-        private bool _playing = false;
-        public bool Playing
-        {
-            get 
-            { 
-                return _playing;
+                return _connectCommand ?? (_connectCommand = new RelayCommand(delegate { parent.ConnectExecuted(); }));
             }
-            set 
-            { 
-                SetField(ref _playing, value, "Playing");
-                PlayPause.Label = _playing ? "Pause" : "Play";
-                PlayPause.LargeImage = _playing ? pauseUri : playUri;
+        }
+
+        private ICommand _openCommand;
+        public ICommand OpenCommand
+        {
+            get
+            {
+                return _openCommand ?? (_openCommand = new RelayCommand(delegate { parent.OpenExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _clearCommand;
+        public ICommand ClearCommand
+        {
+            get
+            {
+                return _clearCommand ?? (_clearCommand = new RelayCommand(delegate { parent.ClearExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _playpauseCommand;
+        public ICommand PlayPauseCommand
+        {
+            get
+            {
+                return _playpauseCommand ?? (_playpauseCommand = new RelayCommand(delegate { parent.PlayPauseExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _stopCommand;
+        public ICommand StopCommand
+        {
+            get
+            {
+                return _stopCommand ?? (_stopCommand = new RelayCommand(delegate { parent.StopExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _nextCommand;
+        public ICommand NextCommand
+        {
+            get
+            {
+                return _nextCommand ?? (_nextCommand = new RelayCommand(delegate { parent.NextExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _newplCommand;
+        public ICommand NewPlaylistCommand
+        {
+            get
+            {
+                return _newplCommand ?? (_newplCommand = new RelayCommand(delegate { parent.NewPlaylistExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private void Controls_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "ServerDataSource" || e.PropertyName == null)
+            {
+                SelectedPlaylist = ServerDataSource.Playlists.Count > 0 ? ServerDataSource.Playlists[0] : null;
+                ServerDataSource.PropertyChanged += ServerDataSource_PropertyChanged;
+                ServerDataSource_PropertyChanged(ServerDataSource, new PropertyChangedEventArgs(null));
+            }
+        }
+
+        private void ServerDataSource_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Playing" || e.PropertyName == null)
+            {
+                PlayPauseLabel = ServerDataSource.Playing ? "Pause" : "Play";
+                PlayPauseImage = ServerDataSource.Playing ? pauseUri : playUri;
+            }
+            if (e.PropertyName == "Mode" || e.PropertyName == null)
+            {
+                OnPropertyChanged("SelectedMove");
+            }
+        }
+
+        private string _ppLabel = "Play";
+        public string PlayPauseLabel
+        {
+            get
+            {
+                return _ppLabel;
+            }
+            set
+            {
+                SetField(ref _ppLabel, value, "PlayPauseLabel");
+            }
+        }
+
+        private Uri _ppImage = playUri;
+        public Uri PlayPauseImage
+        {
+            get
+            {
+                return _ppImage;
+            }
+            set
+            {
+                SetField(ref _ppImage, value, "PlayPauseImage");
             }
         }
 
@@ -173,42 +225,41 @@ namespace HaMusic
             }
         }
 
-        private int _vol = 50;
-        public int Volume
+        private Playlist _pl = null;
+        public Playlist SelectedPlaylist
         {
             get
             {
-                return _vol;
+                return _pl;
             }
             set
             {
-                SetField(ref _vol, value, "Volume");
+                SetField(ref _pl, value, "SelectedPlaylist");
             }
         }
 
-        private int _pos = 0;
-        public int Position
+        private bool _enabled = false;
+        public bool Enabled
         {
             get
             {
-                return _pos;
+                return _enabled;
             }
             set
             {
-                SetField(ref _pos, value, "Position");
+                SetField(ref _enabled, value, "Enabled");
             }
         }
 
-        private int _max = 0;
-        public int Maximum
+        public string SelectedMove
         {
             get
             {
-                return _max;
+                return MoveTypes[(int)ServerDataSource.Mode];
             }
             set
             {
-                SetField(ref _max, value, "Maximum");
+                ServerDataSource.Mode = (HaProtoImpl.MoveType)MoveTypes.IndexOf(value);
             }
         }
     }

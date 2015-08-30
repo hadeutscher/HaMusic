@@ -7,6 +7,7 @@
 using HaMusicLib;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Security.Cryptography;
 
 namespace HaMusicServer
@@ -18,15 +19,18 @@ namespace HaMusicServer
         private static RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
         private int consecErrors = 0;
 
-        public Mover(ServerDataSource ds)
+        public Mover(ServerDataSource dataSource)
         {
-            this.dataSource = ds;
-            ds.ModeChanged += Ds_ModeChanged;
+            this.dataSource = dataSource;
+            dataSource.PropertyChanged += DataSource_PropertyChanged;
         }
 
-        private void Ds_ModeChanged()
+        private void DataSource_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            resetShuffle();
+            if (e.PropertyName == "Mode")
+            {
+                resetShuffle();
+            }
         }
 
         private void resetShuffle()

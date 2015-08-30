@@ -80,17 +80,30 @@ namespace HaMusicServer
                             break;
                         case HaProtoImpl.Opcode.SETVOL:
                             HaProtoImpl.SETVOL setvol = HaProtoImpl.SETVOL.Parse(data);
-                            mainForm.Volume = setvol.volume;
+                            lock (mainForm.DataSource.Lock)
+                            {
+                                mainForm.DataSource.Volume = setvol.volume;
+                            }
+                            mainForm.SetVolume(setvol.volume);
                             mainForm.BroadcastMessage(type, data, this);
                             break;
                         case HaProtoImpl.Opcode.SEEK:
                             HaProtoImpl.SEEK seek = HaProtoImpl.SEEK.Parse(data);
-                            mainForm.Position = seek.pos;
-                            mainForm.BroadcastMessage(type, data, this);
+                            lock (mainForm.DataSource.Lock)
+                            {
+                                mainForm.DataSource.Position = seek.pos;
+                                seek.max = mainForm.DataSource.Maximum;
+                            }
+                            mainForm.SetPosition(seek.pos);
+                            mainForm.BroadcastMessage(type, seek, this);
                             break;
                         case HaProtoImpl.Opcode.SETPLAYING:
                             HaProtoImpl.SETPLAYING setplaying = HaProtoImpl.SETPLAYING.Parse(data);
-                            mainForm.Playing = setplaying.playing;
+                            lock (mainForm.DataSource.Lock)
+                            {
+                                mainForm.DataSource.Playing = setplaying.playing;
+                            }
+                            mainForm.SetPlaying(setplaying.playing);
                             mainForm.BroadcastMessage(type, data, this);
                             break;
                         default:

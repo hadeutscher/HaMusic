@@ -1,25 +1,18 @@
 ﻿<RibbonWindow x:Class="HaMusic.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:this="clr-namespace:HaMusic"
         Title="HaMusic" Height="350" Width="525" Closing="RibbonWindow_Closing"
         WindowState="Maximized" Icon="HaLogo.ico" Loaded="RibbonWindow_Loaded">
     <RibbonWindow.InputBindings>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding Open.Command}" />
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding Connect.Command}" />
     </RibbonWindow.InputBindings>
+    <RibbonWindow.Resources>
+        <this:EnumConverter x:Key="EnumConverter" />
+        <this:BindingConverter x:Key="BindingConverter" />
+    </RibbonWindow.Resources>
     <Grid>
-        <Grid.Resources>
-            <Style TargetType="RibbonButton">
-                <Setter Property="Label" Value="{Binding Label}" />
-                <Setter Property="Command" Value="{Binding Command}" />
-                <Setter Property="LargeImageSource" Value="{Binding LargeImage}" />
-            </Style>
-            <Style TargetType="RibbonApplicationMenuItem">
-                <Setter Property="Header" Value="{Binding Label}" />
-                <Setter Property="Command" Value="{Binding Command}" />
-                <Setter Property="ImageSource" Value="{Binding LargeImage}" />
-            </Style>
-        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -27,18 +20,18 @@
         <Ribbon x:Name="ribbon" >
             <Ribbon.ApplicationMenu>
                 <RibbonApplicationMenu>
-                    <RibbonApplicationMenuItem x:Name="connectBtn" DataContext="{Binding Connect}" />
+                    <RibbonApplicationMenuItem x:Name="connectBtn" Header="Connect" Command="{Binding ConnectCommand}" ImageSource="/HaMusic;component/Images/connect.png" />
                 </RibbonApplicationMenu>
             </Ribbon.ApplicationMenu>
             <RibbonTab Header="Main" >
                 <RibbonGroup Header="Main">
-                    <RibbonButton x:Name="openBtn" DataContext="{Binding Open}" />
-                    <RibbonButton x:Name="clearBtn" DataContext="{Binding Clear}" />
-                    <RibbonButton x:Name="ppBtn" DataContext="{Binding PlayPause}" />
-                    <RibbonButton x:Name="stopBtn" DataContext="{Binding Stop}" />
-                    <RibbonButton x:Name="nextBtn" DataContext="{Binding Next}" />
-                    <RibbonButton x:Name="newplBtn" DataContext="{Binding NewPlaylist}" />
-                    <ListBox x:Name="moveType" VerticalAlignment="Center" SelectedIndex="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
+                    <RibbonButton x:Name="openBtn" Label="Open" Command="{Binding OpenCommand}" LargeImageSource="/HaMusic;component/Images/open.png" />
+                    <RibbonButton x:Name="clearBtn" Label="Clear" Command="{Binding ClearCommand}" LargeImageSource="/HaMusic;component/Images/clear.png" />
+                    <RibbonButton x:Name="ppBtn" Label="{Binding PlayPauseLabel}" Command="{Binding PlayPauseCommand}" LargeImageSource="{Binding PlayPauseImage}" />
+                    <RibbonButton x:Name="stopBtn" Label="Stop" Command="{Binding StopCommand}" LargeImageSource="/HaMusic;component/Images/stop.png" />
+                    <RibbonButton x:Name="nextBtn" Label="Next" Command="{Binding NextCommand}" LargeImageSource="/HaMusic;component/Images/next.png" />
+                    <RibbonButton x:Name="newplBtn" Label="New Playlist" Command="{Binding NewPlaylistCommand}" LargeImageSource="/HaMusic;component/Images/next.png" />
+                    <ListBox x:Name="moveType" IsEnabled="{Binding Enabled}" VerticalAlignment="Center" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
                 <RibbonGroup Header="Controls">
                     <Grid>
@@ -52,16 +45,22 @@
                         </Grid.RowDefinitions>
                         <Label Content="Volume: " Grid.Column="0" Grid.Row="0" />
                         <Label Content="Seek: " Grid.Column="0" Grid.Row="1" />
-                        <Slider x:Name="volumeSlider" Maximum="100" Width="100" Value="{Binding Volume}" ValueChanged="volumeSlider_ValueChanged" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
-                        <Slider x:Name="songSlider" Width="500" Value="{Binding Position}" Maximum="{Binding Maximum}" ValueChanged="songSlider_ValueChanged"  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
+                        <Slider x:Name="volumeSlider" IsEnabled="{Binding Enabled}" Maximum="100" Width="100" Value="{Binding ServerDataSource.Volume}" ValueChanged="volumeSlider_ValueChanged" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
+                        <Slider x:Name="songSlider" IsEnabled="{Binding Enabled}" Width="500" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
                     </Grid>
                 </RibbonGroup>
             </RibbonTab>
         </Ribbon>
-        <TabControl x:Name="items" Grid.Row="1" ItemsSource="{Binding ServerDataSource.Playlists}">
+        <TabControl x:Name="items" Grid.Row="1" IsEnabled="{Binding Enabled}" ItemsSource="{Binding ServerDataSource.Playlists}" SelectedItem="{Binding SelectedPlaylist}" >
             <TabControl.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Name}" />
+                    <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged">
+                        <TextBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Delete" Click="MenuItem_Click" />
+                            </ContextMenu>
+                        </TextBox.ContextMenu>
+                    </TextBox>
                 </DataTemplate>
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
@@ -69,7 +68,24 @@
                     <ListView ItemsSource="{Binding PlaylistItems}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Item}" />
+                                <TextBlock Text="{Binding Item}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <DataTrigger Value="True">
+                                                    <DataTrigger.Binding>
+                                                        <MultiBinding Converter="{StaticResource BindingConverter}">
+                                                            <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type TabControl}}" UpdateSourceTrigger="PropertyChanged" />
+                                                            <Binding Path="UID" />
+                                                        </MultiBinding>
+                                                    </DataTrigger.Binding>
+                                                    <Setter Property="Background" Value="Green" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>

@@ -30,6 +30,7 @@ namespace HaMusicServer
             HaProtoImpl.Entity = HaProtoImpl.HaMusicEntity.Server;
             InitializeComponent();
             DataSource = new ServerDataSource();
+            DataSource.Playlists.Add(new Playlist());
             Mover = new Mover(DataSource);
             listenerThread = new Thread(new ThreadStart(ListenerMain));
             player = new NAudioPlayer(this, 50);
@@ -115,6 +116,11 @@ namespace HaMusicServer
             Tuple<int, int> posInfo = player.GetPos();
             int pos = posInfo.Item1;
             int max = posInfo.Item2;
+            lock (dataSource.Lock)
+            {
+                dataSource.Position = pos;
+                dataSource.Maximum = max;
+            }
             if (pos != -1)
                 BroadcastMessage(HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = pos, max = max }, null, true);
         }
@@ -129,28 +135,14 @@ namespace HaMusicServer
             player.OnIndexChanged();
         }
 
-        public bool Playing
+        public void SetPlaying(bool p)
         {
-            get
-            {
-                return player.IsPlaying();
-            }
-            set
-            {
-                player.SetPlaying(value);
-            }
+            player.SetPlaying(p);
         }
 
-        public int Volume
+        public void SetVolume(int vol)
         {
-            get
-            {
-                return player.GetVolume();
-            }
-            set
-            {
-                player.SetVolume(value);
-            }
+            player.SetVolume(vol);
         }
 
         public Mover Mover
@@ -179,18 +171,11 @@ namespace HaMusicServer
             }
         }
 
-        public int Position
+        public void SetPosition(int pos)
         {
-            get
-            {
-                return player.GetPos().Item1;
-            }
-            set
-            {
-                player.Seek(value);
-            }
+            player.Seek(pos);
         }
-
+        
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.S && e.Control)

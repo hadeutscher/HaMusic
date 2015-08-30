@@ -20,6 +20,10 @@ namespace HaMusicLib
         private FastAccessList<long, Playlist> playlists = new FastAccessList<long, Playlist>(x => x.UID);
         private PlaylistItem currentItem = null;
         private HaProtoImpl.MoveType mode = HaProtoImpl.MoveType.NEXT;
+        private int volume = 50;
+        private int position = 0;
+        private int maximum = 0;
+        private bool playing = false;
 
         public ServerDataSource()
         {
@@ -45,15 +49,6 @@ namespace HaMusicLib
             MemoryStream data = new MemoryStream();
             Serialize(data);
             return data.ToArray();
-        }
-
-        public delegate void ModeChangeDelegate();
-        public event ModeChangeDelegate ModeChanged;
-
-        private void OnModeChanged()
-        {
-            if (ModeChanged != null)
-                ModeChanged();
         }
 
         [ProtoMember(1)]
@@ -94,7 +89,62 @@ namespace HaMusicLib
             set
             {
                 SetField(ref mode, value, "Mode");
-                OnModeChanged();
+            }
+        }
+
+        [ProtoMember(4)]
+        public int Volume
+        {
+            get
+            {
+                return volume;
+            }
+
+            set
+            {
+                SetField(ref volume, value, "Volume");
+            }
+        }
+
+        [ProtoMember(5)]
+        public int Position
+        {
+            get
+            {
+                return position;
+            }
+
+            set
+            {
+                SetField(ref position, value, "Position");
+            }
+        }
+
+        [ProtoMember(6)]
+        public int Maximum
+        {
+            get
+            {
+                return maximum;
+            }
+
+            set
+            {
+                SetField(ref maximum, value, "Maximum");
+            }
+        }
+
+        [ProtoMember(7)]
+        public bool Playing
+        {
+            get
+            {
+                return playing;
+            }
+
+            set
+            {
+                SetField(ref playing, value, "Playing");
             }
         }
 
