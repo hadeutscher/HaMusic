@@ -172,6 +172,15 @@ namespace HaMusic
             }
         }
 
+        private ICommand _showBrowserCommand;
+        public ICommand ShowBrowserCommand
+        {
+            get
+            {
+                return _showBrowserCommand ?? (_showBrowserCommand = new RelayCommand(delegate { parent.ShowBrowserExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
         private void Controls_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "ServerDataSource" || e.PropertyName == null)

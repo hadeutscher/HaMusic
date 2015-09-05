@@ -8,6 +8,7 @@ using HaMusicLib;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -28,6 +29,7 @@ namespace HaMusic
         private Thread connThread = null;
         private Object connectLock = new Object();
         private bool internalChanging = false;
+        public static string defaultIndexPath = Path.Combine(GetLocalSettingsFolder(), "index.txt");
 
         public MainWindow()
         {
@@ -36,6 +38,24 @@ namespace HaMusic
             data = new Controls(this);
             DataContext = data;
             SetEnabled(false);
+            browserBtn.IsChecked = Properties.Settings.Default.showBrowser;
+            if (browserBtn.IsChecked != true)
+            {
+                browserColumn.Width = new GridLength(0);
+            }
+            if (File.Exists(defaultIndexPath))
+            {
+                mediaBrowser.SourceData = File.ReadAllLines(defaultIndexPath).ToList();
+            }
+        }
+
+        public static string GetLocalSettingsFolder()
+        {
+            string appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string our_folder = Path.Combine(appdata, "HaMusic");
+            if (!Directory.Exists(our_folder))
+                Directory.CreateDirectory(our_folder);
+            return our_folder;
         }
 
         private void SetEnabled(bool b)
@@ -184,6 +204,22 @@ namespace HaMusic
                     });
                 }
                 catch { }
+            }
+        }
+
+        GridLength browserWidth = new GridLength(1, GridUnitType.Star);
+        public void ShowBrowserExecuted()
+        {
+            Properties.Settings.Default.showBrowser = browserBtn.IsChecked == true;
+            Properties.Settings.Default.Save();
+            if (browserBtn.IsChecked == true)
+            {
+                browserColumn.Width = browserWidth;
+            }
+            else
+            {
+                browserWidth = browserColumn.Width;
+                browserColumn.Width = new GridLength(0);
             }
         }
 

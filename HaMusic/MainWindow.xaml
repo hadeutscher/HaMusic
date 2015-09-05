@@ -1,18 +1,19 @@
-﻿<RibbonWindow x:Class="HaMusic.MainWindow"
+﻿<RibbonWindow
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:this="clr-namespace:HaMusic"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="HaMusic.MainWindow"
         Title="HaMusic" Height="350" Width="525" Closing="RibbonWindow_Closing"
         WindowState="Maximized" Icon="HaLogo.ico" Loaded="RibbonWindow_Loaded">
-    <RibbonWindow.InputBindings>
-        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}" />
-        <KeyBinding Key="N" Modifiers="Control" Command="{Binding ConnectCommand}" />
-    </RibbonWindow.InputBindings>
     <RibbonWindow.Resources>
         <this:EnumConverter x:Key="EnumConverter" />
         <this:BindingConverter x:Key="BindingConverter" />
         <this:SeekTimeConverter x:Key="SeekTimeConverter" />
     </RibbonWindow.Resources>
+    <RibbonWindow.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}" />
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding ConnectCommand}" />
+    </RibbonWindow.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -26,7 +27,7 @@
                     <RibbonButton x:Name="connectBtn" Label="Connect" Command="{Binding ConnectCommand}" LargeImageSource="/HaMusic;component/Images/connect.png" />
                     <RibbonButton x:Name="openBtn" Label="Open" Command="{Binding OpenCommand}" LargeImageSource="/HaMusic;component/Images/open.png" />
                     <RibbonButton x:Name="newplBtn" Label="New Playlist" Command="{Binding NewPlaylistCommand}" LargeImageSource="/HaMusic;component/Images/add.png" />
-                    <RibbonToggleButton x:Name="browserBtn" Label="Show Browser" LargeImageSource="/HaMusic;component/Images/add.png" />
+                    <RibbonToggleButton x:Name="browserBtn" Label="Show Browser" Command="{Binding ShowBrowserCommand}" LargeImageSource="/HaMusic;component/Images/add.png" />
                     <ListBox x:Name="moveType" VerticalAlignment="Center" IsEnabled="{Binding Enabled}" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
             </RibbonTab>
@@ -35,11 +36,11 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="5" />
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1*" x:Name="browserColumn" />
             </Grid.ColumnDefinitions>
             <TabControl x:Name="playlistTabs" Focusable="False" Grid.Column="0" IsEnabled="{Binding Enabled}" ItemsSource="{Binding ServerDataSource.Playlists}" SelectedItem="{Binding SelectedPlaylist}" >
                 <TabControl.ItemContainerStyle>
-                    <Style TargetType="TabItem">
+                    <Style TargetType="{x:Type TabItem}">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         <Setter Property="Padding" Value="0,0,0,0" />
                     </Style>
@@ -64,7 +65,7 @@
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Item}">
                                         <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
+                                            <Style TargetType="{x:Type TextBlock}">
                                                 <Setter Property="Background" Value="Transparent" />
                                                 <Style.Triggers>
                                                     <DataTrigger Value="True">
@@ -87,9 +88,17 @@
                 </TabControl.ContentTemplate>
             </TabControl>
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" />
         </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" IsEnabled="{Binding Enabled}" Margin="10,5,10,0" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10" />
         <Grid Grid.Row="3" HorizontalAlignment="Stretch">
+            <Grid.Resources>
+                <Style TargetType="{x:Type Button}">
+                    <Setter Property="Height" Value="40" />
+                    <Setter Property="Width" Value="40" />
+                    <Setter Property="Margin" Value="2,5,2,10" />
+                </Style>
+            </Grid.Resources>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="Auto" />
@@ -97,20 +106,11 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
-            <Grid.Resources>
-                <Style TargetType="Button">
-                    <Setter Property="Height" Value="40" />
-                    <Setter Property="Width" Value="40" />
-                    <Setter Property="Margin" Value="2,5,2,10" />
-                </Style>
-            </Grid.Resources>
             <Label Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0,10,5">
-                <Label.Content>
-                    <MultiBinding Converter="{StaticResource SeekTimeConverter}">
-                        <Binding Path="ServerDataSource.Position" UpdateSourceTrigger="PropertyChanged" />
-                        <Binding Path="ServerDataSource.Maximum" UpdateSourceTrigger="PropertyChanged" />
-                    </MultiBinding>
-                </Label.Content>
+                <MultiBinding Converter="{StaticResource SeekTimeConverter}">
+                    <Binding Path="ServerDataSource.Position" UpdateSourceTrigger="PropertyChanged" />
+                    <Binding Path="ServerDataSource.Maximum" UpdateSourceTrigger="PropertyChanged" />
+                </MultiBinding>
             </Label>
             <Button Grid.Column="1" x:Name="stopBtn" Command="{Binding StopCommand}" >
                 <StackPanel>
