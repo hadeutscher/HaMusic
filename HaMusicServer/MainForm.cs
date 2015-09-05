@@ -8,10 +8,12 @@ using HaMusicLib;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -20,21 +22,110 @@ namespace HaMusicServer
     public partial class MainForm : Form
     {
         private Thread listenerThread;
-        private List<Client> clients = new List<Client>();
+        internal List<Client> clients = new List<Client>();
         private IHaMusicPlayer player;
         private Mover mover;
         private ServerDataSource dataSource;
+        public List<IPAddress> banlist = new List<IPAddress>();
+        private Action<string> log = delegate(string x) { };
+        private HaShell hashell = null;
+        private StreamWriter sw;
+
+        public static string defaultLogPath = Path.Combine(Program.GetLocalSettingsFolder(), "hms.log");
+        public static string defaultSourcePath = Path.Combine(Program.GetLocalSettingsFolder(), "hms.db");
+        public static string defaultBanlistPath = Path.Combine(Program.GetLocalSettingsFolder(), "banlist.txt");
+
 
         public MainForm()
         {
             HaProtoImpl.Entity = HaProtoImpl.HaMusicEntity.Server;
             InitializeComponent();
+            CreateLogger();
             DataSource = new ServerDataSource();
             DataSource.Playlists.Add(new Playlist());
             Mover = new Mover(DataSource);
             listenerThread = new Thread(new ThreadStart(ListenerMain));
             player = new NAudioPlayer(this, 50);
             player.PausePlayChanged += player_PausePlayChanged;
+            RestoreState();
+            hashell = new HaShell(this, console);
+        }
+
+        private void CreateLogger()
+        {
+            Stream fs = Stream.Synchronized(File.Open(defaultLogPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read));
+            fs.Seek(0, SeekOrigin.End);
+            sw = new StreamWriter(fs);
+            log = delegate (string x)
+            {
+                lock (sw)
+                {
+                    sw.Write(x + "\r\n");
+                }
+            };
+        }
+
+        public void FlushLog()
+        {
+            lock (sw)
+            {
+                sw.Flush();
+            }
+        }
+
+        private void RestoreState()
+        {
+            if (File.Exists(defaultBanlistPath))
+            {
+                foreach (string ip in File.ReadAllLines(defaultBanlistPath))
+                {
+                    IPAddress addr = null;
+                    if (IPAddress.TryParse(ip, out addr))
+                    {
+                        banlist.Add(addr);
+                    }
+                }
+            }
+
+            /*if (File.Exists(defaultSourcePath) && MessageBox.Show("Reload saved DataSource?", "DataSource Import", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                LoadSourceState(defaultSourcePath);
+            }*/
+        }
+
+        public void LoadSourceState(string path)
+        {
+            int pos;
+            lock (DataSource.Lock)
+            {
+                DataSource = ServerDataSource.Deserialize(File.ReadAllBytes(path));
+                pos = DataSource.Position;
+            }
+            AnnounceIndexChange();
+            player.Seek(pos);
+        }
+
+        public void SaveSourceState(string path)
+        {
+            lock (DataSource.Lock)
+            {
+                File.WriteAllBytes(path, DataSource.Serialize());
+            }
+        }
+
+        public void FlushBanlist()
+        {
+            try
+            {
+                lock (banlist)
+                {
+                    File.WriteAllLines(defaultBanlistPath, banlist.Select(x => x.ToString()));
+                }
+            }
+            catch (Exception e)
+            {
+                log("Banlist flush failed: " + e.Message);
+            }
         }
 
         void player_PausePlayChanged(object sender, bool playing)
@@ -53,17 +144,18 @@ namespace HaMusicServer
             Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             listener.Bind(new IPEndPoint(new IPAddress(new byte[] { 0, 0, 0, 0 }), 5151));
             listener.Listen(10);
-            Action<string> log = delegate(string x)
-            {
-                Invoke((Action)delegate
-                {
-                    logBox.Items.Add(x + "\r\n");
-                    logBox.SelectedIndex = logBox.Items.Count - 1;
-                });
-            };
             while (true)
             {
-                Client c = new Client(this, listener.Accept(), log);
+                Socket newSock = listener.Accept();
+                lock (banlist)
+                {
+                    if (banlist.Any(x => x.Equals(((IPEndPoint)newSock.RemoteEndPoint).Address)))
+                    {
+                        newSock.Close();
+                        continue;
+                    }
+                }
+                Client c = new Client(this, newSock, log);
                 lock (clients)
                 {
                     clients.Add(c);
@@ -177,14 +269,6 @@ namespace HaMusicServer
         
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.S && e.Control)
-            {
-                SaveFileDialog sfd = new SaveFileDialog() { Title = "Select save location", Filter = "Text files (*.txt)|*.txt" };
-                if (sfd.ShowDialog() == DialogResult.OK)
-                {
-                    File.WriteAllLines(sfd.FileName, logBox.Items.Cast<string>());
-                }
-            }
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -206,6 +290,21 @@ namespace HaMusicServer
                 BeginInvoke(method);
             else
                 method.DynamicInvoke();
+        }
+
+        private void saveDbTimer_Tick(object sender, EventArgs e)
+        {
+            new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    SaveSourceState(defaultSourcePath);
+                }
+                catch (Exception ex)
+                {
+                    log("DataSource flush failed: " + ex.Message);
+                }
+            })).Start();
         }
     }
 }

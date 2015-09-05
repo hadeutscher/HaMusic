@@ -16,6 +16,7 @@ namespace HaMusicLib
     [ProtoContract]
     public class ServerDataSource : PropertyNotifierBase
     {
+        public const string LocalVersion = "3.0";
         public object Lock = new object();
         private FastAccessList<long, Playlist> playlists = new FastAccessList<long, Playlist>(x => x.UID);
         private PlaylistItem currentItem = null;
@@ -24,6 +25,7 @@ namespace HaMusicLib
         private int position = 0;
         private int maximum = 0;
         private bool playing = false;
+        private string remoteVersion = LocalVersion;
 
         public ServerDataSource()
         {
@@ -145,6 +147,20 @@ namespace HaMusicLib
             set
             {
                 SetField(ref playing, value, "Playing");
+            }
+        }
+
+        [ProtoMember(8)]
+        public string RemoteVersion
+        {
+            get
+            {
+                return remoteVersion;
+            }
+
+            set
+            {
+                remoteVersion = value;
             }
         }
 

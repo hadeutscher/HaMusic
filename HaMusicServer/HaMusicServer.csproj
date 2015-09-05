@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Client.cs" />
+    <Compile Include="HaShell.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -88,6 +89,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\consolecontrol\source\ConsoleControl\ConsoleControl.csproj">
+      <Project>{737cc7f2-ec7c-4800-b7eb-72637e892c42}</Project>
+      <Name>ConsoleControl</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NAudio\NAudio\NAudio.csproj">
       <Project>{da4f02e3-0b5e-42cd-b8d9-5583fa51d66e}</Project>
       <Name>NAudio</Name>
