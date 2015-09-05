@@ -65,6 +65,7 @@ namespace HaMusicServer
                         case HaProtoImpl.Opcode.DELPL:
                         case HaProtoImpl.Opcode.RENPL:
                         case HaProtoImpl.Opcode.SETMOVE:
+                        case HaProtoImpl.Opcode.REORDER:
                             packet = HaProtoImpl.ApplyPacketToDatabase(type, data, mainForm.DataSource, out announceIndexChanges);
                             mainForm.BroadcastMessage(type, packet);
                             break;

@@ -11,13 +11,16 @@
     <RibbonWindow.Resources>
         <this:EnumConverter x:Key="EnumConverter" />
         <this:BindingConverter x:Key="BindingConverter" />
+        <this:SeekTimeConverter x:Key="SeekTimeConverter" />
     </RibbonWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Ribbon x:Name="ribbon" >
+        <Ribbon x:Name="ribbon" Grid.Row="0">
             <Ribbon.ApplicationMenu>
                 <RibbonApplicationMenu>
                     <RibbonApplicationMenuItem x:Name="connectBtn" Header="Connect" Command="{Binding ConnectCommand}" ImageSource="/HaMusic;component/Images/connect.png" />
@@ -27,9 +30,6 @@
                 <RibbonGroup Header="Main">
                     <RibbonButton x:Name="openBtn" Label="Open" Command="{Binding OpenCommand}" LargeImageSource="/HaMusic;component/Images/open.png" />
                     <RibbonButton x:Name="clearBtn" Label="Clear" Command="{Binding ClearCommand}" LargeImageSource="/HaMusic;component/Images/clear.png" />
-                    <RibbonButton x:Name="ppBtn" Label="{Binding PlayPauseLabel}" Command="{Binding PlayPauseCommand}" LargeImageSource="{Binding PlayPauseImage}" />
-                    <RibbonButton x:Name="stopBtn" Label="Stop" Command="{Binding StopCommand}" LargeImageSource="/HaMusic;component/Images/stop.png" />
-                    <RibbonButton x:Name="nextBtn" Label="Next" Command="{Binding NextCommand}" LargeImageSource="/HaMusic;component/Images/next.png" />
                     <RibbonButton x:Name="newplBtn" Label="New Playlist" Command="{Binding NewPlaylistCommand}" LargeImageSource="/HaMusic;component/Images/next.png" />
                     <ListBox x:Name="moveType" IsEnabled="{Binding Enabled}" VerticalAlignment="Center" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
@@ -46,7 +46,6 @@
                         <Label Content="Volume: " Grid.Column="0" Grid.Row="0" />
                         <Label Content="Seek: " Grid.Column="0" Grid.Row="1" />
                         <Slider x:Name="volumeSlider" IsEnabled="{Binding Enabled}" Maximum="100" Width="100" Value="{Binding ServerDataSource.Volume}" ValueChanged="volumeSlider_ValueChanged" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
-                        <Slider x:Name="songSlider" IsEnabled="{Binding Enabled}" Width="500" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" SmallChange="1" LargeChange="10" />
                     </Grid>
                 </RibbonGroup>
             </RibbonTab>
@@ -92,5 +91,45 @@
                 </DataTemplate>
             </TabControl.ContentTemplate>
         </TabControl>
+        <Slider x:Name="songSlider" Grid.Row="2" IsEnabled="{Binding Enabled}" Margin="10,5,10,0" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10" />
+        <Grid Grid.Row="3" HorizontalAlignment="Center">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Height" Value="40" />
+                    <Setter Property="Width" Value="40" />
+                    <Setter Property="Margin" Value="2,5,2,10" />
+                </Style>
+            </Grid.Resources>
+            <Label Grid.Column="0" VerticalAlignment="Center" Margin="5,5,5,5">
+                <Label.Content>
+                    <MultiBinding Converter="{StaticResource SeekTimeConverter}">
+                        <Binding Path="ServerDataSource.Position" UpdateSourceTrigger="PropertyChanged" />
+                        <Binding Path="ServerDataSource.Maximum" UpdateSourceTrigger="PropertyChanged" />
+                    </MultiBinding>
+                </Label.Content>
+            </Label>
+            <Button Grid.Column="1" x:Name="stopBtn" Command="{Binding StopCommand}" >
+                <StackPanel>
+                    <Image Source="/HaMusic;component/Images/stop.png" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="2" x:Name="ppBtn" Command="{Binding PlayPauseCommand}" Height="53" Width="53" >
+                <StackPanel>
+                    <Image Source="{Binding PlayPauseImage}" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="3" x:Name="nextBtn" Command="{Binding NextCommand}" >
+                <StackPanel>
+                    <Image Source="/HaMusic;component/Images/next.png" />
+                </StackPanel>
+            </Button>
+        </Grid>
     </Grid>
 </RibbonWindow>

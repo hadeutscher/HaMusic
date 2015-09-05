@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +15,15 @@ namespace HaMusicServer
 {
     static class Program
     {
+        public static string GetLocalSettingsFolder()
+        {
+            string appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string our_folder = Path.Combine(appdata, "HaMusic");
+            if (!Directory.Exists(our_folder))
+                Directory.CreateDirectory(our_folder);
+            return our_folder;
+        }
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>

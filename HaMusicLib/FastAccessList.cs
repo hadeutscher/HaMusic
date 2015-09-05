@@ -110,10 +110,10 @@ namespace HaMusicLib
         {
             int index = IndexOf(item);
             dict.Remove(keyDerivingFunc(item));
-            bool result = ((IList<T>)list).Remove(item);
+            ((IList<T>)list).RemoveAt(index);
             if (CollectionChanged != null)
                 CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
-            return result;
+            return true;
         }
 
         public IEnumerator<T> GetEnumerator()
