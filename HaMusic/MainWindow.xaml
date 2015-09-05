@@ -26,59 +26,68 @@
                     <RibbonButton x:Name="connectBtn" Label="Connect" Command="{Binding ConnectCommand}" LargeImageSource="/HaMusic;component/Images/connect.png" />
                     <RibbonButton x:Name="openBtn" Label="Open" Command="{Binding OpenCommand}" LargeImageSource="/HaMusic;component/Images/open.png" />
                     <RibbonButton x:Name="newplBtn" Label="New Playlist" Command="{Binding NewPlaylistCommand}" LargeImageSource="/HaMusic;component/Images/add.png" />
+                    <RibbonToggleButton x:Name="browserBtn" Label="Show Browser" LargeImageSource="/HaMusic;component/Images/add.png" />
                     <ListBox x:Name="moveType" VerticalAlignment="Center" IsEnabled="{Binding Enabled}" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
             </RibbonTab>
         </Ribbon>
-        <TabControl x:Name="playlistTabs" Focusable="False" Grid.Row="1" IsEnabled="{Binding Enabled}" ItemsSource="{Binding ServerDataSource.Playlists}" SelectedItem="{Binding SelectedPlaylist}" >
-            <TabControl.ItemContainerStyle>
-                <Style TargetType="TabItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <Setter Property="Padding" Value="0,0,0,0" />
-                </Style>
-            </TabControl.ItemContainerStyle>
-            <TabControl.ItemTemplate>
-                <DataTemplate>
-                    <this:EditableLabel x:Name="editableLabel" HorizontalAlignment="Stretch" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" >
-                        <this:EditableLabel.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="Rename" Click="MenuItem_Rename" />
-                                <MenuItem Header="Clear" Click="MenuItem_Clear" />
-                                <MenuItem Header="Delete" Click="MenuItem_Click" />
-                            </ContextMenu>
-                        </this:EditableLabel.ContextMenu>
-                    </this:EditableLabel>
-                </DataTemplate>
-            </TabControl.ItemTemplate>
-            <TabControl.ContentTemplate>
-                <DataTemplate>
-                    <ListView x:Name="items" ItemsSource="{Binding PlaylistItems}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Item}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Background" Value="Transparent" />
-                                            <Style.Triggers>
-                                                <DataTrigger Value="True">
-                                                    <DataTrigger.Binding>
-                                                        <MultiBinding Converter="{StaticResource BindingConverter}">
-                                                            <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type TabControl}}" UpdateSourceTrigger="PropertyChanged" />
-                                                            <Binding Path="UID" />
-                                                        </MultiBinding>
-                                                    </DataTrigger.Binding>
-                                                    <Setter Property="Background" Value="Green" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </DataTemplate>
-            </TabControl.ContentTemplate>
-        </TabControl>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            <TabControl x:Name="playlistTabs" Focusable="False" Grid.Column="0" IsEnabled="{Binding Enabled}" ItemsSource="{Binding ServerDataSource.Playlists}" SelectedItem="{Binding SelectedPlaylist}" >
+                <TabControl.ItemContainerStyle>
+                    <Style TargetType="TabItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0,0,0,0" />
+                    </Style>
+                </TabControl.ItemContainerStyle>
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <this:EditableLabel x:Name="editableLabel" HorizontalAlignment="Stretch" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" >
+                            <this:EditableLabel.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Rename" Click="MenuItem_Rename" />
+                                    <MenuItem Header="Clear" Click="MenuItem_Clear" />
+                                    <MenuItem Header="Delete" Click="MenuItem_Click" />
+                                </ContextMenu>
+                            </this:EditableLabel.ContextMenu>
+                        </this:EditableLabel>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <ListView x:Name="items" ItemsSource="{Binding PlaylistItems}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Item}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Background" Value="Transparent" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="True">
+                                                        <DataTrigger.Binding>
+                                                            <MultiBinding Converter="{StaticResource BindingConverter}">
+                                                                <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type TabControl}}" UpdateSourceTrigger="PropertyChanged" />
+                                                                <Binding Path="UID" />
+                                                            </MultiBinding>
+                                                        </DataTrigger.Binding>
+                                                        <Setter Property="Background" Value="Green" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+        </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" IsEnabled="{Binding Enabled}" Margin="10,5,10,0" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10" />
         <Grid Grid.Row="3" HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
