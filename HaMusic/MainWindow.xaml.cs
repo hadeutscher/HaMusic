@@ -176,10 +176,14 @@ namespace HaMusic
                     sock.Close();
                 }
                 catch { }
-                Dispatcher.Invoke(delegate()
+                try
                 {
-                    SetEnabled(false);
-                });
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        SetEnabled(false);
+                    });
+                }
+                catch { }
             }
         }
 
@@ -193,33 +197,19 @@ namespace HaMusic
 
         private void items_KeyDown(object sender, KeyEventArgs e)
         {
+            ListView lv = (ListView)sender;
+            Playlist pl = (Playlist)lv.DataContext;
             switch (e.Key)
             {
-                /*case Key.Delete:
+                case Key.Delete:
                     lock (data)
                     {
                         List<long> uids = new List<long>();
-                        foreach (object item in items.SelectedContent)
+                        foreach (object item in lv.SelectedItems)
                             uids.Add(((PlaylistItem)item).UID);
-                        HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = 0, items = uids });
-                    }
-                    break;*/
-                /*case Key.OemPlus:
-                    lock (data)
-                    {
-                        if (items.SelectedIndex == -1 || items.SelectedIndex == items.Items.Count - 1)
-                            return;
-                        HaProtoImpl.C2SSend(globalSocket, items.SelectedIndex++.ToString(), HaProtoImpl.ClientToServer.DOWN);
+                        HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
                     }
                     break;
-                case Key.OemMinus:
-                    lock (data)
-                    {
-                        if (items.SelectedIndex == -1 || items.SelectedIndex == 0)
-                            return;
-                        HaProtoImpl.C2SSend(globalSocket, items.SelectedIndex--.ToString(), HaProtoImpl.ClientToServer.UP);
-                    }
-                    break;*/
             }
         }
 
@@ -236,12 +226,6 @@ namespace HaMusic
         private long GetSelectedPlaylist()
         {
             return data.SelectedPlaylist.UID;
-        }
-
-        public void ClearExecuted()
-        {
-            if (MessageBox.Show("Are you sure?", "Clear", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = GetSelectedPlaylist() });
         }
 
         public void PlayPauseExecuted()
@@ -302,7 +286,7 @@ namespace HaMusic
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Playlist pl = (Playlist)((Control)e.OriginalSource).DataContext;
+            Playlist pl = (Playlist)((Control)sender).DataContext;
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.RENPL, new HaProtoImpl.RENPL() { uid = pl.UID, name = pl.Name });
         }
 
@@ -310,6 +294,23 @@ namespace HaMusic
         {
             Playlist pl = (Playlist)((Control)sender).DataContext;
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.DELPL, new HaProtoImpl.DELPL() { uid = pl.UID });
+        }
+
+        private void MenuItem_Rename(object sender, RoutedEventArgs e)
+        {
+            EditableLabel el = (EditableLabel)((ContextMenu)((MenuItem)sender).Parent).PlacementTarget;
+            if (!el.Open)
+            {
+                el.SetOpen();
+            }
+        }
+
+        private void MenuItem_Clear(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Are you sure?", "Clear", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = ((Playlist)((MenuItem)sender).DataContext).UID });
+            }
         }
     }
 }

@@ -121,8 +121,7 @@ namespace HaMusicServer
                 dataSource.Position = pos;
                 dataSource.Maximum = max;
             }
-            if (pos != -1)
-                BroadcastMessage(HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = pos, max = max }, null, true);
+            BroadcastMessage(HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = pos, max = max }, null, true);
         }
 
         private void broadcastTimer_Tick(object sender, EventArgs e)

@@ -74,9 +74,9 @@ namespace HaMusicServer
                             lock (mainForm.DataSource.Lock)
                             {
                                 mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
-                                uid = mainForm.DataSource.CurrentItem.UID;
+                                uid = mainForm.DataSource.CurrentItem == null ? -1 : mainForm.DataSource.CurrentItem.UID;
                             }
-                            mainForm.BroadcastMessage(HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = uid }, this);
+                            mainForm.BroadcastMessage(HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = uid });
                             announceIndexChanges = true;
                             break;
                         case HaProtoImpl.Opcode.SETVOL:

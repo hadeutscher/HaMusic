@@ -34,6 +34,8 @@ namespace HaMusic
     {
         private string TranslateTime(int time)
         {
+            if (time == -1)
+                time = 0;
             int secs = time % 60;
             time = time / 60;
             int mins = time % 60;
@@ -131,15 +133,6 @@ namespace HaMusic
             get
             {
                 return _openCommand ?? (_openCommand = new RelayCommand(delegate { parent.OpenExecuted(); }, delegate { return Enabled; }));
-            }
-        }
-
-        private ICommand _clearCommand;
-        public ICommand ClearCommand
-        {
-            get
-            {
-                return _clearCommand ?? (_clearCommand = new RelayCommand(delegate { parent.ClearExecuted(); }, delegate { return Enabled; }));
             }
         }
 
