@@ -227,7 +227,7 @@ namespace HaMusic
         {
             lock (data)
             {
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)((TextBlock)e.OriginalSource).DataContext).UID });
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)((ListView)sender).SelectedValue).UID });
             }
         }
 

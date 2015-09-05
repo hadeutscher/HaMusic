@@ -60,10 +60,10 @@
                 </TabControl.ItemTemplate>
                 <TabControl.ContentTemplate>
                     <DataTemplate>
-                        <ListView x:Name="items" ItemsSource="{Binding PlaylistItems}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True">
+                        <ListView x:Name="items" ItemsSource="{Binding PlaylistItems}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True" HorizontalContentAlignment="Stretch">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Item}">
+                                    <TextBlock Text="{Binding Item}" HorizontalAlignment="Stretch">
                                         <TextBlock.Style>
                                             <Style TargetType="{x:Type TextBlock}">
                                                 <Setter Property="Background" Value="Transparent" />
@@ -75,7 +75,30 @@
                                                                 <Binding Path="UID" />
                                                             </MultiBinding>
                                                         </DataTrigger.Binding>
-                                                        <Setter Property="Background" Value="Green" />
+                                                        <Setter Property="Background" >
+                                                            <Setter.Value>
+                                                                <LinearGradientBrush EndPoint="1,0.5" MappingMode="RelativeToBoundingBox" StartPoint="0,0.5">
+                                                                    <GradientStop Offset="-2" Color="#4095FF" />
+                                                                    <GradientStop Offset="-1" Color="LightBlue" />
+                                                                    <GradientStop Offset="0" Color="#4095FF" />
+                                                                    <GradientStop Offset="1" Color="LightBlue" />
+                                                                </LinearGradientBrush>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[0].(GradientStop.Offset)"
+                                                                        From="-2" To="0" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[1].(GradientStop.Offset)"
+                                                                        From="-1" To="1" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[2].(GradientStop.Offset)"
+                                                                        From="0" To="2" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[3].(GradientStop.Offset)"
+                                                                        From="1" To="3" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
