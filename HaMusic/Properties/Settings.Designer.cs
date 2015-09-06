@@ -34,17 +34,5 @@ namespace HaMusic.Properties {
                 this["lastAddr"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool showBrowser {
-            get {
-                return ((bool)(this["showBrowser"]));
-            }
-            set {
-                this["showBrowser"] = value;
-            }
-        }
     }
 }

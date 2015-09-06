@@ -38,11 +38,6 @@ namespace HaMusic
             data = new Controls(this);
             DataContext = data;
             SetEnabled(false);
-            browserBtn.IsChecked = Properties.Settings.Default.showBrowser;
-            if (browserBtn.IsChecked != true)
-            {
-                browserColumn.Width = new GridLength(0);
-            }
             if (File.Exists(defaultIndexPath))
             {
                 mediaBrowser.SourceData = File.ReadAllLines(defaultIndexPath).ToList();
@@ -61,14 +56,6 @@ namespace HaMusic
         private void SetEnabled(bool b)
         {
             data.Enabled = b;
-        }
-
-        public void OpenExecuted()
-        {
-            OpenFileDialog ofd = new OpenFileDialog() { Filter = "All Files|*.*", Multiselect = true };
-            if (ofd.ShowDialog() != true)
-                return;
-            addSongs(ofd.FileNames);
         }
 
         private void ConnectThreadProc(string address)
@@ -101,29 +88,6 @@ namespace HaMusic
                     MessageBox.Show("Could not connect", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }
-
-        public void ConnectExecuted()
-        {
-            AddressSelector selector = new AddressSelector();
-            if (selector.ShowDialog() != true)
-                return;
-            new Thread(new ThreadStart(delegate() { ConnectThreadProc(selector.Result); })).Start();
-        }
-
-        public void NewPlaylistExecuted()
-        {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADDPL, new HaProtoImpl.ADDPL());
-        }
-
-        public void NextExecuted()
-        {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SKIP, new HaProtoImpl.SKIP());
-        }
-
-        public void DeletePlaylistExecuted()
-        {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.DELPL, new HaProtoImpl.DELPL() { uid = data.SelectedPlaylist.UID });
         }
 
         private void SockProc(Socket sock)
@@ -209,38 +173,63 @@ namespace HaMusic
             }
         }
 
-        GridLength browserWidth = new GridLength(1, GridUnitType.Star);
-        public void ShowBrowserExecuted()
+        public void OpenExecuted()
         {
-            Properties.Settings.Default.showBrowser = browserBtn.IsChecked == true;
-            Properties.Settings.Default.Save();
-            if (browserBtn.IsChecked == true)
-            {
-                browserColumn.Width = browserWidth;
-            }
-            else
-            {
-                browserWidth = browserColumn.Width;
-                browserColumn.Width = new GridLength(0);
-            }
+            OpenFileDialog ofd = new OpenFileDialog() { Filter = "All Files|*.*", Multiselect = true };
+            if (ofd.ShowDialog() != true)
+                return;
+            addSongs(ofd.FileNames);
+        }
+
+        public void ConnectExecuted()
+        {
+            AddressSelector selector = new AddressSelector();
+            if (selector.ShowDialog() != true)
+                return;
+            new Thread(new ThreadStart(delegate () { ConnectThreadProc(selector.Result); })).Start();
+        }
+
+        public void NewPlaylistExecuted()
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADDPL, new HaProtoImpl.ADDPL());
+        }
+
+        public void NextExecuted()
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SKIP, new HaProtoImpl.SKIP());
+        }
+
+        public void DeletePlaylistExecuted()
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.DELPL, new HaProtoImpl.DELPL() { uid = data.SelectedPlaylist.UID });
+        }
+
+        public void DeleteItemsExecuted(ListView lv)
+        {
+            Playlist pl = (Playlist)lv.DataContext;
+            List<long> uids = new List<long>();
+            foreach (object item in lv.SelectedItems)
+                uids.Add(((PlaylistItem)item).UID);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
+        }
+
+        public void SelectItemExecuted(ListView lv)
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)lv.SelectedValue).UID });
         }
 
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)((ListView)sender).SelectedValue).UID });
+            SelectItemExecuted((ListView)sender);
         }
 
         private void items_KeyDown(object sender, KeyEventArgs e)
         {
-            ListView lv = (ListView)sender;
-            Playlist pl = (Playlist)lv.DataContext;
             switch (e.Key)
             {
                 case Key.Delete:
-                    List<long> uids = new List<long>();
-                    foreach (object item in lv.SelectedItems)
-                        uids.Add(((PlaylistItem)item).UID);
-                    HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
+                    DeleteItemsExecuted((ListView)sender);
+                    e.Handled = true;
                     break;
             }
         }
@@ -322,13 +311,13 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.RENPL, new HaProtoImpl.RENPL() { uid = pl.UID, name = pl.Name });
         }
 
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        private void MenuItem_DeletePlaylist(object sender, RoutedEventArgs e)
         {
             Playlist pl = (Playlist)((Control)sender).DataContext;
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.DELPL, new HaProtoImpl.DELPL() { uid = pl.UID });
         }
 
-        private void MenuItem_Rename(object sender, RoutedEventArgs e)
+        private void MenuItem_RenamePlaylist(object sender, RoutedEventArgs e)
         {
             EditableLabel el = (EditableLabel)((ContextMenu)((MenuItem)sender).Parent).PlacementTarget;
             if (!el.Open)
@@ -337,7 +326,7 @@ namespace HaMusic
             }
         }
 
-        private void MenuItem_Clear(object sender, RoutedEventArgs e)
+        private void MenuItem_ClearPlaylist(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Are you sure?", "Clear", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
@@ -345,15 +334,14 @@ namespace HaMusic
             }
         }
 
-        private void MenuItem_PlayNext(object sender, RoutedEventArgs e)
+        private void MenuItem_PlayItemNext(object sender, RoutedEventArgs e)
         {
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = ((PlaylistItem)((MenuItem)sender).DataContext).UID });
         }
 
-        private void MenuItem_Delete(object sender, RoutedEventArgs e)
+        private void MenuItem_DeleteItem(object sender, RoutedEventArgs e)
         {
-            long uid = ((PlaylistItem)((MenuItem)sender).DataContext).UID;
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = data.ServerDataSource.GetPlaylistForItem(uid).UID, items = new List<long> { uid } });
+            DeleteItemsExecuted((ListView)sender);
         }
     }
 }

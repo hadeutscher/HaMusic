@@ -29,7 +29,6 @@
                     <RibbonButton x:Name="connectBtn" Label="Connect" Command="{Binding ConnectCommand}" LargeImageSource="/HaMusic;component/Images/connect.png" />
                     <RibbonButton x:Name="openBtn" Label="Open" Command="{Binding OpenCommand}" LargeImageSource="/HaMusic;component/Images/open.png" />
                     <RibbonButton x:Name="newplBtn" Label="New Playlist" Command="{Binding NewPlaylistCommand}" LargeImageSource="/HaMusic;component/Images/add.png" />
-                    <RibbonToggleButton x:Name="browserBtn" Label="Show Browser" Command="{Binding ShowBrowserCommand}" LargeImageSource="/HaMusic;component/Images/add.png" />
                     <ListBox x:Name="moveType" VerticalAlignment="Center" IsEnabled="{Binding Enabled}" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
             </RibbonTab>
@@ -52,9 +51,9 @@
                         <this:EditableLabel x:Name="editableLabel" HorizontalAlignment="Stretch" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" >
                             <this:EditableLabel.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="Rename" Click="MenuItem_Rename" />
-                                    <MenuItem Header="Clear" Click="MenuItem_Clear" />
-                                    <MenuItem Header="Delete" Click="MenuItem_Click" />
+                                    <MenuItem Header="Rename" Click="MenuItem_RenamePlaylist" />
+                                    <MenuItem Header="Clear" Click="MenuItem_ClearPlaylist" />
+                                    <MenuItem Header="Delete" Click="MenuItem_DeletePlaylist" />
                                 </ContextMenu>
                             </this:EditableLabel.ContextMenu>
                         </this:EditableLabel>
@@ -120,8 +119,8 @@
                                         </TextBlock.Style>
                                         <TextBlock.ContextMenu>
                                             <ContextMenu>
-                                                <MenuItem Header="Play Next" Click="MenuItem_PlayNext" />
-                                                <MenuItem Header="Delete" Click="MenuItem_Delete" />
+                                                <MenuItem Header="Play Next" Click="MenuItem_PlayItemNext" />
+                                                <MenuItem Header="Delete" Click="MenuItem_DeleteItem" />
                                             </ContextMenu>
                                         </TextBlock.ContextMenu>
                                     </TextBlock>
