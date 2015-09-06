@@ -50,6 +50,7 @@ namespace HaMusicLib
             RENPL,
             SETMOVE,
             REORDER,
+            INJECT,
 
             // Skip is special
             SKIP,
@@ -621,40 +622,80 @@ namespace HaMusicLib
 
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
-                List<PlaylistItem> foundNeedles = new List<PlaylistItem>();
-                List<long> needles = items.ToList();
-                for (int haystackIndex = 0; haystackIndex < dataSource.Playlists.Count && needles.Count > 0; haystackIndex++)
+                bool abortClient = false;
+                List<long> needles;
+                lock (dataSource.Lock)
                 {
-                    Playlist haystack = dataSource.Playlists[haystackIndex];
-                    for (int needleIndex = 0; needleIndex < needles.Count; needleIndex++)
+                    List<PlaylistItem> foundNeedles = new List<PlaylistItem>();
+                    needles = items.ToList();
+                    for (int haystackIndex = 0; haystackIndex < dataSource.Playlists.Count && needles.Count > 0; haystackIndex++)
                     {
-                        PlaylistItem foundNeedle;
-                        long uid = needles[needleIndex];
-                        if (haystack.PlaylistItems.FastTryGet(uid, out foundNeedle))
+                        Playlist haystack = dataSource.Playlists[haystackIndex];
+                        for (int needleIndex = 0; needleIndex < needles.Count; needleIndex++)
                         {
-                            foundNeedles.Add(foundNeedle);
-                            needles.RemoveAt(needleIndex--);
-                            haystack.PlaylistItems.Remove(foundNeedle);
+                            PlaylistItem foundNeedle;
+                            long uid = needles[needleIndex];
+                            if (haystack.PlaylistItems.FastTryGet(uid, out foundNeedle))
+                            {
+                                foundNeedles.Add(foundNeedle);
+                                needles.RemoveAt(needleIndex--);
+                                haystack.PlaylistItems.Remove(foundNeedle);
+                            }
                         }
                     }
-                }
-                bool abortClient = false;
-                if (needles.Count > 0)
-                {
-                    // This is bad, some UIDs were not found - abort the client, but only after we re-add the items we removed
-                    abortClient = true;
-                }
 
-                Playlist pl = dataSource.Playlists.FastGet(pid);
-                int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
-                foreach (PlaylistItem currItem in foundNeedles)
-                {
-                    pl.PlaylistItems.Insert(index++, currItem);
+                    if (needles.Count > 0)
+                    {
+                        // This is bad, some UIDs were not found - abort the client, but only after we re-add the items we removed
+                        abortClient = true;
+                    }
+
+                    Playlist pl = dataSource.Playlists.FastGet(pid);
+                    int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
+                    foreach (PlaylistItem currItem in foundNeedles)
+                    {
+                        pl.PlaylistItems.Insert(index++, currItem);
+                    }
                 }
 
                 if (abortClient)
                 {
                     throw new Exception("Could not find UIDs: " + needles.Select(x => x.ToString()).Aggregate((x, y) => x + " " + y));
+                }
+                return false;
+            }
+        }
+
+        [ProtoContract]
+        public class INJECT : HaProtoImpl.HaProtoPacket
+        {
+            [ProtoMember(1)]
+            public long uid { get; set; }
+
+            public INJECT()
+            {
+            }
+
+            public static INJECT Parse(byte[] buf)
+            {
+                using (MemoryStream ms = new MemoryStream(buf))
+                    return Serializer.Deserialize<INJECT>(ms);
+            }
+
+            public byte[] Build()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    Serializer.Serialize<INJECT>(ms, this);
+                    return ms.ToArray();
+                }
+            }
+
+            public bool ApplyToDatabase(ServerDataSource dataSource)
+            {
+                lock (dataSource.Lock)
+                {
+                    dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid);
                 }
                 return false;
             }
@@ -694,6 +735,9 @@ namespace HaMusicLib
                     break;
                 case HaProtoImpl.Opcode.REORDER:
                     packet = HaProtoImpl.REORDER.Parse(data);
+                    break;
+                case HaProtoImpl.Opcode.INJECT:
+                    packet = HaProtoImpl.INJECT.Parse(data);
                     break;
                 default:
                     throw new NotImplementedException();

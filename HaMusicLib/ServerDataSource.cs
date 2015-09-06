@@ -20,6 +20,7 @@ namespace HaMusicLib
         public object Lock = new object();
         private FastAccessList<long, Playlist> playlists = new FastAccessList<long, Playlist>(x => x.UID);
         private PlaylistItem currentItem = null;
+        private PlaylistItem nextItemOverride = null;
         private HaProtoImpl.MoveType mode = HaProtoImpl.MoveType.NEXT;
         private int volume = 50;
         private int position = 0;
@@ -63,7 +64,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref playlists, value, "Playlists");
+                SetField(ref playlists, value);
             }
         }
 
@@ -77,7 +78,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref currentItem, value, "CurrentItem");
+                SetField(ref currentItem, value);
             }
         }
 
@@ -90,7 +91,7 @@ namespace HaMusicLib
             }
             set
             {
-                SetField(ref mode, value, "Mode");
+                SetField(ref mode, value);
             }
         }
 
@@ -104,7 +105,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref volume, value, "Volume");
+                SetField(ref volume, value);
             }
         }
 
@@ -118,7 +119,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref position, value, "Position");
+                SetField(ref position, value);
             }
         }
 
@@ -132,7 +133,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref maximum, value, "Maximum");
+                SetField(ref maximum, value);
             }
         }
 
@@ -146,7 +147,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref playing, value, "Playing");
+                SetField(ref playing, value);
             }
         }
 
@@ -160,7 +161,21 @@ namespace HaMusicLib
 
             set
             {
-                remoteVersion = value;
+                SetField(ref remoteVersion, value);
+            }
+        }
+
+        [ProtoMember(9, AsReference = true)]
+        public PlaylistItem NextItemOverride
+        {
+            get
+            {
+                return nextItemOverride;
+            }
+
+            set
+            {
+                SetField(ref nextItemOverride, value);
             }
         }
 

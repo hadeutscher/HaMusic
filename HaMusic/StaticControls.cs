@@ -9,12 +9,40 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Markup;
 
 namespace HaMusic
 {
+    public class VisibilityBindingConverter : IMultiValueConverter
+    {
+        public IMultiValueConverter Converter1 { get; set; }
+        public IValueConverter Converter2 { get; set; }
+
+        #region IValueConverter Members
+
+        public object Convert(object[] values, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            object convertedValue = Converter1.Convert(values, targetType, parameter, culture);
+            return Converter2.Convert(convertedValue, targetType, parameter, culture);
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
+
+    /// <summary>Represents a collection of <see cref="IValueConverter"/>s.</summary>
+    public sealed class ValueConverterCollection : Collection<IValueConverter> { }
+
     public class BindingConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter,
@@ -87,21 +115,21 @@ namespace HaMusic
         public string Label
         {
             get { return _label; }
-            set { SetField(ref _label, value, "Label"); }
+            set { SetField(ref _label, value); }
         }
 
         private ICommand _command;
         public ICommand Command
         {
             get { return _command; }
-            set { SetField(ref _command, value, "Command"); }
+            set { SetField(ref _command, value); }
         }
 
         private Uri _largeImage;
         public Uri LargeImage
         {
             get { return _largeImage; }
-            set { SetField(ref _largeImage, value, "LargeImage"); }
+            set { SetField(ref _largeImage, value); }
         }
     }
 
@@ -213,7 +241,7 @@ namespace HaMusic
             }
             set
             {
-                SetField(ref _ppLabel, value, "PlayPauseLabel");
+                SetField(ref _ppLabel, value);
             }
         }
 
@@ -226,7 +254,7 @@ namespace HaMusic
             }
             set
             {
-                SetField(ref _ppImage, value, "PlayPauseImage");
+                SetField(ref _ppImage, value);
             }
         }
 
@@ -247,7 +275,7 @@ namespace HaMusic
             }
             set
             {
-                SetField(ref _sds, value, "ServerDataSource");
+                SetField(ref _sds, value);
             }
         }
 
@@ -260,7 +288,7 @@ namespace HaMusic
             }
             set
             {
-                SetField(ref _pl, value, "SelectedPlaylist");
+                SetField(ref _pl, value);
             }
         }
 
@@ -273,7 +301,7 @@ namespace HaMusic
             }
             set
             {
-                SetField(ref _enabled, value, "Enabled");
+                SetField(ref _enabled, value);
             }
         }
 

@@ -15,12 +15,14 @@ namespace HaMusicServer
     // All mover actions may lock the data source
     public class Mover
     {
+        private MainForm mainForm;
         private ServerDataSource dataSource;
         private static RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
         private int consecErrors = 0;
 
-        public Mover(ServerDataSource dataSource)
+        public Mover(MainForm mainForm, ServerDataSource dataSource)
         {
+            this.mainForm = mainForm;
             this.dataSource = dataSource;
             dataSource.PropertyChanged += DataSource_PropertyChanged;
         }
@@ -98,6 +100,13 @@ namespace HaMusicServer
         {
             lock (dataSource.Lock)
             {
+                if (dataSource.NextItemOverride != null)
+                {
+                    PlaylistItem result = dataSource.NextItemOverride;
+                    dataSource.NextItemOverride = null;
+                    mainForm.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = -1 });
+                    return result;
+                }
                 if (dataSource.CurrentItem == null)
                 {
                     return null;

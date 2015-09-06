@@ -43,7 +43,7 @@ namespace HaMusicServer
             CreateLogger();
             DataSource = new ServerDataSource();
             DataSource.Playlists.Add(new Playlist());
-            Mover = new Mover(DataSource);
+            Mover = new Mover(this, DataSource);
             listenerThread = new Thread(new ThreadStart(ListenerMain));
             player = new NAudioPlayer(this, 50);
             player.PausePlayChanged += player_PausePlayChanged;

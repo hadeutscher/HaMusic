@@ -40,7 +40,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref uid, value, "UID");
+                SetField(ref uid, value);
             }
         }
 
@@ -54,7 +54,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref playlistItems, value, "PlaylistItems");
+                SetField(ref playlistItems, value);
             }
         }
 
@@ -68,7 +68,7 @@ namespace HaMusicLib
 
             set
             {
-                SetField(ref name, value, "Name");
+                SetField(ref name, value);
             }
         }
     }

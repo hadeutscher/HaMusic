@@ -157,6 +157,8 @@ namespace HaMusic
                                 case HaProtoImpl.Opcode.ADDPL:
                                 case HaProtoImpl.Opcode.DELPL:
                                 case HaProtoImpl.Opcode.RENPL:
+                                case HaProtoImpl.Opcode.REORDER:
+                                case HaProtoImpl.Opcode.INJECT:
                                     HaProtoImpl.ApplyPacketToDatabase(type, buf, data.ServerDataSource, out foo);
                                     break;
                                 case HaProtoImpl.Opcode.SETMOVE:
@@ -225,10 +227,7 @@ namespace HaMusic
 
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            lock (data)
-            {
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)((ListView)sender).SelectedValue).UID });
-            }
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)((ListView)sender).SelectedValue).UID });
         }
 
         private void items_KeyDown(object sender, KeyEventArgs e)
@@ -238,13 +237,10 @@ namespace HaMusic
             switch (e.Key)
             {
                 case Key.Delete:
-                    lock (data)
-                    {
-                        List<long> uids = new List<long>();
-                        foreach (object item in lv.SelectedItems)
-                            uids.Add(((PlaylistItem)item).UID);
-                        HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
-                    }
+                    List<long> uids = new List<long>();
+                    foreach (object item in lv.SelectedItems)
+                        uids.Add(((PlaylistItem)item).UID);
+                    HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
                     break;
             }
         }
@@ -347,6 +343,17 @@ namespace HaMusic
             {
                 HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = ((Playlist)((MenuItem)sender).DataContext).UID });
             }
+        }
+
+        private void MenuItem_PlayNext(object sender, RoutedEventArgs e)
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = ((PlaylistItem)((MenuItem)sender).DataContext).UID });
+        }
+
+        private void MenuItem_Delete(object sender, RoutedEventArgs e)
+        {
+            long uid = ((PlaylistItem)((MenuItem)sender).DataContext).UID;
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = data.ServerDataSource.GetPlaylistForItem(uid).UID, items = new List<long> { uid } });
         }
     }
 }

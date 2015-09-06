@@ -9,6 +9,8 @@
         <this:EnumConverter x:Key="EnumConverter" />
         <this:BindingConverter x:Key="BindingConverter" />
         <this:SeekTimeConverter x:Key="SeekTimeConverter" />
+        <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
+        <this:VisibilityBindingConverter x:Key="MultiBindingToVisibilityConverter" Converter1="{StaticResource BindingConverter}" Converter2="{StaticResource VisibilityConverter}" />
     </RibbonWindow.Resources>
     <RibbonWindow.InputBindings>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}" />
@@ -63,7 +65,20 @@
                         <ListView x:Name="items" ItemsSource="{Binding PlaylistItems}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" DragEnter="items_DragEnter" Drop="items_Drop" AllowDrop="True" HorizontalContentAlignment="Stretch">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Item}" HorizontalAlignment="Stretch">
+                                    <TextBlock HorizontalAlignment="Stretch">
+                                        <TextBlock.Inlines>
+                                            <InlineUIContainer>
+                                                <Image Source="/HaMusic;component/Images/next_target.png" Height="{Binding Path=FontSize,RelativeSource={RelativeSource FindAncestor, AncestorType=TextBlock}}">
+                                                    <Image.Visibility>
+                                                        <MultiBinding Converter="{StaticResource MultiBindingToVisibilityConverter}">
+                                                            <Binding Path="DataContext.ServerDataSource.NextItemOverride.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
+                                                            <Binding Path="UID" />
+                                                        </MultiBinding>
+                                                    </Image.Visibility>
+                                                </Image>
+                                            </InlineUIContainer>
+                                            <Run Text="{Binding Item}" />
+                                        </TextBlock.Inlines>
                                         <TextBlock.Style>
                                             <Style TargetType="{x:Type TextBlock}">
                                                 <Setter Property="Background" Value="Transparent" />
@@ -71,7 +86,7 @@
                                                     <DataTrigger Value="True">
                                                         <DataTrigger.Binding>
                                                             <MultiBinding Converter="{StaticResource BindingConverter}">
-                                                                <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type TabControl}}" UpdateSourceTrigger="PropertyChanged" />
+                                                                <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
                                                                 <Binding Path="UID" />
                                                             </MultiBinding>
                                                         </DataTrigger.Binding>
@@ -79,9 +94,9 @@
                                                             <Setter.Value>
                                                                 <LinearGradientBrush EndPoint="1,0.5" MappingMode="RelativeToBoundingBox" StartPoint="0,0.5">
                                                                     <GradientStop Offset="-2" Color="#4095FF" />
-                                                                    <GradientStop Offset="-1" Color="LightBlue" />
+                                                                    <GradientStop Offset="-1" Color="White" />
                                                                     <GradientStop Offset="0" Color="#4095FF" />
-                                                                    <GradientStop Offset="1" Color="LightBlue" />
+                                                                    <GradientStop Offset="1" Color="White" />
                                                                 </LinearGradientBrush>
                                                             </Setter.Value>
                                                         </Setter>
@@ -103,6 +118,12 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
+                                        <TextBlock.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Play Next" Click="MenuItem_PlayNext" />
+                                                <MenuItem Header="Delete" Click="MenuItem_Delete" />
+                                            </ContextMenu>
+                                        </TextBlock.ContextMenu>
                                     </TextBlock>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
@@ -123,34 +144,44 @@
                 </Style>
             </Grid.Resources>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0,10,5">
-                <MultiBinding Converter="{StaticResource SeekTimeConverter}">
-                    <Binding Path="ServerDataSource.Position" UpdateSourceTrigger="PropertyChanged" />
-                    <Binding Path="ServerDataSource.Maximum" UpdateSourceTrigger="PropertyChanged" />
-                </MultiBinding>
-            </Label>
-            <Button Grid.Column="1" x:Name="stopBtn" Command="{Binding StopCommand}" >
-                <StackPanel>
-                    <Image Source="/HaMusic;component/Images/stop.png" />
-                </StackPanel>
-            </Button>
-            <Button Grid.Column="2" x:Name="ppBtn" Command="{Binding PlayPauseCommand}" Height="53" Width="53" >
+            <Grid Grid.Column="0" HorizontalAlignment="Right">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" VerticalAlignment="Center" Margin="10,0,10,5">
+                    <MultiBinding Converter="{StaticResource SeekTimeConverter}">
+                        <Binding Path="ServerDataSource.Position" UpdateSourceTrigger="PropertyChanged" />
+                        <Binding Path="ServerDataSource.Maximum" UpdateSourceTrigger="PropertyChanged" />
+                    </MultiBinding>
+                </Label>
+                <Button Grid.Column="1" x:Name="stopBtn" Command="{Binding StopCommand}" >
+                    <StackPanel>
+                        <Image Source="/HaMusic;component/Images/stop.png" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+            <Button Grid.Column="1" x:Name="ppBtn" Command="{Binding PlayPauseCommand}" Height="53" Width="53" >
                 <StackPanel>
                     <Image Source="{Binding PlayPauseImage}" />
                 </StackPanel>
             </Button>
-            <Button Grid.Column="3" x:Name="nextBtn" Command="{Binding NextCommand}" >
-                <StackPanel>
-                    <Image Source="/HaMusic;component/Images/next.png" />
-                </StackPanel>
-            </Button>
-            <Slider Grid.Column="4" x:Name="volumeSlider" Margin="10,0,10,5" VerticalAlignment="Center" HorizontalAlignment="Left" IsEnabled="{Binding Enabled}" Maximum="100" Width="100" Value="{Binding ServerDataSource.Volume}" ValueChanged="volumeSlider_ValueChanged" SmallChange="1" LargeChange="10" />
+            <Grid Grid.Column="2" HorizontalAlignment="Left">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" x:Name="nextBtn" Command="{Binding NextCommand}" >
+                    <StackPanel>
+                        <Image Source="/HaMusic;component/Images/next.png" />
+                    </StackPanel>
+                </Button>
+                <Slider Grid.Column="1" x:Name="volumeSlider" Margin="10,0,10,5" VerticalAlignment="Center" HorizontalAlignment="Left" IsEnabled="{Binding Enabled}" Maximum="100" Width="100" Value="{Binding ServerDataSource.Volume}" ValueChanged="volumeSlider_ValueChanged" SmallChange="1" LargeChange="10" />
+            </Grid>
         </Grid>
     </Grid>
 </RibbonWindow>

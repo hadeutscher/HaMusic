@@ -218,7 +218,7 @@ namespace HaMusicServer
                         {
                             byte[] returnBuffer = new byte[fs.Length - fs.Position];
                             fs.Read(returnBuffer, 0, returnBuffer.Length);
-                            return Encoding.ASCII.GetString(returnBuffer).Split('\n');
+                            return Encoding.ASCII.GetString(returnBuffer).Split(new string[] { "\r\n" }, StringSplitOptions.None);
                         }
                     }
                 }
@@ -227,7 +227,7 @@ namespace HaMusicServer
                 fs.Seek(0, SeekOrigin.Begin);
                 buffer = new byte[fs.Length];
                 fs.Read(buffer, 0, buffer.Length);
-                return Encoding.ASCII.GetString(buffer).Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                return Encoding.ASCII.GetString(buffer).Split(new string[] { "\r\n" }, StringSplitOptions.None);
             }
         }
 

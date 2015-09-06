@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,7 +24,7 @@ namespace HaMusicLib
                 PropertyChanged.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        protected bool SetField<T>(ref T field, T value, string name)
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string name = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;
