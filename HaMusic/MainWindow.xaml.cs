@@ -38,6 +38,11 @@ namespace HaMusic
             data = new Controls(this);
             DataContext = data;
             SetEnabled(false);
+            TryReloadMediaIndex();
+        }
+
+        private void TryReloadMediaIndex()
+        {
             if (File.Exists(defaultIndexPath))
             {
                 mediaBrowser.SourceData = File.ReadAllLines(defaultIndexPath).ToList();
@@ -178,7 +183,7 @@ namespace HaMusic
             OpenFileDialog ofd = new OpenFileDialog() { Filter = "All Files|*.*", Multiselect = true };
             if (ofd.ShowDialog() != true)
                 return;
-            addSongs(ofd.FileNames);
+            AddSongs(ofd.FileNames);
         }
 
         public void ConnectExecuted()
@@ -192,6 +197,15 @@ namespace HaMusic
         public void NewPlaylistExecuted()
         {
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADDPL, new HaProtoImpl.ADDPL());
+        }
+
+        public void IndexerSettingsExecuted()
+        {
+            IndexerSettings isWnd = new IndexerSettings();
+            if (isWnd.ShowDialog() == true)
+            {
+                TryReloadMediaIndex();
+            }
         }
 
         public void NextExecuted()
@@ -221,6 +235,7 @@ namespace HaMusic
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             SelectItemExecuted((ListView)sender);
+            e.Handled = true;
         }
 
         private void items_KeyDown(object sender, KeyEventArgs e)
@@ -285,10 +300,10 @@ namespace HaMusic
         private void items_Drop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            addSongs(files);
+            AddSongs(files);
         }
 
-        public void addSongs(IEnumerable<string> paths)
+        public void AddSongs(IEnumerable<string> paths)
         {
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = GetSelectedPlaylist(), paths = paths.ToList() });
         }
@@ -341,7 +356,15 @@ namespace HaMusic
 
         private void MenuItem_DeleteItem(object sender, RoutedEventArgs e)
         {
-            DeleteItemsExecuted((ListView)sender);
+
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = GetSelectedPlaylist(), items = new List<long> { ((PlaylistItem)((MenuItem)sender).DataContext).UID } });
+        }
+
+        private void mediaBrowser_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            string path = (string)((FrameworkElement)e.OriginalSource).DataContext;
+            AddSongs(new List<string> { path });
+            e.Handled = true;
         }
     }
 }

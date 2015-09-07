@@ -12,6 +12,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <TextBox Grid.Row="0" x:Name="textBox" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextChanged="textBox_TextChanged"/>
-        <ListView Grid.Row="1" x:Name="listView" ItemsSource="{Binding SelectedData}"/>
+        <ListView Grid.Row="1" x:Name="listView" ItemsSource="{Binding SelectedData}" />
     </Grid>
 </UserControl>

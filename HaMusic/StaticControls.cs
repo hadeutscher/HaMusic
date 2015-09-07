@@ -17,6 +17,19 @@ using System.Windows.Markup;
 
 namespace HaMusic
 {
+    public class NullBooleanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value != null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
     public class VisibilityBindingConverter : IMultiValueConverter
     {
         public IMultiValueConverter Converter1 { get; set; }
@@ -197,6 +210,15 @@ namespace HaMusic
             get
             {
                 return _newplCommand ?? (_newplCommand = new RelayCommand(delegate { parent.NewPlaylistExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _idxsetCommand;
+        public ICommand IndexSettingsCommand
+        {
+            get
+            {
+                return _idxsetCommand ?? (_idxsetCommand = new RelayCommand(delegate { parent.IndexerSettingsExecuted(); }, delegate { return Enabled; }));
             }
         }
 

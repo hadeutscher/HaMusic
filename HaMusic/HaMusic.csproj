@@ -62,6 +62,9 @@
     <Compile Include="EditableLabel.xaml.cs">
       <DependentUpon>EditableLabel.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IndexerSettings.xaml.cs">
+      <DependentUpon>IndexerSettings.xaml</DependentUpon>
+    </Compile>
     <Compile Include="MediaBrowser.xaml.cs">
       <DependentUpon>MediaBrowser.xaml</DependentUpon>
     </Compile>
@@ -72,6 +75,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="EditableLabel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="IndexerSettings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

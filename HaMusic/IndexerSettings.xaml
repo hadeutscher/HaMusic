@@ -1,0 +1,49 @@
+﻿<Window x:Class="HaMusic.IndexerSettings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HaMusic"
+        mc:Ignorable="d"
+        Title="Indexer Settings" Height="360" Width="480" WindowStartupLocation="CenterOwner" Icon="HaLogo.ico" WindowStyle="ToolWindow" ResizeMode="NoResize">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Width" Value="100" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Margin" Value="5,5,5,5" />
+        </Style>
+        <local:NullBooleanConverter x:Key="nullBoolConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <ListView x:Name="sourcesListView" Grid.Row="0" ItemsSource="{Binding SourcesList}" />
+            <TextBlock x:Name="logBox" Grid.Row="0" Visibility="Hidden" />
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="okButton" Grid.Column="0" Content="OK" Click="okButton_Click" />
+                <Button x:Name="cancelButton" Grid.Column="1" Content="Cancel" Click="cancelButton_Click" />
+            </Grid>
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="addSource" Grid.Row="0" Content="Add Source" Click="AddSource_Click" />
+            <Button x:Name="removeSource" Grid.Row="1" Content="Remove Source" Click="RemoveSource_Click" IsEnabled="{Binding SelectedValue, ElementName=sourcesListView, Converter={StaticResource nullBoolConverter}}" />
+            <Button x:Name="reindex" Grid.Row="2" Content="Reindex" Click="Reindex_Click" />
+        </Grid>
+    </Grid>
+</Window>

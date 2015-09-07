@@ -29,6 +29,7 @@
                     <RibbonButton x:Name="connectBtn" Label="Connect" Command="{Binding ConnectCommand}" LargeImageSource="/HaMusic;component/Images/connect.png" />
                     <RibbonButton x:Name="openBtn" Label="Open" Command="{Binding OpenCommand}" LargeImageSource="/HaMusic;component/Images/open.png" />
                     <RibbonButton x:Name="newplBtn" Label="New Playlist" Command="{Binding NewPlaylistCommand}" LargeImageSource="/HaMusic;component/Images/add.png" />
+                    <RibbonButton x:Name="indexSetingsBtn" Label="Indexer Settings" Command="{Binding IndexSettingsCommand}" LargeImageSource="/HaMusic;component/Images/add.png" />
                     <ListBox x:Name="moveType" VerticalAlignment="Center" IsEnabled="{Binding Enabled}" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
                 </RibbonGroup>
             </RibbonTab>
@@ -131,7 +132,7 @@
                 </TabControl.ContentTemplate>
             </TabControl>
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
-            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" />
+            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" MouseDoubleClick="mediaBrowser_MouseDoubleClick" />
         </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" IsEnabled="{Binding Enabled}" Margin="10,5,10,0" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10" />
         <Grid Grid.Row="3" HorizontalAlignment="Stretch">

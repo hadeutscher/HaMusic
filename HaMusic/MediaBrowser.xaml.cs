@@ -95,6 +95,16 @@ namespace HaMusic
             else
             {
                 SelectedData.Clear();
+                if (_sourceData.Count > 10000)
+                {
+                    SelectedData = new ObservableCollection<string> { "Too many results; please define your search better" };
+                    listView.IsEnabled = false;
+                    return;
+                }
+                else
+                {
+                    SelectedData = new ObservableCollection<string>(_sourceData);
+                }
             }
             listView.IsEnabled = true;
         }
