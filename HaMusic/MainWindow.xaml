@@ -132,7 +132,7 @@
                 </TabControl.ContentTemplate>
             </TabControl>
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
-            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" MouseDoubleClick="mediaBrowser_MouseDoubleClick" />
+            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" MouseDoubleClick="mediaBrowser_MouseDoubleClick" IsEnabled="{Binding Enabled}" />
         </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" IsEnabled="{Binding Enabled}" Margin="10,5,10,0" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10" />
         <Grid Grid.Row="3" HorizontalAlignment="Stretch">

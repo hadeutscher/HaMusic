@@ -224,7 +224,8 @@ namespace HaMusic
             List<long> uids = new List<long>();
             foreach (object item in lv.SelectedItems)
                 uids.Add(((PlaylistItem)item).UID);
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
+            if (uids.Count > 0)
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
         }
 
         public void SelectItemExecuted(ListView lv)

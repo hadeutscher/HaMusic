@@ -218,10 +218,14 @@ namespace HaMusicLib
                 lock (dataSource.Lock)
                 {
                     Playlist pl = dataSource.Playlists.FastGet(uid);
-                    if (items.Contains(dataSource.CurrentItem.UID))
+                    if (dataSource.CurrentItem != null && items.Contains(dataSource.CurrentItem.UID))
                     {
                         dataSource.CurrentItem = null;
                         result = true;
+                    }
+                    if (dataSource.NextItemOverride != null && items.Contains(dataSource.NextItemOverride.UID))
+                    {
+                        dataSource.NextItemOverride = null;
                     }
                     foreach (long uid in items)
                     {
@@ -268,6 +272,10 @@ namespace HaMusicLib
                         dataSource.CurrentItem = null;
                         result = true;
                     }
+                    if (dataSource.NextItemOverride != null && pl.PlaylistItems.ContainsKey(dataSource.NextItemOverride.UID))
+                    {
+                        dataSource.NextItemOverride = null;
+                    }
                     pl.PlaylistItems.Clear();
                 }
                 return result;
@@ -304,6 +312,10 @@ namespace HaMusicLib
                 lock (dataSource.Lock)
                 {
                     dataSource.CurrentItem = uid < 0 ? null : dataSource.GetItem(uid);
+                    if (dataSource.NextItemOverride != null && dataSource.NextItemOverride.UID == uid)
+                    {
+                        dataSource.NextItemOverride = null;
+                    }
                 }
                 return true;
             }
@@ -415,6 +427,10 @@ namespace HaMusicLib
                     {
                         dataSource.CurrentItem = null;
                         result = true;
+                    }
+                    if (dataSource.NextItemOverride != null && pl.PlaylistItems.ContainsKey(dataSource.NextItemOverride.UID))
+                    {
+                        dataSource.NextItemOverride = null;
                     }
                     dataSource.Playlists.Remove(pl);
                 }
@@ -752,7 +768,7 @@ namespace HaMusicLib
             byte[] result = new byte[len];
             while (totalRead < len)
             {
-                bRead = s.Receive(result, bRead, len - bRead, SocketFlags.None);
+                bRead = s.Receive(result, totalRead, len - totalRead, SocketFlags.None);
                 if (bRead <= 0)
                 {
                     throw new SocketException();
