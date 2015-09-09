@@ -138,6 +138,10 @@
       <Project>{d01b1d20-8f5b-4834-8e5c-c7ec6dd587d4}</Project>
       <Name>Ookii.Dialogs.Wpf</Name>
     </ProjectReference>
+    <ProjectReference Include="C:\Users\Habufe\Desktop\gong-wpf-dragdrop\GongSolutions.Wpf.DragDrop\GongSolutions.Wpf.DragDrop %28NET4%29.csproj">
+      <Project>{0c6674cc-6d49-414a-9b41-d4e175028ffb}</Project>
+      <Name>GongSolutions.Wpf.DragDrop %28NET4%29</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="HaLogo.ico" />

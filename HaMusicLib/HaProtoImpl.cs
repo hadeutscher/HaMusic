@@ -640,6 +640,8 @@ namespace HaMusicLib
             {
                 bool abortClient = false;
                 List<long> needles;
+                if (items.Contains(after))
+                    return false;
                 lock (dataSource.Lock)
                 {
                     List<PlaylistItem> foundNeedles = new List<PlaylistItem>();

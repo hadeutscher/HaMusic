@@ -4,6 +4,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+using GongSolutions.Wpf.DragDrop;
 using HaMusicLib;
 using Microsoft.Win32;
 using System;
@@ -22,7 +23,7 @@ namespace HaMusic
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : RibbonWindow
+    public partial class MainWindow : Window
     {
         private Socket globalSocket = null;
         private Controls data;
@@ -233,6 +234,34 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)lv.SelectedValue).UID });
         }
 
+        public void DragMoveItems(IDropInfo dropInfo)
+        {
+            List<long> items;
+            if (dropInfo.Data is PlaylistItem)
+                items = new List<long> { ((PlaylistItem)dropInfo.Data).UID };
+            else
+            {
+                List<PlaylistItem> plItems = ((IEnumerable<PlaylistItem>)dropInfo.Data).ToList();
+                plItems.Sort((x, y) => data.SelectedPlaylist.PlaylistItems.IndexOf(x).CompareTo(data.SelectedPlaylist.PlaylistItems.IndexOf(y)));
+                items = plItems.Select(x => x.UID).ToList();
+            }
+            long after;
+            if ((dropInfo.InsertPosition & RelativeInsertPosition.AfterTargetItem) != 0)
+            {
+                after = ((PlaylistItem)dropInfo.TargetItem).UID;
+            }
+            else if ((dropInfo.InsertPosition & RelativeInsertPosition.BeforeTargetItem) != 0)
+            {
+                int index = data.SelectedPlaylist.PlaylistItems.IndexOf((PlaylistItem)dropInfo.TargetItem);
+                after = index == 0 ? -1 : data.SelectedPlaylist.PlaylistItems[index - 1].UID;
+            }
+            else
+            {
+                return;
+            }
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REORDER, new HaProtoImpl.REORDER() { pid = data.SelectedPlaylist.UID, after = after, items = items });
+        }
+
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             SelectItemExecuted((ListView)sender);
@@ -289,24 +318,12 @@ namespace HaMusic
                 return;
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = data.ServerDataSource.Position });
         }
-
-        private void items_DragEnter(object sender, DragEventArgs e)
+        
+        public void AddSongs(IEnumerable<string> paths, long playlist = -1)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                e.Effects = DragDropEffects.Copy;
-            else
-                e.Effects = DragDropEffects.None;
-        }
-
-        private void items_Drop(object sender, DragEventArgs e)
-        {
-            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            AddSongs(files);
-        }
-
-        public void AddSongs(IEnumerable<string> paths)
-        {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = GetSelectedPlaylist(), paths = paths.ToList() });
+            if (playlist == -1)
+                playlist = data.SelectedPlaylist.UID;
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = playlist, paths = paths.ToList() });
         }
 
         private void RibbonWindow_Loaded(object sender, RoutedEventArgs e)
@@ -366,6 +383,34 @@ namespace HaMusic
             string path = (string)((FrameworkElement)e.OriginalSource).DataContext;
             AddSongs(new List<string> { path });
             e.Handled = true;
+        }
+
+        private void MenuItem_ImportPlaylist(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog() { Title = "Select File", Filter = "HaMusic Playlist (*.hmp)|*.hmp" };
+            if (ofd.ShowDialog() != true)
+                return;
+
+            AddSongs(File.ReadLines(ofd.FileName), ((Playlist)((MenuItem)sender).DataContext).UID);
+        }
+
+        private void MenuItem_ExportPlaylist(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog() { Title = "Select File", Filter = "HaMusic Playlist (*.hmp)|*.hmp" };
+            if (sfd.ShowDialog() != true)
+                return;
+            using (StreamWriter sw = new StreamWriter(File.Create(sfd.FileName)))
+            {
+                foreach (PlaylistItem pi in ((Playlist)((MenuItem)sender).DataContext).PlaylistItems)
+                {
+                    sw.WriteLine(pi.Item);
+                }
+            }
+        }
+
+        private void MenuItem_NewPlaylist(object sender, RoutedEventArgs e)
+        {
+            NewPlaylistExecuted();
         }
     }
 }

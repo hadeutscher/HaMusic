@@ -4,6 +4,8 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+using GongSolutions.Wpf.DragDrop;
+using GongSolutions.Wpf.DragDrop.Utilities;
 using HaMusicLib;
 using System;
 using System.Collections.Generic;
@@ -11,6 +13,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
@@ -146,7 +149,7 @@ namespace HaMusic
         }
     }
 
-    public class Controls : PropertyNotifierBase
+    public class Controls : PropertyNotifierBase, IDropTarget
     {
         private readonly static Uri playUri = new Uri("/HaMusic;component/Images/play.png", UriKind.Relative);
         private readonly static Uri pauseUri = new Uri("/HaMusic;component/Images/pause.png", UriKind.Relative);
@@ -242,6 +245,43 @@ namespace HaMusic
             if (e.PropertyName == "Mode" || e.PropertyName == null)
             {
                 OnPropertyChanged("SelectedMove");
+            }
+        }
+
+        public void DragOver(IDropInfo dropInfo)
+        {
+            if ((dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>) && dropInfo.TargetItem != null)
+            {
+                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
+                dropInfo.Effects = DragDropEffects.Move;
+            }
+            else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
+            {
+                dropInfo.DropTargetAdorner = null;
+                dropInfo.Effects = DragDropEffects.Copy;
+            }
+            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
+            {
+                dropInfo.DropTargetAdorner = null;
+                dropInfo.Effects = DragDropEffects.Copy;
+            }
+        }
+
+        public void Drop(IDropInfo dropInfo)
+        {
+            if ((dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>) && dropInfo.TargetItem != null)
+            {
+                parent.DragMoveItems(dropInfo);
+            }
+            else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])((DataObject)dropInfo.Data).GetData(DataFormats.FileDrop);
+                parent.AddSongs(files);
+            }
+            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
+            {
+                string[] files = dropInfo.Data is string ? new string[] { (string)dropInfo.Data } : ((IEnumerable<string>)dropInfo.Data).ToArray();
+                parent.AddSongs(files);
             }
         }
 
