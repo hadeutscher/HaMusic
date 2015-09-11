@@ -230,7 +230,7 @@ namespace HaMusicServer
         {
             lock (dataSource.Lock)
             {
-                BroadcastMessage(HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = dataSource.CurrentItem.UID });
+                BroadcastMessage(HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = dataSource.CurrentItem == null ? -1 : dataSource.CurrentItem.UID });
             }
         }
 

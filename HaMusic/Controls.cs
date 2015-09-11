@@ -125,6 +125,72 @@ namespace HaMusic
         }
     }
 
+    public class ListDropHandler : IDropTarget
+    {
+        MainWindow parent;
+
+        public ListDropHandler(MainWindow parent)
+        {
+            this.parent = parent;
+        }
+
+        public void DragOver(IDropInfo dropInfo)
+        {
+            if ((dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>) && dropInfo.TargetItem != null)
+            {
+                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
+                dropInfo.Effects = DragDropEffects.Move;
+            }
+            else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
+            {
+                dropInfo.DropTargetAdorner = null;
+                dropInfo.Effects = DragDropEffects.Copy;
+            }
+            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
+            {
+                dropInfo.DropTargetAdorner = null;
+                dropInfo.Effects = DragDropEffects.Copy;
+            }
+        }
+
+        public void Drop(IDropInfo dropInfo)
+        {
+            if ((dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>) && dropInfo.TargetItem != null)
+            {
+                parent.DragMoveItems(dropInfo);
+            }
+            else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])((DataObject)dropInfo.Data).GetData(DataFormats.FileDrop);
+                parent.AddSongs(files);
+            }
+            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
+            {
+                string[] files = dropInfo.Data is string ? new string[] { (string)dropInfo.Data } : ((IEnumerable<string>)dropInfo.Data).ToArray();
+                parent.AddSongs(files);
+            }
+        }
+    }
+
+    public class TabHeaderDropHandler : IDropTarget
+    {
+        Controls data;
+
+        public TabHeaderDropHandler(Controls data)
+        {
+            this.data = data;
+        }
+
+        public void DragOver(IDropInfo dropInfo)
+        {
+            data.SelectedPlaylist = (Playlist)((FrameworkElement)dropInfo.VisualTarget).DataContext;
+        }
+
+        public void Drop(IDropInfo dropInfo)
+        {
+        }
+    }
+
     public class MvvmControl : PropertyNotifierBase
     {
         private string _label;
@@ -149,7 +215,7 @@ namespace HaMusic
         }
     }
 
-    public class Controls : PropertyNotifierBase, IDropTarget
+    public class Controls : PropertyNotifierBase
     {
         private readonly static Uri playUri = new Uri("/HaMusic;component/Images/play.png", UriKind.Relative);
         private readonly static Uri pauseUri = new Uri("/HaMusic;component/Images/pause.png", UriKind.Relative);
@@ -158,6 +224,8 @@ namespace HaMusic
         public Controls(MainWindow parent)
         {
             this.parent = parent;
+            ldh = new ListDropHandler(parent);
+            thdh = new TabHeaderDropHandler(this);
 
             PropertyChanged += Controls_PropertyChanged;
         }
@@ -248,43 +316,6 @@ namespace HaMusic
             }
         }
 
-        public void DragOver(IDropInfo dropInfo)
-        {
-            if ((dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>) && dropInfo.TargetItem != null)
-            {
-                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
-                dropInfo.Effects = DragDropEffects.Move;
-            }
-            else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
-            {
-                dropInfo.DropTargetAdorner = null;
-                dropInfo.Effects = DragDropEffects.Copy;
-            }
-            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
-            {
-                dropInfo.DropTargetAdorner = null;
-                dropInfo.Effects = DragDropEffects.Copy;
-            }
-        }
-
-        public void Drop(IDropInfo dropInfo)
-        {
-            if ((dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>) && dropInfo.TargetItem != null)
-            {
-                parent.DragMoveItems(dropInfo);
-            }
-            else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
-            {
-                string[] files = (string[])((DataObject)dropInfo.Data).GetData(DataFormats.FileDrop);
-                parent.AddSongs(files);
-            }
-            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
-            {
-                string[] files = dropInfo.Data is string ? new string[] { (string)dropInfo.Data } : ((IEnumerable<string>)dropInfo.Data).ToArray();
-                parent.AddSongs(files);
-            }
-        }
-
         private string _ppLabel = "Play";
         public string PlayPauseLabel
         {
@@ -309,6 +340,18 @@ namespace HaMusic
             {
                 SetField(ref _ppImage, value);
             }
+        }
+
+        private ListDropHandler ldh;
+        public ListDropHandler ListDropHandler
+        {
+            get { return ldh; }
+        }
+
+        private TabHeaderDropHandler thdh;
+        public TabHeaderDropHandler TabHeaderDropHandler
+        {
+            get { return thdh; }
         }
 
         public ObservableCollection<string> MoveTypes

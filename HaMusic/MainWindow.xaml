@@ -40,7 +40,7 @@
                 </TabControl.ItemContainerStyle>
                 <TabControl.ItemTemplate>
                     <DataTemplate>
-                        <this:EditableLabel x:Name="editableLabel" HorizontalAlignment="Stretch" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" >
+                        <this:EditableLabel x:Name="editableLabel" HorizontalAlignment="Stretch" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.TabHeaderDropHandler, ElementName=playlistTabs}" >
                             <this:EditableLabel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="New" Click="MenuItem_NewPlaylist" />
@@ -57,7 +57,7 @@
                 </TabControl.ItemTemplate>
                 <TabControl.ContentTemplate>
                     <DataTemplate>
-                        <ListView x:Name="items" ItemsSource="{Binding PlaylistItems}" SelectedItem="{Binding DataContext.SelectedPlaylistItem, Mode=OneWayToSource, ElementName=playlistTabs}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" HorizontalContentAlignment="Stretch" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext, ElementName=playlistTabs}">
+                        <ListView x:Name="items" ItemsSource="{Binding PlaylistItems}" SelectedItem="{Binding DataContext.SelectedPlaylistItem, Mode=OneWayToSource, ElementName=playlistTabs}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" HorizontalContentAlignment="Stretch" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.ListDropHandler, ElementName=playlistTabs}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <DockPanel LastChildFill="True" HorizontalAlignment="Stretch">
