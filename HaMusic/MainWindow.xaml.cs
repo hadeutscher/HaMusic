@@ -26,6 +26,7 @@ namespace HaMusic
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const int EyeCandyDisableThreshold = 1000;
         private Socket globalSocket = null;
         private Controls data;
         private Thread connThread = null;
@@ -194,6 +195,10 @@ namespace HaMusic
                                 case HaProtoImpl.Opcode.SETDB:
                                     HaProtoImpl.SETDB setdb = HaProtoImpl.SETDB.Parse(buf);
                                     data.ServerDataSource = setdb.dataSource;
+                                    if (data.ServerDataSource.CurrentItem != null)
+                                    {
+                                        data.SelectedPlaylist = data.ServerDataSource.GetPlaylistForItem(data.ServerDataSource.CurrentItem.UID);
+                                    }
                                     break;
                                 case HaProtoImpl.Opcode.ADD:
                                 case HaProtoImpl.Opcode.REMOVE:
@@ -205,6 +210,8 @@ namespace HaMusic
                                 case HaProtoImpl.Opcode.REORDER:
                                 case HaProtoImpl.Opcode.INJECT:
                                     // These opcodes might change the list selection, we need to back it up
+                                    // However, only do this for small selections - if the selection is large, we would rather take the UI
+                                    // inconsistency over multiple seconds of delay
                                     List<PlaylistItem> selectedItems = data.SelectedPlaylistItems.ToList();
                                     IInputElement element = FocusManager.GetFocusedElement(this);
                                     PlaylistItem focusItem = null;
@@ -217,7 +224,7 @@ namespace HaMusic
                                     {
                                         firstIndex = 0;
                                     }
-                                    else if (selectedItems.Count < 1000)
+                                    else if (selectedItems.Count < EyeCandyDisableThreshold)
                                     {
                                         firstIndex = selectedItems.Select(x => data.SelectedPlaylist.PlaylistItems.IndexOf(x)).Min();
                                     }
@@ -266,7 +273,7 @@ namespace HaMusic
                                             newSelectedItems.Add(focusItem = data.SelectedPlaylist.PlaylistItems[selectedIndex]);
                                         }
                                     }
-                                    if (!IsSelectionEqual(data.SelectedPlaylistItems, newSelectedItems))
+                                    if (newSelectedItems.Count < EyeCandyDisableThreshold && !IsSelectionEqual(data.SelectedPlaylistItems, newSelectedItems))
                                     {
                                         data.SelectedPlaylistItems.Clear();
                                         newSelectedItems.ForEach(x => data.SelectedPlaylistItems.Add(x));
