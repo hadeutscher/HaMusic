@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace HaMusicLib
 {
-    public class FastAccessList<K, T> : IList, IList<T>, INotifyCollectionChanged
+    public class FastAccessList<K, T> : IList<T>, INotifyCollectionChanged
     {
         List<T> list = new List<T>();
         Dictionary<K, T> dict = new Dictionary<K, T>();
@@ -42,43 +42,6 @@ namespace HaMusicLib
             get
             {
                 return ((IList<T>)list).IsReadOnly;
-            }
-        }
-
-        public bool IsFixedSize
-        {
-            get
-            {
-                return ((IList)list).IsFixedSize;
-            }
-        }
-
-        public object SyncRoot
-        {
-            get
-            {
-                return ((IList)list).SyncRoot;
-            }
-        }
-
-        public bool IsSynchronized
-        {
-            get
-            {
-                return ((IList)list).IsSynchronized;
-            }
-        }
-
-        object IList.this[int index]
-        {
-            get
-            {
-                return this[index];
-            }
-
-            set
-            {
-                throw new NotSupportedException();
             }
         }
 
@@ -108,17 +71,6 @@ namespace HaMusicLib
                 CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
         }
 
-        public void InsertRange(int index, List<T> items)
-        {
-            list.InsertRange(index, items);
-            foreach (T item in items)
-            {
-                dict.Add(keyDerivingFunc(item), item);
-            }
-            if (CollectionChanged != null)
-                CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items, index));
-        }
-
         public void RemoveAt(int index)
         {
             T item = list[index];
@@ -134,11 +86,6 @@ namespace HaMusicLib
             dict.Add(keyDerivingFunc(item), item);
             if (CollectionChanged != null)
                 CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, list.Count - 1));
-        }
-
-        public void AddRange(List<T> items)
-        {
-            InsertRange(Count, items);
         }
 
         public void Clear()
@@ -208,37 +155,6 @@ namespace HaMusicLib
         public bool ContainsKey(K key)
         {
             return dict.ContainsKey(key);
-        }
-
-        int IList.Add(object value)
-        {
-            Add((T)value);
-            return Count - 1;
-        }
-
-        bool IList.Contains(object value)
-        {
-            return Contains((T)value);
-        }
-
-        int IList.IndexOf(object value)
-        {
-            return IndexOf((T)value);
-        }
-
-        void IList.Insert(int index, object value)
-        {
-            Insert(index, (T)value);
-        }
-
-        void IList.Remove(object value)
-        {
-            Remove((T)value);
-        }
-
-        public void CopyTo(Array array, int index)
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -269,7 +269,7 @@ namespace HaMusic
                                     if (!IsSelectionEqual(data.SelectedPlaylistItems, newSelectedItems))
                                     {
                                         data.SelectedPlaylistItems.Clear();
-                                        data.SelectedPlaylistItems.AddRange(newSelectedItems);
+                                        newSelectedItems.ForEach(x => data.SelectedPlaylistItems.Add(x));
 
                                         if (focusItem != null)
                                         {
@@ -378,8 +378,7 @@ namespace HaMusic
 
         public void SelectItemExecuted(ListView lv)
         {
-            if (lv.SelectedValue != null)
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)lv.SelectedValue).UID });
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)lv.SelectedValue).UID });
         }
 
         private Dictionary<PlaylistItem, int> GetPlaylistIndices(Playlist pl, List<PlaylistItem> plItems)
