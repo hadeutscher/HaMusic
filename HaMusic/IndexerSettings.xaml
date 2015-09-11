@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HaMusic"
         mc:Ignorable="d"
-        Title="Indexer Settings" Height="360" Width="480" WindowStartupLocation="CenterOwner" Icon="HaLogo.ico" WindowStyle="ToolWindow" ResizeMode="NoResize">
+        Title="Indexer Settings" Height="360" Width="480" WindowStartupLocation="CenterOwner" Icon="HaLogo.ico" WindowStyle="ToolWindow" ResizeMode="NoResize" KeyDown="Window_KeyDown">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Width" Value="100" />

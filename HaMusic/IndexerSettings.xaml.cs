@@ -177,10 +177,13 @@ namespace HaMusic
                     await sw.WriteLineAsync(file.FullName);
             }
         }
-
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        
+        private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-
+            if (e.Key == Key.Escape)
+            {
+                Close();
+            }
         }
     }
 }

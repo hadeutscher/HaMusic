@@ -153,7 +153,14 @@
                         <Image Source="/HaMusic;component/Images/connect.png" />
                     </StackPanel>
                 </Button>
-                <ListBox Grid.Column="1" x:Name="moveType" VerticalAlignment="Center" IsEnabled="{Binding Enabled}" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged"/>
+                <ListView Grid.Column="1" x:Name="moveType" VerticalAlignment="Center" IsEnabled="{Binding Enabled}" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged">
+                    <ListView.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="DodgerBlue" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="DodgerBlue" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="White" />
+                    </ListView.Resources>
+                </ListView>
                 <Label Grid.Column="3" VerticalAlignment="Center" Margin="10,0,10,5">
                     <MultiBinding Converter="{StaticResource SeekTimeConverter}">
                         <Binding Path="ServerDataSource.Position" UpdateSourceTrigger="PropertyChanged" />
