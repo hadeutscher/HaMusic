@@ -14,6 +14,9 @@
         <this:SeekTimeConverter x:Key="SeekTimeConverter" />
         <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
         <this:VisibilityBindingConverter x:Key="MultiBindingToVisibilityConverter" Converter1="{StaticResource BindingConverter}" Converter2="{StaticResource VisibilityConverter}" />
+        <Style TargetType="Slider">
+            <Setter Property="Focusable" Value="False" />
+        </Style>
     </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}" />
