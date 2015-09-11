@@ -333,14 +333,6 @@ namespace HaMusic
             }
         }
 
-        public void OpenExecuted()
-        {
-            OpenFileDialog ofd = new OpenFileDialog() { Filter = "All Files|*.*", Multiselect = true };
-            if (ofd.ShowDialog() != true)
-                return;
-            AddSongs(ofd.FileNames);
-        }
-
         public void ConnectExecuted()
         {
             AddressSelector selector = new AddressSelector();
@@ -411,20 +403,7 @@ namespace HaMusic
                 plItems.Sort((x, y) => indices[x].CompareTo(indices[y]));
                 items = plItems.Select(x => x.UID).ToList();
             }
-            long after;
-            if ((dropInfo.InsertPosition & RelativeInsertPosition.AfterTargetItem) != 0)
-            {
-                after = ((PlaylistItem)dropInfo.TargetItem).UID;
-            }
-            else if ((dropInfo.InsertPosition & RelativeInsertPosition.BeforeTargetItem) != 0)
-            {
-                int index = data.SelectedPlaylist.PlaylistItems.IndexOf((PlaylistItem)dropInfo.TargetItem);
-                after = index == 0 ? -1 : data.SelectedPlaylist.PlaylistItems[index - 1].UID;
-            }
-            else
-            {
-                return;
-            }
+            long after = ListDropHandler.GetAfterFromDropInfo(data, dropInfo);
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REORDER, new HaProtoImpl.REORDER() { pid = data.SelectedPlaylist.UID, after = after, items = items });
         }
 
@@ -492,11 +471,11 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = data.ServerDataSource.Position });
         }
         
-        public void AddSongs(IEnumerable<string> paths, long playlist = -1)
+        public void AddSongs(IEnumerable<string> paths, long after, long playlist = -1)
         {
             if (playlist == -1)
                 playlist = data.SelectedPlaylist.UID;
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = playlist, paths = paths.ToList() });
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADD, new HaProtoImpl.ADD() { uid = playlist, paths = paths.ToList(), after = after });
         }
 
         private void RibbonWindow_Loaded(object sender, RoutedEventArgs e)
@@ -579,9 +558,17 @@ namespace HaMusic
             NewPlaylistExecuted();
         }
 
+        public static long GetAfterFromIndex(Playlist pl, int index)
+        {
+            if (index == 0)
+                return -1;
+            else
+                return pl.PlaylistItems[index - 1].UID;
+        }
+
         private void mediaBrowser_ItemDoubleClicked(string item)
         {
-            AddSongs(new List<string> { item });
+            AddSongs(new List<string> { item }, GetAfterFromIndex(data.SelectedPlaylist, data.SelectedPlaylist.PlaylistItems.Count));
         }
     }
 }

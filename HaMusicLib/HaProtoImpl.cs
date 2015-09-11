@@ -145,6 +145,9 @@ namespace HaMusicLib
             [ProtoMember(3)]
             public List<long> pathUids { get; set; }
 
+            [ProtoMember(4)]
+            public long after { get; set; }
+
             public ADD()
             {
             }
@@ -172,10 +175,11 @@ namespace HaMusicLib
                 {
                     Playlist pl = dataSource.Playlists.FastGet(uid);
                     int i = 0;
+                    int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
                     foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
                                                            : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
                     {
-                        pl.PlaylistItems.Add(pi);
+                        pl.PlaylistItems.Insert(index++, pi);
                         if (IsServer())
                             pathUids.Add(pi.UID);
                     }

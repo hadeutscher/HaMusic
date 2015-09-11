@@ -128,10 +128,12 @@ namespace HaMusic
     public class ListDropHandler : IDropTarget
     {
         MainWindow parent;
+        Controls data;
 
-        public ListDropHandler(MainWindow parent)
+        public ListDropHandler(MainWindow parent, Controls data)
         {
             this.parent = parent;
+            this.data = data;
         }
 
         public void DragOver(IDropInfo dropInfo)
@@ -143,14 +145,33 @@ namespace HaMusic
             }
             else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
             {
-                dropInfo.DropTargetAdorner = null;
+                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
                 dropInfo.Effects = DragDropEffects.Copy;
             }
             else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
             {
-                dropInfo.DropTargetAdorner = null;
+                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
                 dropInfo.Effects = DragDropEffects.Copy;
             }
+        }
+
+        public static long GetAfterFromDropInfo(Controls data, IDropInfo dropInfo)
+        {
+            long after;
+            if ((dropInfo.InsertPosition & RelativeInsertPosition.AfterTargetItem) != 0)
+            {
+                after = dropInfo.TargetItem == null ? data.SelectedPlaylist.PlaylistItems[data.SelectedPlaylist.PlaylistItems.Count - 1].UID : ((PlaylistItem)dropInfo.TargetItem).UID;
+            }
+            else if ((dropInfo.InsertPosition & RelativeInsertPosition.BeforeTargetItem) != 0)
+            {
+                int index = data.SelectedPlaylist.PlaylistItems.IndexOf((PlaylistItem)dropInfo.TargetItem);
+                after = index == 0 ? -1 : data.SelectedPlaylist.PlaylistItems[index - 1].UID;
+            }
+            else
+            {
+                return -1;
+            }
+            return after;
         }
 
         public void Drop(IDropInfo dropInfo)
@@ -162,12 +183,12 @@ namespace HaMusic
             else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])((DataObject)dropInfo.Data).GetData(DataFormats.FileDrop);
-                parent.AddSongs(files);
+                parent.AddSongs(files, GetAfterFromDropInfo(data, dropInfo));
             }
             else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
             {
                 string[] files = dropInfo.Data is string ? new string[] { (string)dropInfo.Data } : ((IEnumerable<string>)dropInfo.Data).ToArray();
-                parent.AddSongs(files);
+                parent.AddSongs(files, GetAfterFromDropInfo(data, dropInfo));
             }
         }
     }
@@ -224,7 +245,7 @@ namespace HaMusic
         public Controls(MainWindow parent)
         {
             this.parent = parent;
-            ldh = new ListDropHandler(parent);
+            ldh = new ListDropHandler(parent, this);
             thdh = new TabHeaderDropHandler(this);
 
             PropertyChanged += Controls_PropertyChanged;
@@ -236,15 +257,6 @@ namespace HaMusic
             get
             {
                 return _connectCommand ?? (_connectCommand = new RelayCommand(delegate { parent.ConnectExecuted(); }));
-            }
-        }
-
-        private ICommand _openCommand;
-        public ICommand OpenCommand
-        {
-            get
-            {
-                return _openCommand ?? (_openCommand = new RelayCommand(delegate { parent.OpenExecuted(); }, delegate { return Enabled; }));
             }
         }
 
