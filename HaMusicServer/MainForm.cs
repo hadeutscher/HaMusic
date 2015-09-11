@@ -100,6 +100,7 @@ namespace HaMusicServer
                     DataSource = ServerDataSource.Deserialize(fs);
                 }
                 pos = DataSource.Position;
+                BroadcastMessage(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = DataSource });
             }
             mover.OnSetDataSource();
             AnnounceIndexChange();
@@ -186,8 +187,9 @@ namespace HaMusicServer
             BroadcastMessage(HaProtoImpl.Opcode.SETPLAYING, new HaProtoImpl.SETPLAYING() { playing = playing });
         }
 
-        public void BroadcastMessage(HaProtoImpl.Opcode type, byte[] data, Client exempt = null, bool caching = false)
+        public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, Client exempt = null, bool caching = false)
         {
+            byte[] data = packet.Build();
             lock (clients)
             {
                 for (int i = 0; i < clients.Count; i++)
@@ -202,11 +204,6 @@ namespace HaMusicServer
                         c.SetCache(type, data);
                 }
             }
-        }
-
-        public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, Client exempt = null, bool caching = false)
-        {
-            BroadcastMessage(type, packet.Build(), exempt, caching);
         }
 
         public void BroadcastPosition()

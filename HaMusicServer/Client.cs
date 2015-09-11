@@ -87,7 +87,7 @@ namespace HaMusicServer
                                 mainForm.DataSource.Volume = setvol.volume;
                             }
                             mainForm.SetVolume(setvol.volume);
-                            mainForm.BroadcastMessage(type, data, this);
+                            mainForm.BroadcastMessage(type, setvol, this);
                             break;
                         case HaProtoImpl.Opcode.SEEK:
                             HaProtoImpl.SEEK seek = HaProtoImpl.SEEK.Parse(data);
@@ -106,7 +106,7 @@ namespace HaMusicServer
                                 mainForm.DataSource.Playing = setplaying.playing;
                             }
                             mainForm.SetPlaying(setplaying.playing);
-                            mainForm.BroadcastMessage(type, data);
+                            mainForm.BroadcastMessage(type, setplaying);
                             break;
                         default:
                             throw new NotSupportedException();

@@ -97,6 +97,80 @@ namespace HaMusic
             }
         }
 
+        private static bool IsSelectionEqual(ICollection<PlaylistItem> a, ICollection<PlaylistItem> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+            for (int i = 0; i < a.Count; i++)
+            {
+                if (a.ElementAt(i) != b.ElementAt(i))
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Finds a Child of a given item in the visual tree. 
+        /// </summary>
+        /// <param name="parent">A direct parent of the queried item.</param>
+        /// <typeparam name="T">The type of the queried item.</typeparam>
+        /// <param name="childName">x:Name or Name of child. </param>
+        /// <returns>The first parent item that matches the submitted type parameter. 
+        /// If not matching item can be found, 
+        /// a null parent is being returned.</returns>
+        public static T FindChild<T>(DependencyObject parent, string childName=null, object dataContext = null)
+           where T : DependencyObject
+        {
+            // Confirm parent and childName are valid. 
+            if (parent == null) return null;
+
+            T foundChild = null;
+
+            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                // If the child is not of the request child type child
+                T childType = child as T;
+                if (childType == null)
+                {
+                    // recursively drill down the tree
+                    foundChild = FindChild<T>(child, childName, dataContext);
+
+                    // If the child is found, break so we do not overwrite the found child. 
+                    if (foundChild != null) break;
+                }
+                else if (!string.IsNullOrEmpty(childName))
+                {
+                    var frameworkElement = child as FrameworkElement;
+                    // If the child's name is set for search
+                    if (frameworkElement != null && frameworkElement.Name == childName)
+                    {
+                        // if the child's name is of the request name
+                        foundChild = (T)child;
+                        break;
+                    }
+                }
+                else if (dataContext != null)
+                {
+                    var frameworkElement = child as FrameworkElement;
+                    if (frameworkElement != null && frameworkElement.DataContext == dataContext)
+                    {
+                        foundChild = (T)child;
+                        break;
+                    }
+                }
+                else
+                {
+                    // child element found.
+                    foundChild = (T)child;
+                    break;
+                }
+            }
+
+            return foundChild;
+        }
+
         private void SockProc(Socket sock)
         {
             try
@@ -130,7 +204,79 @@ namespace HaMusic
                                 case HaProtoImpl.Opcode.RENPL:
                                 case HaProtoImpl.Opcode.REORDER:
                                 case HaProtoImpl.Opcode.INJECT:
+                                    // These opcodes might change the list selection, we need to back it up
+                                    List<PlaylistItem> selectedItems = data.SelectedPlaylistItems.ToList();
+                                    IInputElement element = FocusManager.GetFocusedElement(this);
+                                    PlaylistItem focusItem = null;
+                                    if (element is FrameworkElement && ((FrameworkElement)element).DataContext is PlaylistItem)
+                                    {
+                                        focusItem = (PlaylistItem)((FrameworkElement)element).DataContext;
+                                    }
+                                    int firstIndex;
+                                    if (selectedItems.Count == 0)
+                                    {
+                                        firstIndex = 0;
+                                    }
+                                    else if (selectedItems.Count < 1000)
+                                    {
+                                        firstIndex = selectedItems.Select(x => data.SelectedPlaylist.PlaylistItems.IndexOf(x)).Min();
+                                    }
+                                    else
+                                    {
+                                        firstIndex = data.SelectedPlaylist.PlaylistItems.IndexOf(selectedItems[0]);
+                                    }
+
                                     HaProtoImpl.ApplyPacketToDatabase(type, buf, data.ServerDataSource, out foo);
+
+                                    // Check which items still exist
+                                    List<PlaylistItem> newSelectedItems = new List<PlaylistItem>();
+                                    foreach (PlaylistItem item in selectedItems)
+                                    {
+                                        PlaylistItem newItem;
+                                        if (data.SelectedPlaylist.PlaylistItems.FastTryGet(item.UID, out newItem))
+                                        {
+                                            // We could have added item and it would work, but for extra safety lets add the new item
+                                            newSelectedItems.Add(newItem);
+                                        }
+                                    }
+
+                                    // Special case for deletion
+                                    if (selectedItems.Count > 0 && newSelectedItems.Count == 0)
+                                    {
+                                        int selectedIndex;
+                                        if (firstIndex < data.SelectedPlaylist.PlaylistItems.Count)
+                                        {
+                                            selectedIndex = firstIndex;
+                                        }
+                                        else if (data.SelectedPlaylist.PlaylistItems.Count > 0)
+                                        {
+                                            selectedIndex = data.SelectedPlaylist.PlaylistItems.Count - 1;
+                                        }
+                                        else
+                                        {
+                                            selectedIndex = -1;
+                                        }
+
+                                        if (selectedIndex == -1)
+                                        {
+                                            focusItem = null;
+                                        }
+                                        else
+                                        {
+                                            newSelectedItems.Add(focusItem = data.SelectedPlaylist.PlaylistItems[selectedIndex]);
+                                        }
+                                    }
+                                    if (!IsSelectionEqual(data.SelectedPlaylistItems, newSelectedItems))
+                                    {
+                                        data.SelectedPlaylistItems.Clear();
+                                        newSelectedItems.ForEach(x => data.SelectedPlaylistItems.Add(x));
+
+                                        if (focusItem != null)
+                                        {
+                                            data.FocusedItem = null;
+                                            data.FocusedItem = focusItem;
+                                        }
+                                    }
                                     break;
                                 case HaProtoImpl.Opcode.SETMOVE:
                                     HaProtoImpl.ApplyPacketToDatabase(type, buf, data.ServerDataSource, out foo);
@@ -235,6 +381,17 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)lv.SelectedValue).UID });
         }
 
+        private Dictionary<PlaylistItem, int> GetPlaylistIndices(Playlist pl, List<PlaylistItem> plItems)
+        {
+            Dictionary<PlaylistItem, int> result = new Dictionary<PlaylistItem, int>();
+            int i = 0;
+            foreach (PlaylistItem item in pl.PlaylistItems)
+            {
+                result.Add(item, i++);
+            }
+            return result;
+        }
+
         public void DragMoveItems(IDropInfo dropInfo)
         {
             List<long> items;
@@ -243,7 +400,8 @@ namespace HaMusic
             else
             {
                 List<PlaylistItem> plItems = ((IEnumerable<PlaylistItem>)dropInfo.Data).ToList();
-                plItems.Sort((x, y) => data.SelectedPlaylist.PlaylistItems.IndexOf(x).CompareTo(data.SelectedPlaylist.PlaylistItems.IndexOf(y)));
+                Dictionary<PlaylistItem, int> indices = GetPlaylistIndices(data.SelectedPlaylist, plItems);
+                plItems.Sort((x, y) => indices[x].CompareTo(indices[y]));
                 items = plItems.Select(x => x.UID).ToList();
             }
             long after;

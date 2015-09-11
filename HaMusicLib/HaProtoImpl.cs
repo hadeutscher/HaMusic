@@ -227,9 +227,16 @@ namespace HaMusicLib
                     {
                         dataSource.NextItemOverride = null;
                     }
-                    foreach (long uid in items)
+
+                    // This is a performance-critical area in the client, because Remove is a costly operation on INotifyCollectionChanged objects
+                    if (items.Count > 1)
                     {
-                        pl.PlaylistItems.Remove(pl.PlaylistItems.FastGet(uid));
+                        HashSet<long> fastItems = new HashSet<long>(items);
+                        pl.PlaylistItems.RemoveAll(x => fastItems.Contains(x.UID));
+                    }
+                    else if (items.Count > 0)
+                    {
+                        pl.PlaylistItems.Remove(pl.PlaylistItems.FastGet(items[0]));
                     }
                 }
                 return result;
@@ -646,6 +653,7 @@ namespace HaMusicLib
                 {
                     List<PlaylistItem> foundNeedles = new List<PlaylistItem>();
                     needles = items.ToList();
+                    HashSet<Playlist> relevantPlaylists = new HashSet<Playlist>();
                     for (int haystackIndex = 0; haystackIndex < dataSource.Playlists.Count && needles.Count > 0; haystackIndex++)
                     {
                         Playlist haystack = dataSource.Playlists[haystackIndex];
@@ -656,16 +664,21 @@ namespace HaMusicLib
                             if (haystack.PlaylistItems.FastTryGet(uid, out foundNeedle))
                             {
                                 foundNeedles.Add(foundNeedle);
-                                needles.RemoveAt(needleIndex--);
-                                haystack.PlaylistItems.Remove(foundNeedle);
+                                relevantPlaylists.Add(haystack);
                             }
                         }
                     }
 
-                    if (needles.Count > 0)
+                    if (needles.Count != foundNeedles.Count)
                     {
                         // This is bad, some UIDs were not found - abort the client, but only after we re-add the items we removed
                         abortClient = true;
+                    }
+
+                    HashSet<long> fastNeedles = new HashSet<long>(needles);
+                    foreach (Playlist haystack in relevantPlaylists)
+                    {
+                        haystack.PlaylistItems.RemoveAll(x => fastNeedles.Contains(x.UID));
                     }
 
                     Playlist pl = dataSource.Playlists.FastGet(pid);

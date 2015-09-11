@@ -401,6 +401,32 @@ namespace HaMusic
             }
         }
 
+        private FastAccessList<long, PlaylistItem> _plis = new FastAccessList<long, PlaylistItem>(x => x.UID);
+        public FastAccessList<long, PlaylistItem> SelectedPlaylistItems
+        {
+            get
+            {
+                return _plis;
+            }
+            set
+            {
+                SetField(ref _plis, value);
+            }
+        }
+
+        private PlaylistItem _focusedItem = null;
+        public PlaylistItem FocusedItem
+        {
+            get
+            {
+                return _focusedItem;
+            }
+            set
+            {
+                SetField(ref _focusedItem, value);
+            }
+        }
+
 
         private bool _enabled = false;
         public bool Enabled

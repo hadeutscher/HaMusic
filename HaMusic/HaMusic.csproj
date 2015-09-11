@@ -63,13 +63,17 @@
     <Compile Include="EditableLabel.xaml.cs">
       <DependentUpon>EditableLabel.xaml</DependentUpon>
     </Compile>
+    <Compile Include="FocusableListView.cs" />
+    <Compile Include="FunctionalFun\IListItemConverter.cs" />
     <Compile Include="IndexerSettings.xaml.cs">
       <DependentUpon>IndexerSettings.xaml</DependentUpon>
     </Compile>
     <Compile Include="MediaBrowser.xaml.cs">
       <DependentUpon>MediaBrowser.xaml</DependentUpon>
     </Compile>
+    <Compile Include="FunctionalFun\MultiSelectorBehaviours.cs" />
     <Compile Include="RelayCommand.cs" />
+    <Compile Include="FunctionalFun\TwoListSynchronizer.cs" />
     <Page Include="AddressSelector.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

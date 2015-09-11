@@ -116,6 +116,22 @@ namespace HaMusicLib
             return true;
         }
 
+        public void RemoveAll(Predicate<T> pred)
+        {
+            List<T> removeLog = new List<T>();
+            foreach (T curr in list)
+            {
+                if (pred(curr))
+                {
+                    removeLog.Add(curr);
+                    dict.Remove(keyDerivingFunc(curr));
+                }
+            }
+            list.RemoveAll(pred);
+            if (CollectionChanged != null)
+                CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+
         public IEnumerator<T> GetEnumerator()
         {
             return ((IList<T>)list).GetEnumerator();
