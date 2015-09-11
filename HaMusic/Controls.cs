@@ -401,8 +401,8 @@ namespace HaMusic
             }
         }
 
-        private FastAccessList<long, PlaylistItem> _plis = new FastAccessList<long, PlaylistItem>(x => x.UID);
-        public FastAccessList<long, PlaylistItem> SelectedPlaylistItems
+        private ObservableCollection<PlaylistItem> _plis = new ObservableCollection<PlaylistItem>();
+        public ObservableCollection<PlaylistItem> SelectedPlaylistItems
         {
             get
             {
