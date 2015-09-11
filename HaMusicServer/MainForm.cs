@@ -43,7 +43,7 @@ namespace HaMusicServer
             CreateLogger();
             DataSource = new ServerDataSource();
             DataSource.Playlists.Add(new Playlist());
-            Mover = new Mover(this, DataSource);
+            Mover = new Mover(this);
             listenerThread = new Thread(new ThreadStart(ListenerMain));
             player = new NAudioPlayer(this, 50);
             player.PausePlayChanged += player_PausePlayChanged;
@@ -86,11 +86,6 @@ namespace HaMusicServer
                     }
                 }
             }
-
-            /*if (File.Exists(defaultSourcePath) && MessageBox.Show("Reload saved DataSource?", "DataSource Import", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-            {
-                LoadSourceState(defaultSourcePath);
-            }*/
         }
 
         public void LoadSourceState(string path)
@@ -98,9 +93,15 @@ namespace HaMusicServer
             int pos;
             lock (DataSource.Lock)
             {
-                DataSource = ServerDataSource.Deserialize(File.ReadAllBytes(path));
+                using (FileStream fs = File.OpenRead(path))
+                {
+                    Playlist.DeserializeCounters(fs);
+                    PlaylistItem.DeserializeCounters(fs);
+                    DataSource = ServerDataSource.Deserialize(fs);
+                }
                 pos = DataSource.Position;
             }
+            mover.OnSetDataSource();
             AnnounceIndexChange();
             player.Seek(pos);
         }
@@ -109,7 +110,12 @@ namespace HaMusicServer
         {
             lock (DataSource.Lock)
             {
-                File.WriteAllBytes(path, DataSource.Serialize());
+                using (FileStream fs = File.Create(path))
+                {
+                    Playlist.SerializeCounters(fs);
+                    PlaylistItem.SerializeCounters(fs);
+                    DataSource.Serialize(fs);
+                }
             }
         }
 

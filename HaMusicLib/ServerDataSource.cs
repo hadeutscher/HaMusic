@@ -68,7 +68,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(2, AsReference = true)]
+        [ProtoMember(2)]
         public PlaylistItem CurrentItem
         {
             get
@@ -165,7 +165,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(9, AsReference = true)]
+        [ProtoMember(9)]
         public PlaylistItem NextItemOverride
         {
             get

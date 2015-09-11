@@ -205,7 +205,7 @@ namespace HaMusicServer
 
         public void Close()
         {
-            CleanPlayerAndStream(false);
+            CleanPlayerAndStream(true);
         }
     }
 }

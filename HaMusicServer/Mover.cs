@@ -16,18 +16,21 @@ namespace HaMusicServer
     public class Mover
     {
         private MainForm mainForm;
-        private ServerDataSource dataSource;
         private static RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
         private int consecErrors = 0;
 
-        public Mover(MainForm mainForm, ServerDataSource dataSource)
+        public Mover(MainForm mainForm)
         {
             this.mainForm = mainForm;
-            this.dataSource = dataSource;
-            dataSource.PropertyChanged += DataSource_PropertyChanged;
+            OnSetDataSource();
         }
 
-        private void DataSource_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        public void OnSetDataSource()
+        {
+            mainForm.DataSource.PropertyChanged += dataSource_PropertyChanged;
+        }
+
+        private void dataSource_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "Mode")
             {
@@ -37,9 +40,9 @@ namespace HaMusicServer
 
         private void resetShuffle()
         {
-            lock (dataSource.Lock)
+            lock (mainForm.DataSource.Lock)
             {
-                foreach (Playlist pl in dataSource.Playlists)
+                foreach (Playlist pl in mainForm.DataSource.Playlists)
                 {
                     resetShuffle(pl);
                 }
@@ -75,7 +78,7 @@ namespace HaMusicServer
         private int getRandomMove(Playlist pl)
         {
             List<int> candidates = new List<int>();
-            int currIdx = pl.PlaylistItems.IndexOf(dataSource.CurrentItem);
+            int currIdx = pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem);
             for (int i = 0; i < pl.PlaylistItems.Count; i++)
             {
                 if (i != currIdx)
@@ -98,29 +101,29 @@ namespace HaMusicServer
 
         public PlaylistItem Next()
         {
-            lock (dataSource.Lock)
+            lock (mainForm.DataSource.Lock)
             {
-                if (dataSource.NextItemOverride != null)
+                if (mainForm.DataSource.NextItemOverride != null)
                 {
-                    PlaylistItem result = dataSource.NextItemOverride;
-                    dataSource.NextItemOverride = null;
+                    PlaylistItem result = mainForm.DataSource.NextItemOverride;
+                    mainForm.DataSource.NextItemOverride = null;
                     mainForm.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = -1 });
                     return result;
                 }
-                if (dataSource.CurrentItem == null)
+                if (mainForm.DataSource.CurrentItem == null)
                 {
                     return null;
                 }
-                Playlist pl = dataSource.GetPlaylistForItem(dataSource.CurrentItem.UID);
+                Playlist pl = mainForm.DataSource.GetPlaylistForItem(mainForm.DataSource.CurrentItem.UID);
                 if (consecErrors > pl.PlaylistItems.Count || pl.PlaylistItems.Count == 0)
                 {
                     // Too many errors in a row, or nothing to play, just stop
                     return null;
                 }
-                switch (dataSource.Mode)
+                switch (mainForm.DataSource.Mode)
                 {
                     case HaProtoImpl.MoveType.NEXT:
-                        return indexToItem(pl.PlaylistItems.IndexOf(dataSource.CurrentItem) + 1, pl);
+                        return indexToItem(pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem) + 1, pl);
                     case HaProtoImpl.MoveType.RANDOM:
                         return indexToItem(getRandomMove(pl), pl);
                     case HaProtoImpl.MoveType.SHUFFLE:

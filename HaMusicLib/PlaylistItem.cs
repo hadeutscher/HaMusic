@@ -5,6 +5,8 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 using ProtoBuf;
+using System;
+using System.IO;
 using System.Threading;
 
 namespace HaMusicLib
@@ -62,6 +64,28 @@ namespace HaMusicLib
             {
                 played = value;
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is PlaylistItem && ((PlaylistItem)obj).UID == UID;
+        }
+
+        public override int GetHashCode()
+        {
+            return uid.GetHashCode();
+        }
+
+        public static void DeserializeCounters(Stream ifs)
+        {
+            byte[] buf = new byte[8];
+            ifs.Read(buf, 0, 8);
+            nextUid = BitConverter.ToInt64(buf, 0);
+        }
+
+        public static void SerializeCounters(Stream ofs)
+        {
+            ofs.Write(BitConverter.GetBytes(nextUid), 0, 8);
         }
     }
 }

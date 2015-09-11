@@ -254,7 +254,7 @@ namespace HaMusicServer
 
         public void command_exit(string[] args)
         {
-            Application.Exit();
+            mainForm.Close();
         }
 
         private void ConsoleWrite(string data)

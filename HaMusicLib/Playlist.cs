@@ -9,6 +9,7 @@ using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -70,6 +71,18 @@ namespace HaMusicLib
             {
                 SetField(ref name, value);
             }
+        }
+
+        public static void DeserializeCounters(Stream ifs)
+        {
+            byte[] buf = new byte[8];
+            ifs.Read(buf, 0, 8);
+            nextUid = BitConverter.ToInt64(buf, 0);
+        }
+
+        public static void SerializeCounters(Stream ofs)
+        {
+            ofs.Write(BitConverter.GetBytes(nextUid), 0, 8);
         }
     }
 }
