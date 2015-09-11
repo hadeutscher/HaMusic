@@ -345,6 +345,20 @@ namespace HaMusic
             }
         }
 
+        private PlaylistItem _pli = null;
+        public PlaylistItem SelectedPlaylistItem
+        {
+            get
+            {
+                return _pli;
+            }
+            set
+            {
+                SetField(ref _pli, value);
+            }
+        }
+
+
         private bool _enabled = false;
         public bool Enabled
         {

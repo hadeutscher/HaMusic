@@ -226,6 +226,14 @@ namespace HaMusicServer
             player.OnIndexChanged();
         }
 
+        public void AnnounceRemoteIndexChange()
+        {
+            lock (dataSource.Lock)
+            {
+                BroadcastMessage(HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = dataSource.CurrentItem.UID });
+            }
+        }
+
         public void SetPlaying(bool p)
         {
             player.SetPlaying(p);

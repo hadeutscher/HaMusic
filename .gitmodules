@@ -4,3 +4,6 @@
 [submodule "consolecontrol"]
 	path = consolecontrol
 	url = https://github.com/haha01haha01/consolecontrol.git
+[submodule "gong-wpf-dragdrop"]
+	path = gong-wpf-dragdrop
+	url = https://github.com/haha01haha01/gong-wpf-dragdrop.git

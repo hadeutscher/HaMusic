@@ -106,7 +106,7 @@ namespace HaMusicServer
                                 mainForm.DataSource.Playing = setplaying.playing;
                             }
                             mainForm.SetPlaying(setplaying.playing);
-                            mainForm.BroadcastMessage(type, data, this);
+                            mainForm.BroadcastMessage(type, data);
                             break;
                         default:
                             throw new NotSupportedException();

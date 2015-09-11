@@ -39,6 +39,7 @@ namespace HaMusicServer
                 mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
             }
             mainForm.AnnounceIndexChange();
+            mainForm.AnnounceRemoteIndexChange();
         }
 
         private void SetVolumeInternal(int vol)

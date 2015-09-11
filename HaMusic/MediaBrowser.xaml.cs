@@ -57,6 +57,9 @@ namespace HaMusic
             set { SetValue(SelectedDataProperty, value); }
         }
 
+        public delegate void ItemDoubleClickedEventHandler(string item);
+        public event ItemDoubleClickedEventHandler ItemDoubleClicked;
+
         private void textBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             FilterData();
@@ -107,6 +110,15 @@ namespace HaMusic
                 }
             }
             listView.IsEnabled = true;
+        }
+
+        private void listView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (ItemDoubleClicked != null)
+            {
+                ItemDoubleClicked((string)((FrameworkElement)e.OriginalSource).DataContext);
+            }
+            e.Handled = true;
         }
     }
 }

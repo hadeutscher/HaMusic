@@ -296,7 +296,14 @@ namespace HaMusic
 
         public void PlayPauseExecuted()
         {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETPLAYING, new HaProtoImpl.SETPLAYING() { playing = data.ServerDataSource.Playing = !data.ServerDataSource.Playing });
+            if (!data.ServerDataSource.Playing && data.ServerDataSource.CurrentItem == null && data.SelectedPlaylistItem != null)
+            {
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = data.SelectedPlaylistItem.UID });
+            }
+            else if (data.ServerDataSource.Playing || data.ServerDataSource.CurrentItem != null)
+            {
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETPLAYING, new HaProtoImpl.SETPLAYING() { playing = !data.ServerDataSource.Playing });
+            }
         }
 
         public void StopExecuted()
@@ -378,13 +385,6 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = GetSelectedPlaylist(), items = new List<long> { ((PlaylistItem)((MenuItem)sender).DataContext).UID } });
         }
 
-        private void mediaBrowser_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            string path = (string)((FrameworkElement)e.OriginalSource).DataContext;
-            AddSongs(new List<string> { path });
-            e.Handled = true;
-        }
-
         private void MenuItem_ImportPlaylist(object sender, RoutedEventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog() { Title = "Select File", Filter = "HaMusic Playlist (*.hmp)|*.hmp" };
@@ -411,6 +411,11 @@ namespace HaMusic
         private void MenuItem_NewPlaylist(object sender, RoutedEventArgs e)
         {
             NewPlaylistExecuted();
+        }
+
+        private void mediaBrowser_ItemDoubleClicked(string item)
+        {
+            AddSongs(new List<string> { item });
         }
     }
 }
