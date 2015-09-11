@@ -94,7 +94,7 @@ namespace HaMusicServer
                         "\tbanlist - print banlist",
                         "\ttail [n] - print last n lines from the log, default 10",
                         "\tflush [path] - force DataSource flush, optionally into a specific path",
-                        "\tload - load DataSource from path",
+                        "\tload [path] - load DataSource, optionally from a specific path",
                         "\texit - exit server"
                     });
                     goto ret;

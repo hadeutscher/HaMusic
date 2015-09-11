@@ -23,12 +23,12 @@ namespace HaMusicLib
         private static long nextUid = 0;
 
         private FastAccessList<long, PlaylistItem> playlistItems = new FastAccessList<long, PlaylistItem>(x => x.UID);
-        private string name;
+        private string name = "Playlist";
         private long uid;
 
         public Playlist()
         {
-            this.name = string.Format("Playlist {0}", uid = Interlocked.Increment(ref nextUid));
+            uid = Interlocked.Increment(ref nextUid);
         }
 
         [ProtoMember(1)]

@@ -137,6 +137,7 @@ namespace HaMusicServer
 
         void player_PausePlayChanged(object sender, bool playing)
         {
+            dataSource.Playing = playing;
             BroadcastPlayPauseInfo(playing);
         }
 
