@@ -20,7 +20,6 @@ namespace HaMusicServer
         Action<string> log;
         MainForm mainForm;
         string id;
-        Dictionary<HaProtoImpl.Opcode, byte[]> packetCache = new Dictionary<HaProtoImpl.Opcode, byte[]>();
 
         public Client(MainForm mainForm, Socket s, Action<string> log)
         {
@@ -127,16 +126,6 @@ namespace HaMusicServer
                 mainForm.OnThreadExit(this);
                 return;
             }
-        }
-
-        public bool InCache(HaProtoImpl.Opcode opcode, byte[] data)
-        {
-            return packetCache.ContainsKey(opcode) && packetCache[opcode] == data;
-        }
-
-        public void SetCache(HaProtoImpl.Opcode opcode, byte[] data)
-        {
-            packetCache[opcode] = data;
         }
 
         public Thread Thread { get { return t; } }

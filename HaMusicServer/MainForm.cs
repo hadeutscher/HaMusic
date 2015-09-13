@@ -89,7 +89,7 @@ namespace HaMusicServer
 
         public void LoadSourceState(string path)
         {
-            int pos;
+            int pos, vol;
             lock (DataSource.Lock)
             {
                 using (FileStream fs = File.OpenRead(path))
@@ -99,11 +99,13 @@ namespace HaMusicServer
                     DataSource = ServerDataSource.Deserialize(fs);
                 }
                 pos = DataSource.Position;
+                vol = DataSource.Volume;
                 BroadcastMessage(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = DataSource });
             }
             mover.OnSetDataSource();
             player.OnSongChanged();
             player.Position = pos;
+            player.Volume = vol;
         }
 
         public void SaveSourceState(string path)
@@ -193,7 +195,7 @@ namespace HaMusicServer
             }
         }
 
-        public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, Client exempt = null, bool caching = false)
+        public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, Client exempt = null)
         {
             byte[] data = packet.Build();
             lock (clients)
@@ -203,11 +205,7 @@ namespace HaMusicServer
                     Client c = clients[i];
                     if (c == exempt)
                         continue;
-                    if (caching && c.InCache(type, data))
-                        continue;
                     HaProtoImpl.Send(c.Socket, type, data);
-                    if (caching)
-                        c.SetCache(type, data);
                 }
             }
         }
@@ -223,7 +221,7 @@ namespace HaMusicServer
                 dataSource.Position = pos;
                 dataSource.Maximum = max;
             }
-            BroadcastMessage(HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = pos, max = max }, null, true);
+            BroadcastMessage(HaProtoImpl.Opcode.SEEK, new HaProtoImpl.SEEK() { pos = pos, max = max });
         }
 
         private void broadcastTimer_Tick(object sender, EventArgs e)
