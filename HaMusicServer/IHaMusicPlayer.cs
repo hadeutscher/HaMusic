@@ -5,23 +5,17 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HaMusicServer
 {
-    public interface IHaMusicPlayer
+    public interface IHaMusicPlayer : IDisposable
     {
         void SetVolume(int vol);
-        int GetVolume();
-        void Seek(int time);
-        Tuple<int, int> GetPos();
+        void SetPos(int time);
+        int GetPos();
         void SetPlaying(bool playing);
-        bool IsPlaying();
-        void OnIndexChanged();
-        event EventHandler<bool> PausePlayChanged;
-        void Close();
+        int PlaySong(string path);
+
+        event EventHandler SongEnded;
     }
 }

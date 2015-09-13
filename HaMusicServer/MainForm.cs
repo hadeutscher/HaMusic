@@ -8,12 +8,10 @@ using HaMusicLib;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -23,7 +21,7 @@ namespace HaMusicServer
     {
         private Thread listenerThread;
         internal List<Client> clients = new List<Client>();
-        private IHaMusicPlayer player;
+        private HaMusicPlayerManager player;
         private Mover mover;
         private ServerDataSource dataSource;
         public List<IPAddress> banlist = new List<IPAddress>();
@@ -45,8 +43,9 @@ namespace HaMusicServer
             DataSource.Playlists.Add(new Playlist());
             Mover = new Mover(this);
             listenerThread = new Thread(new ThreadStart(ListenerMain));
-            player = new NAudioPlayer(this, 50);
-            player.PausePlayChanged += player_PausePlayChanged;
+            player = new HaMusicPlayerManager(new NAudioPlayer(this), this, 50);
+            player.SongChanged += player_SongChanged;
+            player.PlayingChanged += player_PlayingChanged;
             RestoreState();
             hashell = new HaShell(this, console);
         }
@@ -103,8 +102,8 @@ namespace HaMusicServer
                 BroadcastMessage(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = DataSource });
             }
             mover.OnSetDataSource();
-            AnnounceIndexChange();
-            player.Seek(pos);
+            player.OnSongChanged();
+            player.Position = pos;
         }
 
         public void SaveSourceState(string path)
@@ -135,10 +134,21 @@ namespace HaMusicServer
             }
         }
 
-        void player_PausePlayChanged(object sender, bool playing)
+        void player_SongChanged(object sender, PlaylistItem item)
         {
-            dataSource.Playing = playing;
-            BroadcastPlayPauseInfo(playing);
+            BroadcastMessage(HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = item == null ? -1 : item.UID });
+        }
+
+        void player_PlayingChanged(object sender, bool playing)
+        {
+            lock (dataSource)
+            {
+                if (dataSource.Playing != playing)
+                {
+                    dataSource.Playing = playing;
+                    BroadcastMessage(HaProtoImpl.Opcode.SETPLAYING, new HaProtoImpl.SETPLAYING() { playing = playing });
+                }
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -183,11 +193,6 @@ namespace HaMusicServer
             }
         }
 
-        public void BroadcastPlayPauseInfo(bool playing)
-        {
-            BroadcastMessage(HaProtoImpl.Opcode.SETPLAYING, new HaProtoImpl.SETPLAYING() { playing = playing });
-        }
-
         public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, Client exempt = null, bool caching = false)
         {
             byte[] data = packet.Build();
@@ -209,11 +214,12 @@ namespace HaMusicServer
 
         public void BroadcastPosition()
         {
-            Tuple<int, int> posInfo = player.GetPos();
-            int pos = posInfo.Item1;
-            int max = posInfo.Item2;
+            int pos = player.Position;
+            int max = player.Maximum;
             lock (dataSource.Lock)
             {
+                if (dataSource.Position == pos && dataSource.Maximum == max)
+                    return;
                 dataSource.Position = pos;
                 dataSource.Maximum = max;
             }
@@ -227,25 +233,17 @@ namespace HaMusicServer
 
         public void AnnounceIndexChange()
         {
-            player.OnIndexChanged();
+            player.OnSongChanged();
         }
-
-        public void AnnounceRemoteIndexChange()
-        {
-            lock (dataSource.Lock)
-            {
-                BroadcastMessage(HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = dataSource.CurrentItem == null ? -1 : dataSource.CurrentItem.UID });
-            }
-        }
-
+        
         public void SetPlaying(bool p)
         {
-            player.SetPlaying(p);
+            player.Playing = p;
         }
 
         public void SetVolume(int vol)
         {
-            player.SetVolume(vol);
+            player.Volume = vol;
         }
 
         public Mover Mover
@@ -276,7 +274,7 @@ namespace HaMusicServer
 
         public void SetPosition(int pos)
         {
-            player.Seek(pos);
+            player.Position = pos;
         }
         
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
@@ -285,7 +283,7 @@ namespace HaMusicServer
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            player.Close();
+            player.Dispose();
         }
 
         public object InvokeIfRequired(Delegate method)

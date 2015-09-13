@@ -12,34 +12,27 @@ namespace HaMusicServer
 {
     public class NAudioPlayer : IHaMusicPlayer
     {
-        private IWavePlayer player;
-        private WaveStream stream;
-        private MainForm mainForm;
-        private int vol;
+        private IWavePlayer player = null;
+        private WaveStream stream = null;
+        private MainForm sync;
 
-        public NAudioPlayer(MainForm mainForm, int vol)
+        public event EventHandler SongEnded;
+
+        public NAudioPlayer(MainForm sync)
         {
-            this.vol = vol;
-            this.player = null;
-            this.stream = null;
-            this.mainForm = mainForm;
+            this.sync = sync;
         }
 
         private void MakePlayerInternal()
         {
             player = new WaveOutEvent();
             player.PlaybackStopped += player_PlaybackStopped;
-            SetVolumeInternal(vol);
         }
 
         void player_PlaybackStopped(object sender, StoppedEventArgs e)
         {
-            lock (mainForm.DataSource.Lock)
-            {
-                mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
-            }
-            mainForm.AnnounceIndexChange();
-            mainForm.AnnounceRemoteIndexChange();
+            if (SongEnded != null)
+                SongEnded(this, new EventArgs());
         }
 
         private void SetVolumeInternal(int vol)
@@ -55,8 +48,7 @@ namespace HaMusicServer
 
         public void SetVolume(int vol)
         {
-            this.vol = vol;
-            mainForm.InvokeIfRequired((Action)delegate
+            sync.InvokeIfRequired((Action)delegate
             {
                 if (player != null)
                 {
@@ -65,14 +57,9 @@ namespace HaMusicServer
             });
         }
 
-        public int GetVolume()
+        public void SetPos(int time)
         {
-            return vol;
-        }
-
-        public void Seek(int time)
-        {
-            mainForm.InvokeIfRequired((Action)delegate
+            sync.InvokeIfRequired((Action)delegate
             {
                 if (stream == null)
                     return;
@@ -80,27 +67,26 @@ namespace HaMusicServer
             });
         }
 
-        public Tuple<int, int> GetPos()
+        public int GetPos()
         {
-            return (Tuple<int, int>)mainForm.InvokeIfRequired((Func<Tuple<int, int>>)delegate
+            int result = 0; // To satisfy VS, this is actually always assigned inside InvokeIfRequired
+            sync.InvokeIfRequired((Action)delegate
             {
-                int pos, max;
                 if (player == null || player.PlaybackState == PlaybackState.Stopped || stream == null)
                 {
-                    pos = max = -1;
+                    result = -1;
                 }
                 else
                 {
-                    pos = (int)(stream.Position / stream.WaveFormat.AverageBytesPerSecond);
-                    max = (int)(stream.Length / stream.WaveFormat.AverageBytesPerSecond);
+                    result = (int)(stream.Position / stream.WaveFormat.AverageBytesPerSecond);
                 }
-                return new Tuple<int, int>(pos, max);
             });
+            return result;
         }
 
         public void SetPlaying(bool playing)
         {
-            mainForm.InvokeIfRequired((Action)delegate
+            sync.InvokeIfRequired((Action)delegate
             {
                 if (player == null)
                     return;
@@ -111,33 +97,17 @@ namespace HaMusicServer
             });
         }
 
-        private bool IsPlayingInternal()
-        {
-            return player != null && player.PlaybackState == PlaybackState.Playing;
-        }
-
-        public bool IsPlaying()
-        {
-            return (bool)mainForm.Invoke((Func<bool>)delegate
-            {
-                return IsPlayingInternal();
-            });
-        }
-
         private WaveStream CreateStream(string path)
         {
             return new MediaFoundationReader(path);
         }
 
-        private void CleanPlayerAndStream(bool full)
+        private void CleanPlayerAndStream()
         {
             if (player != null)
             {
-                if (full)
-                {
-                    player.PlaybackStopped -= player_PlaybackStopped;
-                    player.Stop();
-                }
+                player.PlaybackStopped -= player_PlaybackStopped;
+                player.Stop();
                 player.Dispose();
                 player = null;
             }
@@ -148,22 +118,14 @@ namespace HaMusicServer
             }
         }
 
-        public void OnIndexChanged()
+        public int PlaySong(string path)
         {
-            string path = "";
-            bool advance_idx = false;
-            lock (mainForm.DataSource.Lock)
+            int result = 0;
+            sync.InvokeIfRequired((Action)delegate
             {
-                if (mainForm.DataSource.CurrentItem != null)
-                {
-                    mainForm.DataSource.CurrentItem.Played = true;
-                    path = mainForm.DataSource.CurrentItem.Item;
-                }
-            }
-            mainForm.InvokeIfRequired((Action)delegate
-            {
-                CleanPlayerAndStream(true);
-                if (path != "")
+                CleanPlayerAndStream();
+                result = -1;
+                if (!string.IsNullOrEmpty(path))
                 {
                     try
                     {
@@ -171,41 +133,20 @@ namespace HaMusicServer
                         stream = CreateStream(path);
                         player.Init(stream);
                         player.Play();
+                        result = (int)(stream.Length / stream.WaveFormat.AverageBytesPerSecond);
                     }
                     catch (Exception)
                     {
-                        CleanPlayerAndStream(false);
-                        advance_idx = true;
+                        CleanPlayerAndStream();
                     }
                 }
-                UpdatePausePlay();
             });
-            if (advance_idx)
-            {
-                lock (mainForm.DataSource.Lock)
-                {
-                    mainForm.Mover.IncreaseErrors();
-                    mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
-                }
-                this.OnIndexChanged(); // Try again with next item
-            }
-            else
-            {
-                mainForm.Mover.ResetErrors();
-            }
+            return result;
         }
-
-        public event EventHandler<bool> PausePlayChanged;
-
-        private void UpdatePausePlay()
+       
+        public void Dispose()
         {
-            if (PausePlayChanged != null)
-                PausePlayChanged.Invoke(this, IsPlayingInternal());
-        }
-
-        public void Close()
-        {
-            CleanPlayerAndStream(true);
+            CleanPlayerAndStream();
         }
     }
 }
