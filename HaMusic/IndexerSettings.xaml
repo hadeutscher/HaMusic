@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HaMusic"
+        xmlns:hmwpf="clr-namespace:HaMusic.Wpf"
         mc:Ignorable="d"
         Title="Indexer Settings" Height="360" Width="480" WindowStartupLocation="CenterOwner" Icon="HaLogo.ico" WindowStyle="ToolWindow" ResizeMode="NoResize" KeyDown="Window_KeyDown">
     <Window.Resources>
@@ -12,7 +13,7 @@
             <Setter Property="Height" Value="30" />
             <Setter Property="Margin" Value="5,5,5,5" />
         </Style>
-        <local:NullBooleanConverter x:Key="nullBoolConverter" />
+        <hmwpf:NullBooleanConverter x:Key="nullBoolConverter" />
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>

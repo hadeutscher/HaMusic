@@ -4,6 +4,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+using HaMusic.Wpf;
 using System.Windows;
 using System.Windows.Input;
 
@@ -19,8 +20,6 @@ namespace HaMusic
         public AddressSelector()
         {
             InitializeComponent();
-            _okCommand = new RelayCommand(delegate { Confirm(); });
-            _cancelCommand = new RelayCommand(delegate { Cancel(); });
             addressBox.Text = Properties.Settings.Default.lastAddr;
             DataContext = this;
             addressBox.Focus();
@@ -44,13 +43,13 @@ namespace HaMusic
         private ICommand _okCommand;
         public ICommand OKCommand
         {
-            get { return _okCommand; }
+            get { return _okCommand ?? (_okCommand = new RelayCommand(delegate { Confirm(); })); }
         }
 
         private ICommand _cancelCommand;
         public ICommand CancelCommand
         {
-            get { return _cancelCommand; }
+            get { return _cancelCommand ?? (_cancelCommand = new RelayCommand(delegate { Cancel(); })); }
         }
 
         private void Window_KeyDown(object sneder, KeyEventArgs e)

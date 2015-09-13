@@ -4,7 +4,6 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using GongSolutions.Wpf.DragDrop;
 using HaMusicLib;
 using Microsoft.Win32;
 using System;
@@ -15,7 +14,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Ribbon;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -28,7 +26,7 @@ namespace HaMusic
     {
         private const int EyeCandyDisableThreshold = 1000;
         private Socket globalSocket = null;
-        private Controls data;
+        private Data data;
         private Thread connThread = null;
         private Object connectLock = new Object();
         private bool internalChanging = false;
@@ -38,7 +36,7 @@ namespace HaMusic
         {
             HaProtoImpl.Entity = HaProtoImpl.HaMusicEntity.Client;
             InitializeComponent();
-            data = new Controls(this);
+            data = new Data(this);
             DataContext = data;
             SetEnabled(false);
             TryReloadMediaIndex();
@@ -391,9 +389,9 @@ namespace HaMusic
             return result;
         }
 
-        public void DragMoveItems(IDropInfo dropInfo)
+        public void DragMoveItems(PlaylistItem[] plItems, long after)
         {
-            List<long> items;
+            /*List<long> items;
             if (dropInfo.Data is PlaylistItem)
                 items = new List<long> { ((PlaylistItem)dropInfo.Data).UID };
             else
@@ -403,8 +401,8 @@ namespace HaMusic
                 plItems.Sort((x, y) => indices[x].CompareTo(indices[y]));
                 items = plItems.Select(x => x.UID).ToList();
             }
-            long after = ListDropHandler.GetAfterFromDropInfo(data, dropInfo);
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REORDER, new HaProtoImpl.REORDER() { pid = data.SelectedPlaylist.UID, after = after, items = items });
+            long after = data.ListDropHandler.GetAfterFromDropInfo(dropInfo);
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REORDER, new HaProtoImpl.REORDER() { pid = data.SelectedPlaylist.UID, after = after, items = items });*/
         }
 
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)

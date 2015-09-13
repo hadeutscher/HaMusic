@@ -59,7 +59,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Controls.cs" />
+    <Compile Include="Data.cs" />
+    <Compile Include="DragDrop\MediaBrowserDragHandler.cs" />
+    <Compile Include="DragDrop\PlaylistDropHandler.cs" />
+    <Compile Include="DragDrop\TabHeaderDropHandler.cs" />
     <Compile Include="EditableLabel.xaml.cs">
       <DependentUpon>EditableLabel.xaml</DependentUpon>
     </Compile>
@@ -72,8 +75,13 @@
       <DependentUpon>MediaBrowser.xaml</DependentUpon>
     </Compile>
     <Compile Include="FunctionalFun\MultiSelectorBehaviours.cs" />
-    <Compile Include="RelayCommand.cs" />
+    <Compile Include="Wpf\RelayCommand.cs" />
     <Compile Include="FunctionalFun\TwoListSynchronizer.cs" />
+    <Compile Include="Wpf\BindingConverter.cs" />
+    <Compile Include="Wpf\EnumConverter.cs" />
+    <Compile Include="Wpf\NullBooleanConverter.cs" />
+    <Compile Include="Wpf\SeekTimeConverter.cs" />
+    <Compile Include="Wpf\VisibilityBindingConverter.cs" />
     <Page Include="AddressSelector.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -13,6 +13,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <TextBox Grid.Row="0" x:Name="textBox" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextChanged="textBox_TextChanged" />
-        <ListView Grid.Row="1" x:Name="listView" ItemsSource="{Binding SelectedData}" dd:DragDrop.IsDragSource="True" MouseDoubleClick="listView_MouseDoubleClick"/>
+        <ListView Grid.Row="1" x:Name="listView" ItemsSource="{Binding SelectedData}" dd:DragDrop.IsDragSource="True" dd:DragDrop.DragHandler="{Binding MediaBrowserDragHandler}" MouseDoubleClick="listView_MouseDoubleClick"/>
     </Grid>
 </UserControl>

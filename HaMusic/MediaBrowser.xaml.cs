@@ -4,23 +4,12 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using System;
+using HaMusic.DragDrop;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace HaMusic
 {
@@ -38,11 +27,10 @@ namespace HaMusic
             ((FrameworkElement)this.Content).DataContext = this;
         }
 
-        private List<string> _sourceData = new List<string>();
-
+        private List<string> _sourceData;
         public List<string> SourceData
         {
-            get { return _sourceData; }
+            get { return _sourceData ?? (_sourceData = new List<string>()); }
             set
             {
                 _sourceData = value;
@@ -50,11 +38,16 @@ namespace HaMusic
             }
         }
 
-        private ObservableCollection<string> _selectedData = new ObservableCollection<string>();
         private ObservableCollection<string> SelectedData
         {
             get { return (ObservableCollection<string>)GetValue(SelectedDataProperty); }
             set { SetValue(SelectedDataProperty, value); }
+        }
+
+        private MediaBrowserDragHandler mediaBrowserDragHandler;
+        public MediaBrowserDragHandler MediaBrowserDragHandler
+        {
+            get { return mediaBrowserDragHandler ?? (mediaBrowserDragHandler = new MediaBrowserDragHandler()); }
         }
 
         public delegate void ItemDoubleClickedEventHandler(string item);

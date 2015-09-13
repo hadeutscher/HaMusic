@@ -1,0 +1,243 @@
+﻿/* Copyright (C) 2015 haha01haha01
+
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+using HaMusic.DragDrop;
+using HaMusic.Wpf;
+using HaMusicLib;
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Input;
+
+namespace HaMusic
+{
+    public class Data : PropertyNotifierBase
+    {
+        private readonly static Uri playUri = new Uri("/HaMusic;component/Images/play.png", UriKind.Relative);
+        private readonly static Uri pauseUri = new Uri("/HaMusic;component/Images/pause.png", UriKind.Relative);
+        private MainWindow parent;
+
+        public Data(MainWindow parent)
+        {
+            this.parent = parent;
+            PropertyChanged += Controls_PropertyChanged;
+        }
+
+        private ICommand _connectCommand;
+        public ICommand ConnectCommand
+        {
+            get
+            {
+                return _connectCommand ?? (_connectCommand = new RelayCommand(delegate { parent.ConnectExecuted(); }));
+            }
+        }
+
+        private ICommand _playpauseCommand;
+        public ICommand PlayPauseCommand
+        {
+            get
+            {
+                return _playpauseCommand ?? (_playpauseCommand = new RelayCommand(delegate { parent.PlayPauseExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _stopCommand;
+        public ICommand StopCommand
+        {
+            get
+            {
+                return _stopCommand ?? (_stopCommand = new RelayCommand(delegate { parent.StopExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _nextCommand;
+        public ICommand NextCommand
+        {
+            get
+            {
+                return _nextCommand ?? (_nextCommand = new RelayCommand(delegate { parent.NextExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _newplCommand;
+        public ICommand NewPlaylistCommand
+        {
+            get
+            {
+                return _newplCommand ?? (_newplCommand = new RelayCommand(delegate { parent.NewPlaylistExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private ICommand _idxsetCommand;
+        public ICommand IndexSettingsCommand
+        {
+            get
+            {
+                return _idxsetCommand ?? (_idxsetCommand = new RelayCommand(delegate { parent.IndexerSettingsExecuted(); }, delegate { return Enabled; }));
+            }
+        }
+
+        private void Controls_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "ServerDataSource" || e.PropertyName == null)
+            {
+                SelectedPlaylist = ServerDataSource.Playlists.Count > 0 ? ServerDataSource.Playlists[0] : null;
+                ServerDataSource.PropertyChanged += ServerDataSource_PropertyChanged;
+                ServerDataSource_PropertyChanged(ServerDataSource, new PropertyChangedEventArgs(null));
+            }
+        }
+
+        private void ServerDataSource_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Playing" || e.PropertyName == null)
+            {
+                PlayPauseLabel = ServerDataSource.Playing ? "Pause" : "Play";
+                PlayPauseImage = ServerDataSource.Playing ? pauseUri : playUri;
+            }
+            if (e.PropertyName == "Mode" || e.PropertyName == null)
+            {
+                OnPropertyChanged("SelectedMove");
+            }
+        }
+
+        private string _ppLabel = "Play";
+        public string PlayPauseLabel
+        {
+            get
+            {
+                return _ppLabel;
+            }
+            set
+            {
+                SetField(ref _ppLabel, value);
+            }
+        }
+
+        private Uri _ppImage = playUri;
+        public Uri PlayPauseImage
+        {
+            get
+            {
+                return _ppImage;
+            }
+            set
+            {
+                SetField(ref _ppImage, value);
+            }
+        }
+
+        private PlaylistDropHandler ldh;
+        public PlaylistDropHandler ListDropHandler
+        {
+            get { return ldh ?? (ldh = new PlaylistDropHandler(parent, this)); }
+        }
+
+        private TabHeaderDropHandler thdh;
+        public TabHeaderDropHandler TabHeaderDropHandler
+        {
+            get { return thdh ?? (thdh = new TabHeaderDropHandler(this)); }
+        }
+
+        public ObservableCollection<string> MoveTypes
+        {
+            get
+            {
+                return new ObservableCollection<string> { "Next", "Random", "Shuffle" };
+            }
+        }
+
+        private ServerDataSource _sds;
+        public ServerDataSource ServerDataSource
+        {
+            get
+            {
+                return _sds ?? (_sds = new ServerDataSource());
+            }
+            set
+            {
+                SetField(ref _sds, value);
+            }
+        }
+
+        private Playlist _pl;
+        public Playlist SelectedPlaylist
+        {
+            get
+            {
+                return _pl;
+            }
+            set
+            {
+                SetField(ref _pl, value);
+            }
+        }
+
+        private PlaylistItem _pli;
+        public PlaylistItem SelectedPlaylistItem
+        {
+            get
+            {
+                return _pli;
+            }
+            set
+            {
+                SetField(ref _pli, value);
+            }
+        }
+
+        private ObservableCollection<PlaylistItem> _plis;
+        public ObservableCollection<PlaylistItem> SelectedPlaylistItems
+        {
+            get
+            {
+                return _plis ?? (_plis = new ObservableCollection<PlaylistItem>());
+            }
+            set
+            {
+                SetField(ref _plis, value);
+            }
+        }
+
+        private PlaylistItem _focusedItem;
+        public PlaylistItem FocusedItem
+        {
+            get
+            {
+                return _focusedItem;
+            }
+            set
+            {
+                SetField(ref _focusedItem, value);
+            }
+        }
+
+
+        private bool _enabled = false;
+        public bool Enabled
+        {
+            get
+            {
+                return _enabled;
+            }
+            set
+            {
+                SetField(ref _enabled, value);
+            }
+        }
+
+        public string SelectedMove
+        {
+            get
+            {
+                return MoveTypes[(int)ServerDataSource.Mode];
+            }
+            set
+            {
+                ServerDataSource.Mode = (HaProtoImpl.MoveType)MoveTypes.IndexOf(value);
+            }
+        }
+    }
+}

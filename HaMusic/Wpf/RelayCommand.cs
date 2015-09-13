@@ -7,7 +7,7 @@
 using System;
 using System.Windows.Input;
 
-namespace HaMusic
+namespace HaMusic.Wpf
 {
     public class RelayCommand : ICommand
     {
