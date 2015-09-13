@@ -60,7 +60,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Data.cs" />
-    <Compile Include="DragDrop\MediaBrowserDragHandler.cs" />
+    <Compile Include="DragDrop\SortedDragHandler.cs" />
     <Compile Include="DragDrop\PlaylistDropHandler.cs" />
     <Compile Include="DragDrop\TabHeaderDropHandler.cs" />
     <Compile Include="EditableLabel.xaml.cs">

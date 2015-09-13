@@ -25,7 +25,7 @@ namespace HaMusic.DragDrop
 
         public void DragOver(IDropInfo dropInfo)
         {
-            if (dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>)
+            if (dropInfo.Data is IEnumerable<PlaylistItem>)
             {
                 dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
                 dropInfo.Effects = DragDropEffects.Move;
@@ -35,7 +35,7 @@ namespace HaMusic.DragDrop
                 dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
                 dropInfo.Effects = DragDropEffects.Copy;
             }
-            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
+            else if (dropInfo.Data is IEnumerable<string>)
             {
                 dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
                 dropInfo.Effects = DragDropEffects.Copy;
@@ -44,39 +44,43 @@ namespace HaMusic.DragDrop
 
         public long GetAfterFromDropInfo(IDropInfo dropInfo)
         {
-            long after;
             if ((dropInfo.InsertPosition & RelativeInsertPosition.AfterTargetItem) != 0)
             {
-                after = dropInfo.TargetItem == null ? data.SelectedPlaylist.PlaylistItems[data.SelectedPlaylist.PlaylistItems.Count - 1].UID : ((PlaylistItem)dropInfo.TargetItem).UID;
+                if (dropInfo.TargetItem == null)
+                    return data.SelectedPlaylist.PlaylistItems[data.SelectedPlaylist.PlaylistItems.Count - 1].UID;
+                else
+                    return ((PlaylistItem)dropInfo.TargetItem).UID;
             }
             else if ((dropInfo.InsertPosition & RelativeInsertPosition.BeforeTargetItem) != 0)
             {
-                int index = data.SelectedPlaylist.PlaylistItems.IndexOf((PlaylistItem)dropInfo.TargetItem);
-                after = index == 0 ? -1 : data.SelectedPlaylist.PlaylistItems[index - 1].UID;
+                if (dropInfo.TargetItem == null)
+                    return -1;
+                else
+                {
+                    int index = data.SelectedPlaylist.PlaylistItems.IndexOf((PlaylistItem)dropInfo.TargetItem);
+                    return index == 0 ? -1 : data.SelectedPlaylist.PlaylistItems[index - 1].UID;
+                }
             }
             else
             {
                 return -1;
             }
-            return after;
         }
 
         public void Drop(IDropInfo dropInfo)
         {
-            if ((dropInfo.Data is PlaylistItem || dropInfo.Data is IEnumerable<PlaylistItem>) && dropInfo.TargetItem != null)
+            if (dropInfo.Data is IEnumerable<PlaylistItem>)
             {
-                PlaylistItem[] items = dropInfo.Data is PlaylistItem ? new PlaylistItem[] { (PlaylistItem)dropInfo.Data } : ((IEnumerable<PlaylistItem>)dropInfo.Data).ToArray();
-                parent.DragMoveItems(items, GetAfterFromDropInfo(dropInfo));
+                parent.DragMoveItems((IEnumerable<PlaylistItem>)dropInfo.Data, GetAfterFromDropInfo(dropInfo));
             }
             else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])((DataObject)dropInfo.Data).GetData(DataFormats.FileDrop);
                 parent.AddSongs(files, GetAfterFromDropInfo(dropInfo));
             }
-            else if (dropInfo.Data is string || dropInfo.Data is IEnumerable<string>)
+            else if (dropInfo.Data is IEnumerable<string>)
             {
-                string[] files = dropInfo.Data is string ? new string[] { (string)dropInfo.Data } : ((IEnumerable<string>)dropInfo.Data).ToArray();
-                parent.AddSongs(files, GetAfterFromDropInfo(dropInfo));
+                parent.AddSongs((IEnumerable<string>)dropInfo.Data, GetAfterFromDropInfo(dropInfo));
             }
         }
     }

@@ -10,6 +10,7 @@ using HaMusicLib;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace HaMusic
@@ -24,6 +25,7 @@ namespace HaMusic
         {
             this.parent = parent;
             PropertyChanged += Controls_PropertyChanged;
+            BindingOperations.SetBinding(parent, MainWindow.SelectedPlaylistItemsProperty, new Binding("SelectedPlaylist.PlaylistItems") { Source = this });
         }
 
         private ICommand _connectCommand;
@@ -129,23 +131,30 @@ namespace HaMusic
             }
         }
 
-        private PlaylistDropHandler ldh;
-        public PlaylistDropHandler ListDropHandler
+        private SortedDragHandler<PlaylistItem> _playlistDragHandler;
+        public SortedDragHandler<PlaylistItem> PlaylistDragHandler
         {
-            get { return ldh ?? (ldh = new PlaylistDropHandler(parent, this)); }
+            get { return _playlistDragHandler ?? (_playlistDragHandler = new SortedDragHandler<PlaylistItem>(parent, MainWindow.SelectedPlaylistItemsProperty)); }
         }
 
-        private TabHeaderDropHandler thdh;
+        private PlaylistDropHandler _playlistDropHandler;
+        public PlaylistDropHandler PlaylistDropHandler
+        {
+            get { return _playlistDropHandler ?? (_playlistDropHandler = new PlaylistDropHandler(parent, this)); }
+        }
+
+        private TabHeaderDropHandler _tabHeaderDropHandler;
         public TabHeaderDropHandler TabHeaderDropHandler
         {
-            get { return thdh ?? (thdh = new TabHeaderDropHandler(this)); }
+            get { return _tabHeaderDropHandler ?? (_tabHeaderDropHandler = new TabHeaderDropHandler(this)); }
         }
 
+        private ObservableCollection<string> _moveTypes;
         public ObservableCollection<string> MoveTypes
         {
             get
             {
-                return new ObservableCollection<string> { "Next", "Random", "Shuffle" };
+                return _moveTypes ?? (_moveTypes = new ObservableCollection<string> { "Next", "Random", "Shuffle" });
             }
         }
 

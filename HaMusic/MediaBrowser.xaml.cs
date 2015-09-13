@@ -38,16 +38,16 @@ namespace HaMusic
             }
         }
 
-        private ObservableCollection<string> SelectedData
+        public ObservableCollection<string> SelectedData
         {
             get { return (ObservableCollection<string>)GetValue(SelectedDataProperty); }
             set { SetValue(SelectedDataProperty, value); }
         }
 
-        private MediaBrowserDragHandler mediaBrowserDragHandler;
-        public MediaBrowserDragHandler MediaBrowserDragHandler
+        private SortedDragHandler<string> mediaBrowserDragHandler;
+        public SortedDragHandler<string> MediaBrowserDragHandler
         {
-            get { return mediaBrowserDragHandler ?? (mediaBrowserDragHandler = new MediaBrowserDragHandler()); }
+            get { return mediaBrowserDragHandler ?? (mediaBrowserDragHandler = new SortedDragHandler<string>(this, SelectedDataProperty)); }
         }
 
         public delegate void ItemDoubleClickedEventHandler(string item);

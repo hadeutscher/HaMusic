@@ -36,7 +36,10 @@
                 <ColumnDefinition Width="5" />
                 <ColumnDefinition Width="1*" x:Name="browserColumn" />
             </Grid.ColumnDefinitions>
-            <TabControl x:Name="playlistTabs" Focusable="False" Grid.Column="0" IsEnabled="{Binding Enabled}" ItemsSource="{Binding ServerDataSource.Playlists}" SelectedItem="{Binding SelectedPlaylist}" >
+            <TabControl x:Name="playlistTabs" Focusable="False" Grid.Column="0"
+                        IsEnabled="{Binding Enabled}"
+                        ItemsSource="{Binding ServerDataSource.Playlists}"
+                        SelectedItem="{Binding SelectedPlaylist}">
                 <TabControl.ItemContainerStyle>
                     <Style TargetType="{x:Type TabItem}">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -45,7 +48,10 @@
                 </TabControl.ItemContainerStyle>
                 <TabControl.ItemTemplate>
                     <DataTemplate>
-                        <this:EditableLabel x:Name="editableLabel" HorizontalAlignment="Stretch" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.TabHeaderDropHandler, ElementName=playlistTabs}" >
+                        <this:EditableLabel x:Name="editableLabel" HorizontalAlignment="Stretch" 
+                                            Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            TextChanged="TextBox_TextChanged"
+                                            dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.TabHeaderDropHandler, ElementName=playlistTabs}">
                             <this:EditableLabel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="New" Click="MenuItem_NewPlaylist" />
@@ -62,7 +68,15 @@
                 </TabControl.ItemTemplate>
                 <TabControl.ContentTemplate>
                     <DataTemplate>
-                        <this:FocusableListView x:Name="items" ItemsSource="{Binding PlaylistItems}" ff:MultiSelectorBehaviours.SynchronizedSelectedItems="{Binding DataContext.SelectedPlaylistItems, ElementName=playlistTabs}" SelectedItem="{Binding DataContext.SelectedPlaylistItem, Mode=OneWayToSource, ElementName=playlistTabs}" FocusedItem="{Binding DataContext.FocusedItem, ElementName=playlistTabs}" MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown" HorizontalContentAlignment="Stretch" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.ListDropHandler, ElementName=playlistTabs}">
+                        <this:FocusableListView x:Name="items" 
+                                                ItemsSource="{Binding PlaylistItems}"
+                                                ff:MultiSelectorBehaviours.SynchronizedSelectedItems="{Binding DataContext.SelectedPlaylistItems, ElementName=playlistTabs}"
+                                                SelectedItem="{Binding DataContext.SelectedPlaylistItem, Mode=OneWayToSource, ElementName=playlistTabs}"
+                                                FocusedItem="{Binding DataContext.FocusedItem, ElementName=playlistTabs}"
+                                                MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown"
+                                                HorizontalContentAlignment="Stretch"
+                                                dd:DragDrop.IsDragSource="True" dd:DragDrop.DragHandler="{Binding DataContext.PlaylistDragHandler, ElementName=playlistTabs}"
+                                                dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.PlaylistDropHandler, ElementName=playlistTabs}">
                             <this:FocusableListView.ItemTemplate>
                                 <DataTemplate>
                                     <DockPanel LastChildFill="True" HorizontalAlignment="Stretch">
@@ -86,7 +100,7 @@
                                                                     <Binding Path="UID" />
                                                                 </MultiBinding>
                                                             </DataTrigger.Binding>
-                                                            <Setter Property="Background" >
+                                                            <Setter Property="Background">
                                                                 <Setter.Value>
                                                                     <LinearGradientBrush EndPoint="1,0.5" MappingMode="RelativeToBoundingBox" StartPoint="0,0.5">
                                                                         <GradientStop Offset="-2" Color="#4095FF" />
@@ -100,13 +114,13 @@
                                                                 <BeginStoryboard>
                                                                     <Storyboard>
                                                                         <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[0].(GradientStop.Offset)"
-                                                                        From="-2" To="0" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                        From="-2" To="0" Duration="0:0:4" RepeatBehavior="Forever" />
                                                                         <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[1].(GradientStop.Offset)"
-                                                                        From="-1" To="1" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                        From="-1" To="1" Duration="0:0:4" RepeatBehavior="Forever" />
                                                                         <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[2].(GradientStop.Offset)"
-                                                                        From="0" To="2" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                        From="0" To="2" Duration="0:0:4" RepeatBehavior="Forever" />
                                                                         <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[3].(GradientStop.Offset)"
-                                                                        From="1" To="3" Duration="0:0:4" RepeatBehavior="Forever"/>
+                                                                        From="1" To="3" Duration="0:0:4" RepeatBehavior="Forever" />
                                                                     </Storyboard>
                                                                 </BeginStoryboard>
                                                             </DataTrigger.EnterActions>
@@ -131,7 +145,11 @@
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
             <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" ItemDoubleClicked="mediaBrowser_ItemDoubleClicked" IsEnabled="{Binding Enabled}" />
         </Grid>
-        <Slider x:Name="songSlider" Grid.Row="2" IsEnabled="{Binding Enabled}" Margin="10,5,10,0" Value="{Binding ServerDataSource.Position}" Maximum="{Binding ServerDataSource.Maximum}" ValueChanged="songSlider_ValueChanged"  HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10" />
+        <Slider x:Name="songSlider" Grid.Row="2" HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10"  Margin="10,5,10,0"
+                IsEnabled="{Binding Enabled}"
+                Value="{Binding ServerDataSource.Position}"
+                Maximum="{Binding ServerDataSource.Maximum}"
+                ValueChanged="songSlider_ValueChanged" />
         <Grid Grid.Row="3" HorizontalAlignment="Stretch">
             <Grid.Resources>
                 <Style TargetType="{x:Type Button}">
@@ -145,20 +163,24 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" >
+            <Grid Grid.Column="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition />
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0" Command="{Binding ConnectCommand}" Margin="5,5,2,10">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/connect.png" />
                     </StackPanel>
                 </Button>
-                <ListView Grid.Column="1" x:Name="moveType" VerticalAlignment="Center" IsEnabled="{Binding Enabled}" SelectedValue="{Binding SelectedMove}" ItemsSource="{Binding MoveTypes}" SelectionChanged="moveType_SelectionChanged">
+                <ListView Grid.Column="1" x:Name="moveType" VerticalAlignment="Center"
+                          IsEnabled="{Binding Enabled}"
+                          SelectedValue="{Binding SelectedMove}"
+                          ItemsSource="{Binding MoveTypes}"
+                          SelectionChanged="moveType_SelectionChanged">
                     <ListView.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="DodgerBlue" />
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
@@ -172,33 +194,36 @@
                         <Binding Path="ServerDataSource.Maximum" UpdateSourceTrigger="PropertyChanged" />
                     </MultiBinding>
                 </Label>
-                <Button Grid.Column="4" x:Name="stopBtn" Command="{Binding StopCommand}" >
+                <Button Grid.Column="4" x:Name="stopBtn" Command="{Binding StopCommand}">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/stop.png" />
                     </StackPanel>
                 </Button>
             </Grid>
-            <Button Grid.Column="1" x:Name="ppBtn" Command="{Binding PlayPauseCommand}" Height="53" Width="53" >
+            <Button Grid.Column="1" x:Name="ppBtn" Command="{Binding PlayPauseCommand}" Height="53" Width="53">
                 <StackPanel>
                     <Image Source="{Binding PlayPauseImage}" />
                 </StackPanel>
             </Button>
             <Grid Grid.Column="2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition />
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" x:Name="nextBtn" Command="{Binding NextCommand}" >
+                <Button Grid.Column="0" x:Name="nextBtn" Command="{Binding NextCommand}">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/next.png" />
                     </StackPanel>
                 </Button>
-                <Slider Grid.Column="1" x:Name="volumeSlider" Margin="10,0,10,5" VerticalAlignment="Center" HorizontalAlignment="Left" IsEnabled="{Binding Enabled}" Maximum="100" Width="100" Value="{Binding ServerDataSource.Volume}" ValueChanged="volumeSlider_ValueChanged" SmallChange="1" LargeChange="10" />
+                <Slider Grid.Column="1" x:Name="volumeSlider" Margin="10,0,10,5" VerticalAlignment="Center" HorizontalAlignment="Left" Maximum="100" Width="100" SmallChange="1" LargeChange="10"
+                        IsEnabled="{Binding Enabled}"
+                        Value="{Binding ServerDataSource.Volume}"
+                        ValueChanged="volumeSlider_ValueChanged" />
                 <Button Grid.Column="3" Command="{Binding IndexSettingsCommand}" Margin="2,5,5,10">
                     <StackPanel>
-                        <Image Source="/HaMusic;component/Images/add.png"/>
+                        <Image Source="/HaMusic;component/Images/add.png" />
                     </StackPanel>
                 </Button>
             </Grid>

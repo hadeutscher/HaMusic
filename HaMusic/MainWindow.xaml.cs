@@ -14,6 +14,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -30,7 +31,10 @@ namespace HaMusic
         private Thread connThread = null;
         private Object connectLock = new Object();
         private bool internalChanging = false;
+
         public static string defaultIndexPath = Path.Combine(GetLocalSettingsFolder(), "index.txt");
+        public static readonly DependencyProperty SelectedPlaylistItemsProperty =
+            DependencyProperty.Register("SelectedPlaylistItems", typeof(IEnumerable<PlaylistItem>), typeof(MainWindow), new PropertyMetadata());
 
         public MainWindow()
         {
@@ -378,31 +382,9 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)lv.SelectedValue).UID });
         }
 
-        private Dictionary<PlaylistItem, int> GetPlaylistIndices(Playlist pl, List<PlaylistItem> plItems)
+        public void DragMoveItems(IEnumerable<PlaylistItem> items, long after)
         {
-            Dictionary<PlaylistItem, int> result = new Dictionary<PlaylistItem, int>();
-            int i = 0;
-            foreach (PlaylistItem item in pl.PlaylistItems)
-            {
-                result.Add(item, i++);
-            }
-            return result;
-        }
-
-        public void DragMoveItems(PlaylistItem[] plItems, long after)
-        {
-            /*List<long> items;
-            if (dropInfo.Data is PlaylistItem)
-                items = new List<long> { ((PlaylistItem)dropInfo.Data).UID };
-            else
-            {
-                List<PlaylistItem> plItems = ((IEnumerable<PlaylistItem>)dropInfo.Data).ToList();
-                Dictionary<PlaylistItem, int> indices = GetPlaylistIndices(data.SelectedPlaylist, plItems);
-                plItems.Sort((x, y) => indices[x].CompareTo(indices[y]));
-                items = plItems.Select(x => x.UID).ToList();
-            }
-            long after = data.ListDropHandler.GetAfterFromDropInfo(dropInfo);
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REORDER, new HaProtoImpl.REORDER() { pid = data.SelectedPlaylist.UID, after = after, items = items });*/
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REORDER, new HaProtoImpl.REORDER() { pid = data.SelectedPlaylist.UID, after = after, items = items.Select(x => x.UID).ToList() });
         }
 
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
