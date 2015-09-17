@@ -90,6 +90,7 @@ namespace HaMusicServer
         public void LoadSourceState(string path)
         {
             int pos, vol;
+            bool playing;
             lock (DataSource.Lock)
             {
                 using (FileStream fs = File.OpenRead(path))
@@ -100,10 +101,12 @@ namespace HaMusicServer
                 }
                 pos = DataSource.Position;
                 vol = DataSource.Volume;
+                playing = DataSource.Playing;
                 BroadcastMessage(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = DataSource });
             }
             mover.OnSetDataSource();
             player.OnSongChanged();
+            player.Playing = playing;
             player.Position = pos;
             player.Volume = vol;
         }

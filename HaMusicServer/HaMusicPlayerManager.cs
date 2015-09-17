@@ -24,12 +24,20 @@ namespace HaMusicServer
             this.player.SongEnded += Player_SongEnded;
         }
 
-        private void Player_SongEnded(object sender, EventArgs e)
+        private PlaylistItem AdvancePlaylist()
         {
             lock (mainForm.DataSource.Lock)
             {
-                mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
+                PlaylistItem item = mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
+                if (SongChanged != null)
+                    SongChanged(this, item);
+                return item;
             }
+        }
+
+        private void Player_SongEnded(object sender, EventArgs e)
+        {
+            AdvancePlaylist();
             OnSongChanged();
         }
 
@@ -91,12 +99,10 @@ namespace HaMusicServer
                     PlayingChanged(this, length != -1);
                     break;
                 }
-                PlaylistItem item;
                 lock (mainForm.DataSource.Lock)
                 {
                     mainForm.Mover.IncreaseErrors();
-                    item = mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
-                    SongChanged(this, item);
+                    AdvancePlaylist();
                 }
             }
         }

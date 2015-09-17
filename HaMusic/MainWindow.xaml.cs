@@ -516,7 +516,8 @@ namespace HaMusic
             if (ofd.ShowDialog() != true)
                 return;
 
-            AddSongs(File.ReadLines(ofd.FileName), ((Playlist)((MenuItem)sender).DataContext).UID);
+            Playlist pl = (Playlist)((MenuItem)sender).DataContext;
+            AddSongs(File.ReadLines(ofd.FileName), GetAfterFromIndex(pl, pl.PlaylistItems.Count), pl.UID);
         }
 
         private void MenuItem_ExportPlaylist(object sender, RoutedEventArgs e)
