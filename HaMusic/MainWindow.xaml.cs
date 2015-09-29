@@ -377,9 +377,9 @@ namespace HaMusic
                 HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
         }
 
-        public void SelectItemExecuted(ListView lv)
+        public void SelectItemExecuted(PlaylistItem item)
         {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)lv.SelectedValue).UID });
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = item.UID });
         }
 
         public void DragMoveItems(IEnumerable<PlaylistItem> items, long after)
@@ -389,7 +389,11 @@ namespace HaMusic
 
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            SelectItemExecuted((ListView)sender);
+            PlaylistItem item = ((FrameworkElement)e.OriginalSource).DataContext as PlaylistItem;
+            if (item != null)
+            {
+                SelectItemExecuted(item);
+            }
             e.Handled = true;
         }
 

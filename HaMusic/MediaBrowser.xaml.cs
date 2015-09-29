@@ -109,7 +109,11 @@ namespace HaMusic
         {
             if (ItemDoubleClicked != null)
             {
-                ItemDoubleClicked((string)((FrameworkElement)e.OriginalSource).DataContext);
+                string item = ((FrameworkElement)e.OriginalSource).DataContext as string;
+                if (item != null)
+                {
+                    ItemDoubleClicked((string)((FrameworkElement)e.OriginalSource).DataContext);
+                }
             }
             e.Handled = true;
         }
