@@ -159,11 +159,11 @@ namespace HaMusic
         private async Task IndexRecursive(StreamWriter sw, DirectoryInfo dir)
         {
             logBox.Text = "Indexing " + dir.FullName + "...";
-            foreach (DirectoryInfo subdir in dir.EnumerateDirectories())
+            foreach (DirectoryInfo subdir in dir.EnumerateDirectories().OrderBy(x => x.Name))
             {
                 await IndexRecursive(sw, subdir);
             }
-            foreach (FileInfo file in dir.EnumerateFiles())
+            foreach (FileInfo file in dir.EnumerateFiles().OrderBy(x => x.Name))
             {
                 if (extensionWhitelist.Contains(file.Extension.ToLower()))
                     await sw.WriteLineAsync(file.FullName);
