@@ -28,6 +28,11 @@ namespace HaMusicLib
         {
             if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;
+            return SetFieldAndNotify<T>(ref field, value, name);
+        }
+
+        protected bool SetFieldAndNotify<T>(ref T field, T value, [CallerMemberName] string name = null)
+        {
             field = value;
             OnPropertyChanged(name);
             return true;

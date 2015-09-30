@@ -13,6 +13,7 @@
         <hmwpf:EnumConverter x:Key="EnumConverter" />
         <hmwpf:BindingConverter x:Key="BindingConverter" />
         <hmwpf:SeekTimeConverter x:Key="SeekTimeConverter" />
+        <hmwpf:SongPathConverter x:Key="SongPathConverter" />
         <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
         <hmwpf:VisibilityBindingConverter x:Key="MultiBindingToVisibilityConverter" Converter1="{StaticResource BindingConverter}" Converter2="{StaticResource VisibilityConverter}" />
         <Style TargetType="Slider">
@@ -76,7 +77,8 @@
                                                 MouseDoubleClick="items_MouseDoubleClick" KeyDown="items_KeyDown"
                                                 HorizontalContentAlignment="Stretch"
                                                 dd:DragDrop.IsDragSource="True" dd:DragDrop.DragHandler="{Binding DataContext.PlaylistDragHandler, ElementName=playlistTabs}"
-                                                dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.PlaylistDropHandler, ElementName=playlistTabs}">
+                                                dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.PlaylistDropHandler, ElementName=playlistTabs}"
+                                                hmwpf:ListViewBehavior.ItemInView="{Binding DataContext.ItemInView, ElementName=playlistTabs}">
                             <this:FocusableListView.ItemTemplate>
                                 <DataTemplate>
                                     <DockPanel LastChildFill="True" HorizontalAlignment="Stretch">
@@ -167,11 +169,12 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Command="{Binding ConnectCommand}" Margin="5,5,2,10">
+                <Button x:Name="connectBtn" Grid.Column="0" Command="{Binding ConnectCommand}" Margin="5,5,2,10">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/connect.png" />
                     </StackPanel>
@@ -188,13 +191,24 @@
                         <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="White" />
                     </ListView.Resources>
                 </ListView>
-                <Label Grid.Column="3" VerticalAlignment="Center" Margin="10,0,10,5">
+                <Label Grid.Column="2"
+                       MinHeight="{Binding Height, ElementName=connectBtn}"
+                       Margin="{Binding Margin, ElementName=connectBtn}"
+                       VerticalAlignment="Center"
+                       HorizontalContentAlignment="Center"
+                       VerticalContentAlignment="Center"
+                       Content="{Binding ServerDataSource.CurrentItem.Item, Converter={StaticResource SongPathConverter}}">
+                    <Label.InputBindings>
+                        <MouseBinding Command="{Binding ShowPlayingCommand}" MouseAction="LeftClick" />
+                    </Label.InputBindings>
+                </Label>
+                <Label Grid.Column="4" VerticalAlignment="Center" Margin="10,0,10,5">
                     <MultiBinding Converter="{StaticResource SeekTimeConverter}">
                         <Binding Path="ServerDataSource.Position" UpdateSourceTrigger="PropertyChanged" />
                         <Binding Path="ServerDataSource.Maximum" UpdateSourceTrigger="PropertyChanged" />
                     </MultiBinding>
                 </Label>
-                <Button Grid.Column="4" x:Name="stopBtn" Command="{Binding StopCommand}">
+                <Button Grid.Column="5" x:Name="stopBtn" Command="{Binding StopCommand}">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/stop.png" />
                     </StackPanel>

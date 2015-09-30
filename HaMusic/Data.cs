@@ -37,6 +37,15 @@ namespace HaMusic
             }
         }
 
+        private ICommand _showPlayingCommand;
+        public ICommand ShowPlayingCommand
+        {
+            get
+            {
+                return _showPlayingCommand ?? (_showPlayingCommand = new RelayCommand(delegate { parent.BringSelectedItemIntoView(); }));
+            }
+        }
+
         private ICommand _playpauseCommand;
         public ICommand PlayPauseCommand
         {
@@ -220,6 +229,20 @@ namespace HaMusic
             set
             {
                 SetField(ref _focusedItem, value);
+            }
+        }
+
+        private PlaylistItem _itemInView;
+        public PlaylistItem ItemInView
+        {
+            get
+            {
+                return _itemInView;
+            }
+            set
+            {
+                // Force notify even if field is equal
+                SetFieldAndNotify(ref _itemInView, value);
             }
         }
 
