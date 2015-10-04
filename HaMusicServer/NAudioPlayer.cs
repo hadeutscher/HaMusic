@@ -54,6 +54,12 @@ namespace HaMusicServer
                 {
                     SetVolumeInternal(vol);
                 }
+				else
+				{
+					MakePlayerInternal();
+					SetVolumeInternal(vol);
+					CleanPlayerAndStream();
+				}
             });
         }
 
