@@ -5,10 +5,13 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 using HaMusic.DragDrop;
-using System.Collections.Generic;
+using HaMusic.Wpf;
+using HaMusicLib;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace HaMusic
@@ -18,24 +21,27 @@ namespace HaMusic
     /// </summary>
     public partial class MediaBrowser : UserControl
     {
+        public static readonly DependencyProperty SourceDataProperty =
+            DependencyProperty.Register("SourceData", typeof(ObservableCollection<PlaylistItem>), typeof(MediaBrowser), new PropertyMetadata(new ObservableCollection<string>()));
         public static readonly DependencyProperty SelectedDataProperty =
             DependencyProperty.Register("SelectedData", typeof(ObservableCollection<string>), typeof(MediaBrowser), new PropertyMetadata(new ObservableCollection<string>()));
+
+        public static readonly ObservableCollection<string> TooLong = new ObservableCollection<string> { "Too many results; please define your search better" };
 
         public MediaBrowser()
         {
             InitializeComponent();
             ((FrameworkElement)this.Content).DataContext = this;
+            MultiBinding mb = new MultiBinding() { Converter = new MediaBrowserFilterConverter(this) };
+            mb.Bindings.Add(new Binding("SourceData") { Source = this });
+            mb.Bindings.Add(new Binding("textBox.Text") { Source = this });
+            BindingOperations.SetBinding(this, SelectedDataProperty, mb);
         }
 
-        private List<string> _sourceData;
-        public List<string> SourceData
+        public ObservableCollection<PlaylistItem> SourceData
         {
-            get { return _sourceData ?? (_sourceData = new List<string>()); }
-            set
-            {
-                _sourceData = value;
-                FilterData();
-            }
+            get { return (ObservableCollection<PlaylistItem>)GetValue(SourceDataProperty); }
+            set { SetValue(SourceDataProperty, value); }
         }
 
         public ObservableCollection<string> SelectedData
@@ -55,21 +61,22 @@ namespace HaMusic
 
         private void textBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            FilterData();
+            // This causes the binding to be recalculated, calling MediaBrowserFilterConverter which will filter according to the new text
+            this.InvalidateProperty(SelectedDataProperty);
         }
 
-        private void FilterData()
+        public ObservableCollection<string> FilterData(ObservableCollection<PlaylistItem> sourceData, string filter)
         {
-            string[] terms = textBox.Text.ToLower().Split(' ');
+            string[] terms = filter.ToLower().Split(' ');
             if (terms.Length > 0 && terms[0] != "")
             {
-                List<string> results = new List<string>();
-                foreach (string curr in _sourceData)
+                ObservableCollection<string> results = new ObservableCollection<string>();
+                foreach (PlaylistItem curr in sourceData)
                 {
                     bool pass = true;
                     foreach (string term in terms)
                     {
-                        if (!curr.ToLower().Contains(term))
+                        if (!curr.Item.ToLower().Contains(term))
                         {
                             pass = false;
                             break;
@@ -77,32 +84,28 @@ namespace HaMusic
                     }
                     if (pass)
                     {
-                        results.Add(curr);
+                        results.Add(curr.Item);
                         if (results.Count > 10000)
                         {
-                            SelectedData = new ObservableCollection<string> { "Too many results; please define your search better" };
-                            listView.IsEnabled = false;
-                            return;
+                            return TooLong;
                         }
                     }
                 }
-                SelectedData = new ObservableCollection<string>(results);
+                return new ObservableCollection<string>(results);
             }
             else
             {
                 SelectedData.Clear();
-                if (_sourceData.Count > 10000)
+                if (sourceData.Count > 10000)
                 {
-                    SelectedData = new ObservableCollection<string> { "Too many results; please define your search better" };
-                    listView.IsEnabled = false;
-                    return;
+                    return TooLong;
                 }
                 else
                 {
-                    SelectedData = new ObservableCollection<string>(_sourceData);
+                    return new ObservableCollection<string>(sourceData.Select(x => x.Item));
                 }
             }
-            listView.IsEnabled = true;
+            
         }
 
         private void listView_MouseDoubleClick(object sender, MouseButtonEventArgs e)

@@ -89,7 +89,7 @@ namespace HaMusicServer
                         "\tkick [--ban] <ip> - disconnect client, optionally banning it",
                         "\tunban <ip> - unban client",
                         "\tbanlist - print banlist",
-                        "\tsource [add|remove|reload|addext|removeext] <path|ext>",
+                        "\tsource [add|remove|reload|addext|removeext|list] <path|ext>",
                         "\ttail [n] - print last n lines from the log, default 10",
                         "\tflush [path] - force DataSource flush, optionally into a specific path",
                         "\tload [path] - load DataSource, optionally from a specific path",
@@ -257,6 +257,11 @@ namespace HaMusicServer
 
         public void command_source(string[] args)
         {
+            if (args.Length < 1)
+            {
+                ConsoleWriteLine("source: not enough arguments, try `help`");
+                return;
+            }
             switch (args[0])
             {
                 case "add":
@@ -270,6 +275,7 @@ namespace HaMusicServer
                     }
                     break;
                 case "reload":
+                case "list":
                     break;
                 default:
                     ConsoleWriteLine(string.Format("source: unknown operation {0}, try `help`", args[0]));
@@ -301,6 +307,24 @@ namespace HaMusicServer
                     lock (mainForm.extensionWhitelist)
                     {
                         mainForm.extensionWhitelist.RemoveAll(x => x.ToLower() == args[1].ToLower());
+                    }
+                    break;
+                case "list":
+                    ConsoleWriteLine("Sources:");
+                    lock (mainForm.libraryPaths)
+                    {
+                        foreach (string path in mainForm.libraryPaths)
+                        {
+                            ConsoleWriteLine(path);
+                        }
+                    }
+                    ConsoleWriteLine("Extensions:");
+                    lock (mainForm.extensionWhitelist)
+                    {
+                        foreach (string ext in mainForm.extensionWhitelist)
+                        {
+                            ConsoleWriteLine(ext);
+                        }
                     }
                     break;
                 case "reload":

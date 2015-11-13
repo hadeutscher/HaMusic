@@ -145,7 +145,7 @@
                 </TabControl.ContentTemplate>
             </TabControl>
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
-            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" ItemDoubleClicked="mediaBrowser_ItemDoubleClicked" IsEnabled="{Binding Enabled}" />
+            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" SourceData="{Binding ServerDataSource.LibraryPlaylist}" ItemDoubleClicked="mediaBrowser_ItemDoubleClicked" IsEnabled="{Binding Enabled}" />
         </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10"  Margin="10,5,10,0"
                 IsEnabled="{Binding Enabled}"
@@ -235,7 +235,7 @@
                         IsEnabled="{Binding Enabled}"
                         Value="{Binding ServerDataSource.Volume}"
                         ValueChanged="volumeSlider_ValueChanged" />
-                <Button Grid.Column="3" Command="{Binding IndexSettingsCommand}" Margin="2,5,5,10">
+                <Button Grid.Column="3" Margin="2,5,5,10">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/add.png" />
                     </StackPanel>

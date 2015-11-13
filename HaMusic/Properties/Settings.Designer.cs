@@ -34,16 +34,5 @@ namespace HaMusic.Properties {
                 this["lastAddr"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        public global::System.Collections.Specialized.StringCollection mediaSources {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["mediaSources"]));
-            }
-            set {
-                this["mediaSources"] = value;
-            }
-        }
     }
 }

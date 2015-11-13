@@ -82,15 +82,6 @@ namespace HaMusic
             }
         }
 
-        private ICommand _idxsetCommand;
-        public ICommand IndexSettingsCommand
-        {
-            get
-            {
-                return _idxsetCommand ?? (_idxsetCommand = new RelayCommand(delegate { parent.IndexerSettingsExecuted(); }, delegate { return Enabled; }));
-            }
-        }
-
         private void Controls_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "ServerDataSource" || e.PropertyName == null)

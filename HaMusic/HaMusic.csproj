@@ -67,13 +67,12 @@
     </Compile>
     <Compile Include="FocusableListView.cs" />
     <Compile Include="FunctionalFun\IListItemConverter.cs" />
-    <Compile Include="IndexerSettings.xaml.cs">
-      <DependentUpon>IndexerSettings.xaml</DependentUpon>
-    </Compile>
     <Compile Include="MediaBrowser.xaml.cs">
       <DependentUpon>MediaBrowser.xaml</DependentUpon>
     </Compile>
     <Compile Include="FunctionalFun\MultiSelectorBehaviours.cs" />
+    <Compile Include="Wpf\MediaBrowserFilterConverter.cs" />
+    <Compile Include="Wpf\MediaBrowserListEnableConverter.cs" />
     <Compile Include="Wpf\RelayCommand.cs" />
     <Compile Include="FunctionalFun\TwoListSynchronizer.cs" />
     <Compile Include="Wpf\BindingConverter.cs" />
@@ -88,10 +87,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="EditableLabel.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="IndexerSettings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

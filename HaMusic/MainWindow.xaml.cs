@@ -43,15 +43,6 @@ namespace HaMusic
             data = new Data(this);
             DataContext = data;
             SetEnabled(false);
-            TryReloadMediaIndex();
-        }
-
-        private void TryReloadMediaIndex()
-        {
-            if (File.Exists(defaultIndexPath))
-            {
-                mediaBrowser.SourceData = File.ReadAllLines(defaultIndexPath).ToList();
-            }
         }
 
         public static string GetLocalSettingsFolder()
@@ -140,12 +131,17 @@ namespace HaMusic
                             switch (type)
                             {
                                 case HaProtoImpl.Opcode.GETDB:
-                                    // Why would anyone try to get the client's DB?
                                     throw new NotSupportedException();
                                 case HaProtoImpl.Opcode.SETDB:
                                     HaProtoImpl.SETDB setdb = HaProtoImpl.SETDB.Parse(buf);
                                     data.ServerDataSource = setdb.dataSource;
                                     BringSelectedItemIntoView();
+                                    break;
+                                case HaProtoImpl.Opcode.LIBRARY_ADD:
+                                case HaProtoImpl.Opcode.LIBRARY_REMOVE:
+                                case HaProtoImpl.Opcode.LIBRARY_RESET:
+                                    // No selection eye candy for library because it's not worth the time it will take to implement
+                                    HaProtoImpl.ApplyPacketToDatabase(type, buf, data.ServerDataSource, out foo);
                                     break;
                                 case HaProtoImpl.Opcode.ADD:
                                 case HaProtoImpl.Opcode.REMOVE:
@@ -291,15 +287,6 @@ namespace HaMusic
         public void NewPlaylistExecuted()
         {
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.ADDPL, new HaProtoImpl.ADDPL());
-        }
-
-        public void IndexerSettingsExecuted()
-        {
-            IndexerSettings isWnd = new IndexerSettings();
-            if (isWnd.ShowDialog() == true)
-            {
-                TryReloadMediaIndex();
-            }
         }
 
         public void NextExecuted()
