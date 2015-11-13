@@ -19,6 +19,7 @@ namespace HaMusicLib
         public const string LocalVersion = "3.0";
         public object Lock = new object();
         private FastAccessList<long, Playlist> playlists = new FastAccessList<long, Playlist>(x => x.UID);
+        private Playlist library = new Playlist();
         private PlaylistItem currentItem = null;
         private PlaylistItem nextItemOverride = null;
         private HaProtoImpl.MoveType mode = HaProtoImpl.MoveType.NEXT;
@@ -176,6 +177,20 @@ namespace HaMusicLib
             set
             {
                 SetField(ref nextItemOverride, value);
+            }
+        }
+
+        [ProtoMember(10)]
+        public Playlist LibraryPlaylist
+        {
+            get
+            {
+                return library;
+            }
+
+            set
+            {
+                SetField(ref library, value);
             }
         }
 

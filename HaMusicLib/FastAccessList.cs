@@ -98,6 +98,8 @@ namespace HaMusicLib
 
         public bool Contains(T item)
         {
+            if (item == null)
+                return false;
             return dict.ContainsKey(keyDerivingFunc(item));
         }
 

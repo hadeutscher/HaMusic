@@ -52,7 +52,9 @@ namespace HaMusicServer
                             }
                             break;
                         case HaProtoImpl.Opcode.SETDB:
-                            // Why would anyone try to set the server's DB?
+                        case HaProtoImpl.Opcode.LIBRARY_ADD:
+                        case HaProtoImpl.Opcode.LIBRARY_REMOVE:
+                        case HaProtoImpl.Opcode.LIBRARY_RESET:
                             throw new NotSupportedException();
                         case HaProtoImpl.Opcode.ADD:
                         case HaProtoImpl.Opcode.REMOVE:

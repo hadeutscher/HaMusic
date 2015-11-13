@@ -51,6 +51,9 @@ namespace HaMusicLib
             SETMOVE,
             REORDER,
             INJECT,
+            LIBRARY_ADD,
+            LIBRARY_REMOVE,
+            LIBRARY_RESET,
 
             // Skip is special
             SKIP,
@@ -736,6 +739,142 @@ namespace HaMusicLib
             }
         }
 
+        [ProtoContract]
+        public class LIBRARY_ADD : HaProtoImpl.HaProtoPacket
+        {
+            [ProtoMember(1)]
+            public List<string> paths { get; set; }
+
+            public LIBRARY_ADD()
+            {
+            }
+
+            public static LIBRARY_ADD Parse(byte[] buf)
+            {
+                using (MemoryStream ms = new MemoryStream(buf))
+                    return Serializer.Deserialize<LIBRARY_ADD>(ms);
+            }
+
+            public byte[] Build()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    Serializer.Serialize<LIBRARY_ADD>(ms, this);
+                    return ms.ToArray();
+                }
+            }
+
+            public bool ApplyToDatabase(ServerDataSource dataSource)
+            {
+                lock (dataSource.Lock)
+                {
+                    foreach (string path in paths)
+                    {
+                        dataSource.LibraryPlaylist.PlaylistItems.Add(new PlaylistItem() { Item = path });
+                    }
+                }
+                return false;
+            }
+        }
+
+        [ProtoContract]
+        public class LIBRARY_REMOVE : HaProtoImpl.HaProtoPacket
+        {
+            [ProtoMember(1)]
+            public List<string> paths { get; set; }
+
+            public LIBRARY_REMOVE()
+            {
+            }
+
+            public static LIBRARY_REMOVE Parse(byte[] buf)
+            {
+                using (MemoryStream ms = new MemoryStream(buf))
+                    return Serializer.Deserialize<LIBRARY_REMOVE>(ms);
+            }
+
+            public byte[] Build()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    Serializer.Serialize<LIBRARY_REMOVE>(ms, this);
+                    return ms.ToArray();
+                }
+            }
+
+            public bool ApplyToDatabase(ServerDataSource dataSource)
+            {
+                HashSet<string> paths_set = new HashSet<string>(paths);
+                bool result = false;
+                lock (dataSource.Lock)
+                {
+                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.CurrentItem) && paths_set.Contains(dataSource.CurrentItem.Item))
+                    {
+                        dataSource.CurrentItem = null;
+                        result = true;
+                    }
+                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.NextItemOverride) && paths_set.Contains(dataSource.NextItemOverride.Item))
+                    {
+                        dataSource.NextItemOverride = null;
+                    }
+                    foreach (string path in paths)
+                    {
+                        dataSource.LibraryPlaylist.PlaylistItems.RemoveAll(x => paths_set.Contains(x.Item));
+                    }
+                }
+                return result;
+            }
+        }
+
+        [ProtoContract]
+        public class LIBRARY_RESET : HaProtoImpl.HaProtoPacket
+        {
+            [ProtoMember(1)]
+            public List<string> paths { get; set; }
+
+            public LIBRARY_RESET()
+            {
+            }
+
+            public static LIBRARY_RESET Parse(byte[] buf)
+            {
+                using (MemoryStream ms = new MemoryStream(buf))
+                    return Serializer.Deserialize<LIBRARY_RESET>(ms);
+            }
+
+            public byte[] Build()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    Serializer.Serialize<LIBRARY_RESET>(ms, this);
+                    return ms.ToArray();
+                }
+            }
+
+            public bool ApplyToDatabase(ServerDataSource dataSource)
+            {
+                bool result = false;
+                lock (dataSource.Lock)
+                {
+                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.CurrentItem))
+                    {
+                        dataSource.CurrentItem = null;
+                        result = true;
+                    }
+                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.NextItemOverride))
+                    {
+                        dataSource.NextItemOverride = null;
+                    }
+                    dataSource.LibraryPlaylist.PlaylistItems.Clear();
+                    foreach (string path in paths)
+                    {
+                        dataSource.LibraryPlaylist.PlaylistItems.Add(new PlaylistItem() { Item = path });
+                    }
+                }
+                return result;
+            }
+        }
+
         public static HaProtoImpl.HaProtoPacket ApplyPacketToDatabase(HaProtoImpl.Opcode op, byte[] data, ServerDataSource dataSource, out bool result)
         {
             HaProtoPacket packet;
@@ -773,6 +912,15 @@ namespace HaMusicLib
                     break;
                 case HaProtoImpl.Opcode.INJECT:
                     packet = HaProtoImpl.INJECT.Parse(data);
+                    break;
+                case HaProtoImpl.Opcode.LIBRARY_ADD:
+                    packet = HaProtoImpl.LIBRARY_ADD.Parse(data);
+                    break;
+                case HaProtoImpl.Opcode.LIBRARY_REMOVE:
+                    packet = HaProtoImpl.LIBRARY_REMOVE.Parse(data);
+                    break;
+                case HaProtoImpl.Opcode.LIBRARY_RESET:
+                    packet = HaProtoImpl.LIBRARY_RESET.Parse(data);
                     break;
                 default:
                     throw new NotImplementedException();

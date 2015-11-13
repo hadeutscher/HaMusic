@@ -89,6 +89,7 @@ namespace HaMusicServer
                         "\tkick [--ban] <ip> - disconnect client, optionally banning it",
                         "\tunban <ip> - unban client",
                         "\tbanlist - print banlist",
+                        "\tsource [add|remove|reload|addext|removeext] <path|ext>",
                         "\ttail [n] - print last n lines from the log, default 10",
                         "\tflush [path] - force DataSource flush, optionally into a specific path",
                         "\tload [path] - load DataSource, optionally from a specific path",
@@ -165,7 +166,7 @@ namespace HaMusicServer
                 lock (mainForm.banlist)
                 {
                     mainForm.banlist.Add(ipaddr);
-                    mainForm.FlushBanlist();
+                    mainForm.WriteConfig();
                 }
             }
         }
@@ -181,7 +182,7 @@ namespace HaMusicServer
             lock (mainForm.banlist)
             {
                 mainForm.banlist.RemoveAll(x => x.Equals(addr));
-                mainForm.FlushBanlist();
+                mainForm.WriteConfig();
             }
         }
 
@@ -252,6 +253,60 @@ namespace HaMusicServer
         public void command_exit(string[] args)
         {
             mainForm.Close();
+        }
+
+        public void command_source(string[] args)
+        {
+            switch (args[0])
+            {
+                case "add":
+                case "remove":
+                case "addext":
+                case "removeext":
+                    if (args.Length < 2)
+                    {
+                        ConsoleWriteLine("source: not enough arguments, try `help`");
+                        return;
+                    }
+                    break;
+                case "reload":
+                    break;
+                default:
+                    ConsoleWriteLine(string.Format("source: unknown operation {0}, try `help`", args[0]));
+                    return;
+            }
+            switch (args[0])
+            {
+                case "add":
+                    lock (mainForm.libraryPaths)
+                    {
+                        mainForm.libraryPaths.Add(args[1]);
+                        mainForm.OnLibraryPathsChanged();
+                    }
+                    break;
+                case "remove":
+                    lock(mainForm.libraryPaths)
+                    {
+                        mainForm.libraryPaths.RemoveAll(x => x.ToLower().Contains(args[1].ToLower()));
+                        mainForm.OnLibraryPathsChanged();
+                    }
+                    break;
+                case "addext":
+                    lock (mainForm.extensionWhitelist)
+                    {
+                        mainForm.extensionWhitelist.Add(args[1]);
+                    }
+                    break;
+                case "removeext":
+                    lock (mainForm.extensionWhitelist)
+                    {
+                        mainForm.extensionWhitelist.RemoveAll(x => x.ToLower() == args[1].ToLower());
+                    }
+                    break;
+                case "reload":
+                    mainForm.BeginReloadLibrary();
+                    break;
+            }
         }
 
         private void ConsoleWrite(string data)

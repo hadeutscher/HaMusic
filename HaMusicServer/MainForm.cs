@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -25,13 +26,22 @@ namespace HaMusicServer
         private Mover mover;
         private ServerDataSource dataSource;
         public List<IPAddress> banlist = new List<IPAddress>();
+        public List<string> libraryPaths = new List<string>();
+        private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
+        public List<string> extensionWhitelist = new List<string>();
         private Action<string> log = delegate(string x) { };
         private HaShell hashell = null;
         private StreamWriter sw;
+        private object libraryLoaderLock = new object();
+        private bool indexerFinished = false;
 
         public static string defaultLogPath = Path.Combine(Program.GetLocalSettingsFolder(), "hms.log");
         public static string defaultSourcePath = Path.Combine(Program.GetLocalSettingsFolder(), "hms.db");
-        public static string defaultBanlistPath = Path.Combine(Program.GetLocalSettingsFolder(), "banlist.txt");
+        public static string defaultConfigPath = Path.Combine(Program.GetLocalSettingsFolder(), "config.txt");
+
+        private const string BANLIST_KEY = "banlist";
+        private const string LIBRARIES_KEY = "libraries";
+        private const string EXTENSIONS_KEY = "extensions";
 
 
         public MainForm()
@@ -47,6 +57,7 @@ namespace HaMusicServer
             player.SongChanged += player_SongChanged;
             player.PlayingChanged += player_PlayingChanged;
             RestoreState();
+            BeginReloadLibrary();
             hashell = new HaShell(this, console);
         }
 
@@ -72,19 +83,112 @@ namespace HaMusicServer
             }
         }
 
+        private Dictionary<string, List<string>> ReadConfig()
+        {
+            Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
+            if (File.Exists(defaultConfigPath))
+            {
+                foreach (string conf in File.ReadAllLines(defaultConfigPath))
+                {
+                    int splitterIndex = conf.IndexOf('=');
+                    if (splitterIndex < 0)
+                        continue;
+                    result[conf.Substring(0, splitterIndex)] = conf.Substring(splitterIndex + 1, conf.Length - splitterIndex - 1).Split(',').Select(x => x.Trim()).ToList();
+                }
+            }
+            return result;
+        }
+
         private void RestoreState()
         {
-            if (File.Exists(defaultBanlistPath))
-            {
-                foreach (string ip in File.ReadAllLines(defaultBanlistPath))
+            try {
+                Dictionary<string, List<string>> conf = ReadConfig();
+                List<string> workingSet;
+                if (conf.TryGetValue(BANLIST_KEY, out workingSet))
                 {
-                    IPAddress addr = null;
-                    if (IPAddress.TryParse(ip, out addr))
+                    lock (banlist)
                     {
-                        banlist.Add(addr);
+                        foreach (string ip in workingSet)
+                        {
+                            IPAddress addr = null;
+                            if (IPAddress.TryParse(ip, out addr))
+                            {
+                                banlist.Add(addr);
+                            }
+                        }
+                    }
+                }
+
+                if (conf.TryGetValue(LIBRARIES_KEY, out workingSet))
+                {
+                    lock (libraryPaths)
+                    {
+                        foreach (string library in workingSet)
+                        {
+                            libraryPaths.Add(library);
+                        }
+                        OnLibraryPathsChanged();
+                    }
+                }
+
+                if (conf.TryGetValue(EXTENSIONS_KEY, out workingSet))
+                {
+                    lock(extensionWhitelist)
+                    {
+                        foreach (string ext in workingSet)
+                        {
+                            extensionWhitelist.Add(ext);
+                        }
                     }
                 }
             }
+            catch (Exception e)
+            {
+                log("Config read failed: " + e.Message);
+            }
+        }
+
+        public void OnLibraryPathsChanged()
+        {
+            lock (libraryPaths)
+            {
+                foreach (FileSystemWatcher fsw in watchers)
+                {
+                    fsw.Dispose();
+                }
+                watchers.Clear();
+                foreach (string path in libraryPaths)
+                {
+                    FileSystemWatcher fsw = new FileSystemWatcher(path) { NotifyFilter = NotifyFilters.FileName };
+                    fsw.Created += Fsw_Created;
+                    fsw.Deleted += Fsw_Deleted;
+                    fsw.Renamed += Fsw_Renamed;
+                    watchers.Add(fsw);
+                    fsw.EnableRaisingEvents = true;
+                }
+            }
+        }
+
+        private void Fsw_Created(object sender, FileSystemEventArgs e)
+        {
+            HaProtoImpl.LIBRARY_ADD packet = new HaProtoImpl.LIBRARY_ADD() { paths = { e.FullPath } };
+            ExecutePacketAndBroadcast(HaProtoImpl.Opcode.LIBRARY_ADD, packet);
+        }
+
+        private void Fsw_Deleted(object sender, FileSystemEventArgs e)
+        {
+            HaProtoImpl.LIBRARY_REMOVE packet = new HaProtoImpl.LIBRARY_REMOVE() { paths = { e.FullPath } };
+            ExecutePacketAndBroadcast(HaProtoImpl.Opcode.LIBRARY_REMOVE, packet);
+        }
+
+        private void Fsw_Renamed(object sender, RenamedEventArgs e)
+        {
+            List<HaProtoImpl.HaProtoPacket> packets = new List<HaProtoImpl.HaProtoPacket> {
+                new HaProtoImpl.LIBRARY_REMOVE() { paths = { e.OldFullPath } },
+                new HaProtoImpl.LIBRARY_ADD() { paths = { e.FullPath } }
+            };
+            List<HaProtoImpl.Opcode> ops = new List<HaProtoImpl.Opcode> { HaProtoImpl.Opcode.LIBRARY_REMOVE, HaProtoImpl.Opcode.LIBRARY_ADD };
+            ExecutePacketsAndBroadcast(ops, packets);
         }
 
         public void LoadSourceState(string path)
@@ -93,16 +197,30 @@ namespace HaMusicServer
             bool playing;
             lock (DataSource.Lock)
             {
+                Playlist library = null;
+                if (indexerFinished)
+                {
+                    library = DataSource.LibraryPlaylist;
+                }
+                ServerDataSource newSource;
                 using (FileStream fs = File.OpenRead(path))
                 {
                     Playlist.DeserializeCounters(fs);
                     PlaylistItem.DeserializeCounters(fs);
-                    DataSource = ServerDataSource.Deserialize(fs);
+                    newSource = ServerDataSource.Deserialize(fs);
                 }
-                pos = DataSource.Position;
-                vol = DataSource.Volume;
-                playing = DataSource.Playing;
-                BroadcastMessage(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = DataSource });
+                lock (newSource.Lock)
+                {
+                    if (indexerFinished)
+                    {
+                        newSource.LibraryPlaylist = library;
+                    }
+                    DataSource = newSource;
+                    pos = DataSource.Position;
+                    vol = DataSource.Volume;
+                    playing = DataSource.Playing;
+                    BroadcastMessage(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = DataSource });
+                }
             }
             mover.OnSetDataSource();
             player.OnSongChanged();
@@ -124,18 +242,155 @@ namespace HaMusicServer
             }
         }
 
-        public void FlushBanlist()
+        private void WriteConfigInternal(Dictionary<string, List<string>> conf)
+        {
+            File.WriteAllLines(defaultConfigPath, conf.Keys.Select(x => x + "=" + conf[x].Aggregate((a, b) => a + "," + b)));
+        }
+
+        public void WriteConfig()
         {
             try
             {
+                Dictionary<string, List<string>> conf = new Dictionary<string, List<string>>();
                 lock (banlist)
                 {
-                    File.WriteAllLines(defaultBanlistPath, banlist.Select(x => x.ToString()));
+                    conf[BANLIST_KEY] = banlist.Select(x => x.ToString()).ToList();
+                }
+                lock (libraryPaths)
+                {
+                    conf[LIBRARIES_KEY] = libraryPaths;
+                }
+                lock (extensionWhitelist)
+                {
+                    conf[EXTENSIONS_KEY] = extensionWhitelist;
                 }
             }
             catch (Exception e)
             {
-                log("Banlist flush failed: " + e.Message);
+                log("Config flush failed: " + e.Message);
+            }
+        }
+
+        public void BeginReloadLibrary()
+        {
+            Thread libraryLoader = new Thread(new ThreadStart(() => ReloadLibrary()));
+            libraryLoader.Start();
+        }
+
+        private void ReloadLibrary()
+        {
+            HaProtoImpl.LIBRARY_RESET result = null;
+            if (Monitor.TryEnter(libraryLoaderLock))
+            {
+                try
+                {
+                    List<string> paths = new List<string>(), exts = new List<string>();
+                    lock (libraryPaths)
+                    {
+                        paths = libraryPaths.ToList();
+                    }
+                    lock (extensionWhitelist)
+                    {
+                        exts = extensionWhitelist.ToList();
+                    }
+                    List<string> index = Reindex(paths, exts);
+                    if (index == null)
+                    {
+                        return;
+                    }
+                    lock (dataSource.Lock)
+                    {
+                        dataSource.LibraryPlaylist.PlaylistItems.Clear();
+                        index.ForEach(x => dataSource.LibraryPlaylist.PlaylistItems.Add(new PlaylistItem() { Item = x }));
+                        result = new HaProtoImpl.LIBRARY_RESET() { paths = index };
+                        indexerFinished = true;
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(libraryLoaderLock);
+                }
+            }
+            else
+            {
+                log("ReloadLibrary: Someone else already reloading, skipping");
+            }
+            if (result != null)
+            {
+                ExecutePacketAndBroadcast(HaProtoImpl.Opcode.LIBRARY_RESET, result);
+            }
+        }
+
+        private void ExecutePacketAndBroadcast(HaProtoImpl.Opcode op, HaProtoImpl.HaProtoPacket packet)
+        {
+            bool announceIndexChange;
+            lock (dataSource.Lock)
+            {
+                announceIndexChange = packet.ApplyToDatabase(dataSource);
+            }
+            if (announceIndexChange)
+            {
+                AnnounceIndexChange();
+            }
+            BroadcastMessage(op, packet);
+        }
+
+        private void ExecutePacketsAndBroadcast(List<HaProtoImpl.Opcode> ops, List<HaProtoImpl.HaProtoPacket> packets)
+        {
+            bool announceIndexChange = false;
+            lock (dataSource.Lock)
+            {
+                foreach (HaProtoImpl.HaProtoPacket packet in packets)
+                {
+                    announceIndexChange |= packet.ApplyToDatabase(dataSource);
+                }
+            }
+            if (announceIndexChange)
+            {
+                AnnounceIndexChange();
+            }
+            for (int i = 0; i < packets.Count; i++)
+            {
+                BroadcastMessage(ops[i], packets[i]);
+            }
+        }
+
+        private List<string> Reindex(List<string> sources, List<string> exts)
+        {
+            Exception error = null;
+            List<string> result = new List<string>();
+            try
+            {
+                foreach (string source in sources)
+                {
+                    IndexRecursive(result, new DirectoryInfo(source), exts);
+                }
+            }
+            catch (Exception e)
+            {
+                error = e;
+            }
+            if (error != null)
+            {
+                log("Reindex: " + error.Message);
+                return null;
+            }
+            else
+            {
+                return result;
+            }
+        }
+
+        private void IndexRecursive(List<string> result, DirectoryInfo dir, List<string> exts)
+        {
+            foreach (DirectoryInfo subdir in dir.EnumerateDirectories().OrderBy(x => x.Name))
+            {
+                IndexRecursive(result, subdir, exts);
+            }
+            foreach (FileInfo file in dir.EnumerateFiles().OrderBy(x => x.Name))
+            {
+                if (exts.Contains(file.Extension.ToLower()))
+                    result.Add(file.FullName);
             }
         }
 
