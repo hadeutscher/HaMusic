@@ -482,15 +482,5 @@ namespace HaMusic
             else
                 return pl.PlaylistItems[index - 1].UID;
         }
-
-        private void mediaBrowser_ItemDoubleClicked(string item)
-        {
-            AddSongs(new List<string> { item }, GetAfterFromIndex(data.SelectedPlaylist, data.SelectedPlaylist.PlaylistItems.Count));
-        }
-
-        private void Label_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-        {
-
-        }
     }
 }

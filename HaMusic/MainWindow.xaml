@@ -145,7 +145,7 @@
                 </TabControl.ContentTemplate>
             </TabControl>
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
-            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" SourceData="{Binding ServerDataSource.LibraryPlaylist}" ItemDoubleClicked="mediaBrowser_ItemDoubleClicked" IsEnabled="{Binding Enabled}" />
+            <this:MediaBrowser x:Name="mediaBrowser" Grid.Column="2" SourceData="{Binding ServerDataSource.LibraryPlaylist}" ItemDoubleClicked="SelectItemExecuted" IsEnabled="{Binding Enabled}" />
         </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10"  Margin="10,5,10,0"
                 IsEnabled="{Binding Enabled}"

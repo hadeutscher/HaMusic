@@ -6,6 +6,7 @@
 
 using HaMusicLib;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Data;
@@ -25,12 +26,12 @@ namespace HaMusic.Wpf
         {
             if (values.Length != 2)
                 return null;
-            ObservableCollection<PlaylistItem> items = null;
+            IList<PlaylistItem> items = null;
             string filter = null;
             foreach (object value in values)
             {
-                if (value is ObservableCollection<PlaylistItem>)
-                    items = (ObservableCollection<PlaylistItem>)value;
+                if (value is IList<PlaylistItem>)
+                    items = (IList<PlaylistItem>)value;
                 else if (value is string)
                     filter = (string)value;
             }

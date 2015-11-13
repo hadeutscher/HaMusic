@@ -194,7 +194,7 @@ namespace HaMusicLib
             }
         }
 
-        public Playlist GetPlaylistForItem(long uid)
+        public Playlist GetPlaylistForItem(long uid, bool allowLibrarySearch = false)
         {
             foreach (Playlist pl in playlists)
             {
@@ -203,10 +203,12 @@ namespace HaMusicLib
                     return pl;
                 }
             }
+            if (allowLibrarySearch && library.PlaylistItems.ContainsKey(uid))
+                return library;
             throw new KeyNotFoundException();
         }
 
-        public PlaylistItem GetItem(long uid)
+        public PlaylistItem GetItem(long uid, bool allowLibrarySearch=false)
         {
             PlaylistItem result;
             foreach (Playlist pl in playlists)
@@ -216,6 +218,8 @@ namespace HaMusicLib
                     return result;
                 }
             }
+            if (allowLibrarySearch && library.PlaylistItems.FastTryGet(uid, out result))
+                return result;
             throw new KeyNotFoundException();
         }
     }

@@ -20,6 +20,7 @@ namespace HaMusicServer
     {
         private ConsoleControl.ConsoleControl console;
         private MainForm mainForm;
+        private Action<string> ThreadSafeLogger;
 
         public HaShell(MainForm mainForm, ConsoleControl.ConsoleControl console)
         {
@@ -34,7 +35,14 @@ namespace HaMusicServer
                 Console_HandleCreated(null, null);
             else
                 console.HandleCreated += Console_HandleCreated;
-            
+
+            ThreadSafeLogger = delegate (string x)
+            {
+                if (console.InvokeRequired)
+                    console.BeginInvoke((Action)delegate { ConsoleWriteLine(x); });
+                else
+                    ConsoleWriteLine(x);
+            };
         }
 
         private void Console_HandleCreated(object sender, EventArgs e)
@@ -166,7 +174,7 @@ namespace HaMusicServer
                 lock (mainForm.banlist)
                 {
                     mainForm.banlist.Add(ipaddr);
-                    mainForm.WriteConfig();
+                    mainForm.WriteConfig(ThreadSafeLogger);
                 }
             }
         }
@@ -182,7 +190,7 @@ namespace HaMusicServer
             lock (mainForm.banlist)
             {
                 mainForm.banlist.RemoveAll(x => x.Equals(addr));
-                mainForm.WriteConfig();
+                mainForm.WriteConfig(ThreadSafeLogger);
             }
         }
 
@@ -328,7 +336,16 @@ namespace HaMusicServer
                     }
                     break;
                 case "reload":
-                    mainForm.BeginReloadLibrary();
+                    mainForm.BeginReloadLibrary(ThreadSafeLogger);
+                    break;
+            }
+            switch (args[0])
+            {
+                case "add":
+                case "remove":
+                case "addext":
+                case "removeext":
+                    mainForm.WriteConfig(ThreadSafeLogger);
                     break;
             }
         }

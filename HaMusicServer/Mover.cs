@@ -114,7 +114,7 @@ namespace HaMusicServer
                 {
                     return null;
                 }
-                Playlist pl = mainForm.DataSource.GetPlaylistForItem(mainForm.DataSource.CurrentItem.UID);
+                Playlist pl = mainForm.DataSource.GetPlaylistForItem(mainForm.DataSource.CurrentItem.UID, true);
                 if (consecErrors > pl.PlaylistItems.Count || pl.PlaylistItems.Count == 0)
                 {
                     // Too many errors in a row, or nothing to play, just stop

@@ -93,14 +93,18 @@ namespace HaMusicServer
                     int splitterIndex = conf.IndexOf('=');
                     if (splitterIndex < 0)
                         continue;
-                    result[conf.Substring(0, splitterIndex)] = conf.Substring(splitterIndex + 1, conf.Length - splitterIndex - 1).Split(',').Select(x => x.Trim()).ToList();
+                    string key = conf.Substring(0, splitterIndex).Trim().ToLower();
+                    string value = conf.Substring(splitterIndex + 1, conf.Length - splitterIndex - 1).Trim();
+                    result[key] = string.IsNullOrWhiteSpace(value) ? new List<string>() : value.Split(',').Select(x => x.Trim()).ToList();
                 }
             }
             return result;
         }
 
-        private void RestoreState()
+        private void RestoreState(Action<string> logger = null)
         {
+            if (logger == null)
+                logger = log;
             try {
                 Dictionary<string, List<string>> conf = ReadConfig();
                 List<string> workingSet;
@@ -144,7 +148,7 @@ namespace HaMusicServer
             }
             catch (Exception e)
             {
-                log("Config read failed: " + e.Message);
+                logger("Config read failed: " + e.Message);
             }
         }
 
@@ -244,11 +248,13 @@ namespace HaMusicServer
 
         private void WriteConfigInternal(Dictionary<string, List<string>> conf)
         {
-            File.WriteAllLines(defaultConfigPath, conf.Keys.Select(x => x + "=" + conf[x].Aggregate((a, b) => a + "," + b)));
+            File.WriteAllLines(defaultConfigPath, conf.Keys.Select(x => x + "=" + (conf[x].Count > 0 ? conf[x].Aggregate((a, b) => a + "," + b) : "")));
         }
 
-        public void WriteConfig()
+        public void WriteConfig(Action<string> logger=null)
         {
+            if (logger == null)
+                logger = log;
             try
             {
                 Dictionary<string, List<string>> conf = new Dictionary<string, List<string>>();
@@ -264,21 +270,26 @@ namespace HaMusicServer
                 {
                     conf[EXTENSIONS_KEY] = extensionWhitelist;
                 }
+                WriteConfigInternal(conf);
             }
             catch (Exception e)
             {
-                log("Config flush failed: " + e.Message);
+                logger("Config flush failed: " + e.Message);
             }
         }
 
-        public void BeginReloadLibrary()
+        public void BeginReloadLibrary(Action<string> logger = null)
         {
-            Thread libraryLoader = new Thread(new ThreadStart(() => ReloadLibrary()));
+            if (logger == null)
+                logger = log;
+            Thread libraryLoader = new Thread(new ThreadStart(() => ReloadLibrary(logger)));
             libraryLoader.Start();
         }
 
-        private void ReloadLibrary()
+        private void ReloadLibrary(Action<string> logger = null)
         {
+            if (logger == null)
+                logger = log;
             HaProtoImpl.LIBRARY_RESET result = null;
             if (Monitor.TryEnter(libraryLoaderLock))
             {
@@ -293,15 +304,13 @@ namespace HaMusicServer
                     {
                         exts = extensionWhitelist.ToList();
                     }
-                    List<string> index = Reindex(paths, exts);
+                    List<string> index = Reindex(paths, exts, logger);
                     if (index == null)
                     {
                         return;
                     }
                     lock (dataSource.Lock)
                     {
-                        dataSource.LibraryPlaylist.PlaylistItems.Clear();
-                        index.ForEach(x => dataSource.LibraryPlaylist.PlaylistItems.Add(new PlaylistItem() { Item = x }));
                         result = new HaProtoImpl.LIBRARY_RESET() { paths = index };
                         indexerFinished = true;
                     }
@@ -313,7 +322,7 @@ namespace HaMusicServer
             }
             else
             {
-                log("ReloadLibrary: Someone else already reloading, skipping");
+                logger("ReloadLibrary: Someone else already reloading, skipping");
             }
             if (result != null)
             {
@@ -355,8 +364,10 @@ namespace HaMusicServer
             }
         }
 
-        private List<string> Reindex(List<string> sources, List<string> exts)
+        private List<string> Reindex(List<string> sources, List<string> exts, Action<string> logger = null)
         {
+            if (logger == null)
+                logger = log;
             Exception error = null;
             List<string> result = new List<string>();
             try
@@ -372,7 +383,7 @@ namespace HaMusicServer
             }
             if (error != null)
             {
-                log("Reindex: " + error.Message);
+                logger("Reindex: " + error.Message);
                 return null;
             }
             else
@@ -540,6 +551,7 @@ namespace HaMusicServer
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             player.Dispose();
+            FlushLog();
         }
 
         public object InvokeIfRequired(Delegate method)

@@ -325,7 +325,7 @@ namespace HaMusicLib
             {
                 lock (dataSource.Lock)
                 {
-                    dataSource.CurrentItem = uid < 0 ? null : dataSource.GetItem(uid);
+                    dataSource.CurrentItem = uid < 0 ? null : dataSource.GetItem(uid, true);
                     if (dataSource.NextItemOverride != null && dataSource.NextItemOverride.UID == uid)
                     {
                         dataSource.NextItemOverride = null;
@@ -733,7 +733,7 @@ namespace HaMusicLib
             {
                 lock (dataSource.Lock)
                 {
-                    dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid);
+                    dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid, true);
                 }
                 return false;
             }
@@ -744,6 +744,9 @@ namespace HaMusicLib
         {
             [ProtoMember(1)]
             public List<string> paths { get; set; }
+
+            [ProtoMember(2)]
+            public List<long> pathUids { get; set; }
 
             public LIBRARY_ADD()
             {
@@ -766,11 +769,17 @@ namespace HaMusicLib
 
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
+                if (IsServer())
+                    pathUids = new List<long>();
                 lock (dataSource.Lock)
                 {
-                    foreach (string path in paths)
+                    int i = 0;
+                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
+                                                           : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
                     {
-                        dataSource.LibraryPlaylist.PlaylistItems.Add(new PlaylistItem() { Item = path });
+                        dataSource.LibraryPlaylist.PlaylistItems.Add(pi);
+                        if (IsServer())
+                            pathUids.Add(pi.UID);
                     }
                 }
                 return false;
@@ -832,6 +841,9 @@ namespace HaMusicLib
             [ProtoMember(1)]
             public List<string> paths { get; set; }
 
+            [ProtoMember(2)]
+            public List<long> pathUids { get; set; }
+
             public LIBRARY_RESET()
             {
             }
@@ -853,6 +865,8 @@ namespace HaMusicLib
 
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
+                if (IsServer())
+                    pathUids = new List<long>();
                 bool result = false;
                 lock (dataSource.Lock)
                 {
@@ -866,9 +880,14 @@ namespace HaMusicLib
                         dataSource.NextItemOverride = null;
                     }
                     dataSource.LibraryPlaylist.PlaylistItems.Clear();
-                    foreach (string path in paths)
+
+                    int i = 0;
+                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
+                                                           : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
                     {
-                        dataSource.LibraryPlaylist.PlaylistItems.Add(new PlaylistItem() { Item = path });
+                        dataSource.LibraryPlaylist.PlaylistItems.Add(pi);
+                        if (IsServer())
+                            pathUids.Add(pi.UID);
                     }
                 }
                 return result;

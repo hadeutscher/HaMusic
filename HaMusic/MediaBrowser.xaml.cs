@@ -7,6 +7,7 @@
 using HaMusic.DragDrop;
 using HaMusic.Wpf;
 using HaMusicLib;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
@@ -22,19 +23,19 @@ namespace HaMusic
     public partial class MediaBrowser : UserControl
     {
         public static readonly DependencyProperty SourceDataProperty =
-            DependencyProperty.Register("SourceData", typeof(ObservableCollection<PlaylistItem>), typeof(MediaBrowser), new PropertyMetadata(new ObservableCollection<string>()));
+            DependencyProperty.Register("SourceData", typeof(Playlist), typeof(MediaBrowser));
         public static readonly DependencyProperty SelectedDataProperty =
-            DependencyProperty.Register("SelectedData", typeof(ObservableCollection<string>), typeof(MediaBrowser), new PropertyMetadata(new ObservableCollection<string>()));
+            DependencyProperty.Register("SelectedData", typeof(ObservableCollection<PlaylistItem>), typeof(MediaBrowser));
 
-        public static readonly ObservableCollection<string> TooLong = new ObservableCollection<string> { "Too many results; please define your search better" };
+        public static readonly ObservableCollection<PlaylistItem> TooLong = new ObservableCollection<PlaylistItem> { new PlaylistItem() { Item = "Too many results; please define your search better" } };
 
         public MediaBrowser()
         {
             InitializeComponent();
             ((FrameworkElement)this.Content).DataContext = this;
             MultiBinding mb = new MultiBinding() { Converter = new MediaBrowserFilterConverter(this) };
-            mb.Bindings.Add(new Binding("SourceData") { Source = this });
-            mb.Bindings.Add(new Binding("textBox.Text") { Source = this });
+            mb.Bindings.Add(new Binding("SourceData.PlaylistItems") { Source = this });
+            mb.Bindings.Add(new Binding("Text") { Source = textBox });
             BindingOperations.SetBinding(this, SelectedDataProperty, mb);
         }
 
@@ -44,19 +45,19 @@ namespace HaMusic
             set { SetValue(SourceDataProperty, value); }
         }
 
-        public ObservableCollection<string> SelectedData
+        public ObservableCollection<PlaylistItem> SelectedData
         {
-            get { return (ObservableCollection<string>)GetValue(SelectedDataProperty); }
+            get { return (ObservableCollection<PlaylistItem>)GetValue(SelectedDataProperty); }
             set { SetValue(SelectedDataProperty, value); }
         }
 
-        private SortedDragHandler<string> mediaBrowserDragHandler;
-        public SortedDragHandler<string> MediaBrowserDragHandler
+        private SortedDragHandler<PlaylistItem> mediaBrowserDragHandler;
+        public SortedDragHandler<PlaylistItem> MediaBrowserDragHandler
         {
-            get { return mediaBrowserDragHandler ?? (mediaBrowserDragHandler = new SortedDragHandler<string>(this, SelectedDataProperty)); }
+            get { return mediaBrowserDragHandler ?? (mediaBrowserDragHandler = new SortedDragHandler<PlaylistItem>(this, SelectedDataProperty)); }
         }
 
-        public delegate void ItemDoubleClickedEventHandler(string item);
+        public delegate void ItemDoubleClickedEventHandler(PlaylistItem item);
         public event ItemDoubleClickedEventHandler ItemDoubleClicked;
 
         private void textBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -65,12 +66,12 @@ namespace HaMusic
             this.InvalidateProperty(SelectedDataProperty);
         }
 
-        public ObservableCollection<string> FilterData(ObservableCollection<PlaylistItem> sourceData, string filter)
+        public ObservableCollection<PlaylistItem> FilterData(IList<PlaylistItem> sourceData, string filter)
         {
             string[] terms = filter.ToLower().Split(' ');
             if (terms.Length > 0 && terms[0] != "")
             {
-                ObservableCollection<string> results = new ObservableCollection<string>();
+                ObservableCollection<PlaylistItem> results = new ObservableCollection<PlaylistItem>();
                 foreach (PlaylistItem curr in sourceData)
                 {
                     bool pass = true;
@@ -84,25 +85,24 @@ namespace HaMusic
                     }
                     if (pass)
                     {
-                        results.Add(curr.Item);
+                        results.Add(curr);
                         if (results.Count > 10000)
                         {
                             return TooLong;
                         }
                     }
                 }
-                return new ObservableCollection<string>(results);
+                return results;
             }
             else
             {
-                SelectedData.Clear();
                 if (sourceData.Count > 10000)
                 {
                     return TooLong;
                 }
                 else
                 {
-                    return new ObservableCollection<string>(sourceData.Select(x => x.Item));
+                    return new ObservableCollection<PlaylistItem>(sourceData);
                 }
             }
             
@@ -110,13 +110,9 @@ namespace HaMusic
 
         private void listView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (ItemDoubleClicked != null)
+            if (ItemDoubleClicked != null && e.OriginalSource is FrameworkElement && ((FrameworkElement)e.OriginalSource).DataContext is PlaylistItem)
             {
-                string item = ((FrameworkElement)e.OriginalSource).DataContext as string;
-                if (item != null)
-                {
-                    ItemDoubleClicked((string)((FrameworkElement)e.OriginalSource).DataContext);
-                }
+                ItemDoubleClicked((PlaylistItem)((FrameworkElement)e.OriginalSource).DataContext);
             }
             e.Handled = true;
         }

@@ -5,14 +5,24 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
              xmlns:local="clr-namespace:HaMusic"
+             xmlns:hmwpf="clr-namespace:HaMusic.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
+    <UserControl.Resources>
+        <hmwpf:MediaBrowserListEnableConverter x:Key="MediaBrowserListEnableConverter" />
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <TextBox Grid.Row="0" x:Name="textBox" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextChanged="textBox_TextChanged" />
-        <ListView Grid.Row="1" x:Name="listView" ItemsSource="{Binding SelectedData}" IsEnabled="{Binding SelectedData, Converter=MediaBrowserListEnableConverter}" dd:DragDrop.IsDragSource="True" dd:DragDrop.DragHandler="{Binding MediaBrowserDragHandler}" MouseDoubleClick="listView_MouseDoubleClick"/>
+        <ListView Grid.Row="1" x:Name="listView" ItemsSource="{Binding SelectedData}" IsEnabled="{Binding SelectedData, Converter={StaticResource MediaBrowserListEnableConverter}}" dd:DragDrop.IsDragSource="True" dd:DragDrop.DragHandler="{Binding MediaBrowserDragHandler}" MouseDoubleClick="listView_MouseDoubleClick">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Item}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </UserControl>
