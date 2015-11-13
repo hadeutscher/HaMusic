@@ -211,16 +211,29 @@ namespace HaMusicLib
         public PlaylistItem GetItem(long uid, bool allowLibrarySearch=false)
         {
             PlaylistItem result;
+            if (TryGetItem(uid, out result, allowLibrarySearch))
+            {
+                return result;
+            }
+            else
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public bool TryGetItem(long uid, out PlaylistItem result, bool allowLibrarySearch=false)
+        {
             foreach (Playlist pl in playlists)
             {
                 if (pl.PlaylistItems.FastTryGet(uid, out result))
                 {
-                    return result;
+                    return true;
                 }
             }
             if (allowLibrarySearch && library.PlaylistItems.FastTryGet(uid, out result))
-                return result;
-            throw new KeyNotFoundException();
+                return true;
+            result = null;
+            return false;
         }
     }
 }

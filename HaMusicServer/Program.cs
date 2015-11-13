@@ -6,12 +6,18 @@
 
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 
 namespace HaMusicServer
 {
     static class Program
     {
+        public static string GetErrorException(Exception e, [CallerMemberName] string name = "Unknown")
+        {
+            return string.Format("{0}: {1}\r\n\r\n{2}", name, e.Message, e.StackTrace);
+        }
+
         public static string GetLocalSettingsFolder()
         {
             string appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);

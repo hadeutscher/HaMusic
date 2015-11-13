@@ -103,52 +103,60 @@ namespace HaMusicServer
         {
             lock (mainForm.DataSource.Lock)
             {
-                if (mainForm.DataSource.NextItemOverride != null)
+                try
                 {
-                    PlaylistItem result = mainForm.DataSource.NextItemOverride;
-                    mainForm.DataSource.NextItemOverride = null;
-                    mainForm.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = -1 });
-                    return result;
-                }
-                if (mainForm.DataSource.CurrentItem == null)
-                {
-                    return null;
-                }
-                Playlist pl = mainForm.DataSource.GetPlaylistForItem(mainForm.DataSource.CurrentItem.UID, true);
-                if (consecErrors > pl.PlaylistItems.Count || pl.PlaylistItems.Count == 0)
-                {
-                    // Too many errors in a row, or nothing to play, just stop
-                    return null;
-                }
-                switch (mainForm.DataSource.Mode)
-                {
-                    case HaProtoImpl.MoveType.NEXT:
-                        return indexToItem(pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem) + 1, pl);
-                    case HaProtoImpl.MoveType.RANDOM:
-                        return indexToItem(getRandomMove(pl), pl);
-                    case HaProtoImpl.MoveType.SHUFFLE:
-                        List<int> candidates = new List<int>();
-                        for (int i = 0; i < pl.PlaylistItems.Count; i++)
-                        {
-                            if (!pl.PlaylistItems[i].Played)
-                            {
-                                candidates.Add(i);
-                            }
-                        }
-                        int winner;
-                        if (candidates.Count > 0)
-                        {
-                            winner = candidates[(int)GetRandom(0, candidates.Count)];
-                        }
-                        else
-                        {
-                            resetShuffle(pl);
-                            winner = getRandomMove(pl); // Fallback to random when we just cleared the shuffle set
-                        }
-                        // Winner will be marked as playing when it gets pulled from the playlist by the media player
-                        return indexToItem(winner, pl);
-                    default:
+                    if (mainForm.DataSource.NextItemOverride != null)
+                    {
+                        PlaylistItem result = mainForm.DataSource.NextItemOverride;
+                        mainForm.DataSource.NextItemOverride = null;
+                        mainForm.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = -1 });
+                        return result;
+                    }
+                    if (mainForm.DataSource.CurrentItem == null)
+                    {
                         return null;
+                    }
+                    Playlist pl = mainForm.DataSource.GetPlaylistForItem(mainForm.DataSource.CurrentItem.UID, true);
+                    if (consecErrors > pl.PlaylistItems.Count || pl.PlaylistItems.Count == 0)
+                    {
+                        // Too many errors in a row, or nothing to play, just stop
+                        return null;
+                    }
+                    switch (mainForm.DataSource.Mode)
+                    {
+                        case HaProtoImpl.MoveType.NEXT:
+                            return indexToItem(pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem) + 1, pl);
+                        case HaProtoImpl.MoveType.RANDOM:
+                            return indexToItem(getRandomMove(pl), pl);
+                        case HaProtoImpl.MoveType.SHUFFLE:
+                            List<int> candidates = new List<int>();
+                            for (int i = 0; i < pl.PlaylistItems.Count; i++)
+                            {
+                                if (!pl.PlaylistItems[i].Played)
+                                {
+                                    candidates.Add(i);
+                                }
+                            }
+                            int winner;
+                            if (candidates.Count > 0)
+                            {
+                                winner = candidates[(int)GetRandom(0, candidates.Count)];
+                            }
+                            else
+                            {
+                                resetShuffle(pl);
+                                winner = getRandomMove(pl); // Fallback to random when we just cleared the shuffle set
+                            }
+                            // Winner will be marked as playing when it gets pulled from the playlist by the media player
+                            return indexToItem(winner, pl);
+                        default:
+                            return null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    mainForm.log(Program.GetErrorException(e));
+                    return null;
                 }
             }
         }

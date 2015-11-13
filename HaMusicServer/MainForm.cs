@@ -29,7 +29,7 @@ namespace HaMusicServer
         public List<string> libraryPaths = new List<string>();
         private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
         public List<string> extensionWhitelist = new List<string>();
-        private Action<string> log = delegate(string x) { };
+        public Action<string> log = delegate(string x) { };
         private HaShell hashell = null;
         private StreamWriter sw;
         private object libraryLoaderLock = new object();
@@ -163,7 +163,7 @@ namespace HaMusicServer
                 watchers.Clear();
                 foreach (string path in libraryPaths)
                 {
-                    FileSystemWatcher fsw = new FileSystemWatcher(path) { NotifyFilter = NotifyFilters.FileName };
+                    FileSystemWatcher fsw = new FileSystemWatcher(path) { NotifyFilter = NotifyFilters.FileName, IncludeSubdirectories = true };
                     fsw.Created += Fsw_Created;
                     fsw.Deleted += Fsw_Deleted;
                     fsw.Renamed += Fsw_Renamed;
@@ -175,21 +175,36 @@ namespace HaMusicServer
 
         private void Fsw_Created(object sender, FileSystemEventArgs e)
         {
-            HaProtoImpl.LIBRARY_ADD packet = new HaProtoImpl.LIBRARY_ADD() { paths = { e.FullPath } };
+            lock (extensionWhitelist)
+            {
+                if (!extensionWhitelist.Contains(Path.GetExtension(e.FullPath).ToLower()))
+                    return;
+            }
+            HaProtoImpl.LIBRARY_ADD packet = new HaProtoImpl.LIBRARY_ADD() { paths = new List<string> { e.FullPath } };
             ExecutePacketAndBroadcast(HaProtoImpl.Opcode.LIBRARY_ADD, packet);
         }
 
         private void Fsw_Deleted(object sender, FileSystemEventArgs e)
         {
-            HaProtoImpl.LIBRARY_REMOVE packet = new HaProtoImpl.LIBRARY_REMOVE() { paths = { e.FullPath } };
+            lock (extensionWhitelist)
+            {
+                if (!extensionWhitelist.Contains(Path.GetExtension(e.FullPath).ToLower()))
+                    return;
+            }
+            HaProtoImpl.LIBRARY_REMOVE packet = new HaProtoImpl.LIBRARY_REMOVE() { paths = new List<string> { e.FullPath } };
             ExecutePacketAndBroadcast(HaProtoImpl.Opcode.LIBRARY_REMOVE, packet);
         }
 
         private void Fsw_Renamed(object sender, RenamedEventArgs e)
         {
+            lock (extensionWhitelist)
+            {
+                if (!extensionWhitelist.Contains(Path.GetExtension(e.FullPath).ToLower()))
+                    return;
+            }
             List<HaProtoImpl.HaProtoPacket> packets = new List<HaProtoImpl.HaProtoPacket> {
-                new HaProtoImpl.LIBRARY_REMOVE() { paths = { e.OldFullPath } },
-                new HaProtoImpl.LIBRARY_ADD() { paths = { e.FullPath } }
+                new HaProtoImpl.LIBRARY_REMOVE() { paths = new List<string> { e.OldFullPath } },
+                new HaProtoImpl.LIBRARY_ADD() { paths = new List<string> { e.FullPath } }
             };
             List<HaProtoImpl.Opcode> ops = new List<HaProtoImpl.Opcode> { HaProtoImpl.Opcode.LIBRARY_REMOVE, HaProtoImpl.Opcode.LIBRARY_ADD };
             ExecutePacketsAndBroadcast(ops, packets);
@@ -215,6 +230,13 @@ namespace HaMusicServer
                 }
                 lock (newSource.Lock)
                 {
+                    // Make sure that Current and Next still exist; they might not if the DB was saved when playing from the Library
+                    PlaylistItem foo;
+                    if (newSource.CurrentItem != null && !newSource.TryGetItem(newSource.CurrentItem.UID, out foo))
+                        newSource.CurrentItem = null;
+                    if (newSource.NextItemOverride != null && !newSource.TryGetItem(newSource.NextItemOverride.UID, out foo))
+                        newSource.NextItemOverride = null;
+
                     if (indexerFinished)
                     {
                         newSource.LibraryPlaylist = library;

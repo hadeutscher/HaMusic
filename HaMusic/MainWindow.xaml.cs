@@ -107,9 +107,16 @@ namespace HaMusic
         {
             if (data.ServerDataSource.CurrentItem != null)
             {
-                data.SelectedPlaylist = data.ServerDataSource.GetPlaylistForItem(data.ServerDataSource.CurrentItem.UID);
-                data.ItemInView = null;
-                data.ItemInView = data.ServerDataSource.CurrentItem;
+                try
+                {
+                    data.SelectedPlaylist = data.ServerDataSource.GetPlaylistForItem(data.ServerDataSource.CurrentItem.UID, true);
+                    data.ItemInView = null;
+                    data.ItemInView = data.ServerDataSource.CurrentItem;
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(string.Format("Could not bring item to view, error: {0}", e.Message), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         
@@ -142,6 +149,13 @@ namespace HaMusic
                                 case HaProtoImpl.Opcode.LIBRARY_RESET:
                                     // No selection eye candy for library because it's not worth the time it will take to implement
                                     HaProtoImpl.ApplyPacketToDatabase(type, buf, data.ServerDataSource, out foo);
+
+                                    // For some reason this doesn't happen automatically and I'm too tired to search why
+                                    // mediaBrowser.InvalidateProperty(MediaBrowser.SelectedDataProperty);
+                                    // For some reason, .NET sucks and InvalidateProperty doesn't do what it says it does...
+                                    // BindingOperations.GetBindingExpression(mediaBrowser, MediaBrowser.SelectedDataProperty).UpdateTarget();
+                                    // For some reason, .NET sucks and GetBindingExpression only works with single bindings...
+                                    BindingOperations.GetMultiBindingExpression(mediaBrowser, MediaBrowser.SelectedDataProperty).UpdateTarget();
                                     break;
                                 case HaProtoImpl.Opcode.ADD:
                                 case HaProtoImpl.Opcode.REMOVE:
@@ -360,6 +374,10 @@ namespace HaMusic
             if (!data.ServerDataSource.Playing && data.ServerDataSource.CurrentItem == null && data.SelectedPlaylistItem != null)
             {
                 HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = data.SelectedPlaylistItem.UID });
+            }
+            else if (!data.ServerDataSource.Playing && data.ServerDataSource.CurrentItem == null && mediaBrowser.listView.SelectedItem is PlaylistItem)
+            {
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = ((PlaylistItem)mediaBrowser.listView.SelectedItem).UID });
             }
             else if (data.ServerDataSource.Playing || data.ServerDataSource.CurrentItem != null)
             {

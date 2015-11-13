@@ -881,6 +881,9 @@ namespace HaMusicLib
                     }
                     dataSource.LibraryPlaylist.PlaylistItems.Clear();
 
+                    if (paths == null)
+                        return result;
+
                     int i = 0;
                     foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
                                                            : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))

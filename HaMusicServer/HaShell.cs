@@ -81,6 +81,8 @@ namespace HaMusicServer
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(args.Content))
+                    goto ret;
                 string[] cmd = CommandLineToArgs(args.Content);
                 if (cmd.Length < 0)
                     goto ret;

@@ -118,10 +118,13 @@ namespace HaMusicServer
             }
             catch (Exception e)
             {
-                log(string.Format("Exception in {0} : {1}", id, e.Message));
+                if (e is SocketException && ((SocketException)e).ErrorCode == 0)
+                    log(string.Format("{0} exited normally", id));
+                else
+                    log(string.Format("Exception in {0} : {1}", id, Program.GetErrorException(e)));
                 try
                 {
-                    // Try to close the socket, if it's already closed than w/e
+                    // Try to close the socket, if it's already closed then w/e
                     s.Close();
                 }
                 catch { }

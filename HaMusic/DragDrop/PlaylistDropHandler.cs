@@ -25,17 +25,19 @@ namespace HaMusic.DragDrop
 
         public void DragOver(IDropInfo dropInfo)
         {
-            if (dropInfo.Data is IEnumerable<PlaylistItem>)
+            if (dropInfo.Data is IEnumerable<PlaylistItem> &&
+                dropInfo.DragInfo.VisualSource is FrameworkElement &&
+                ((FrameworkElement)dropInfo.DragInfo.VisualSource).DataContext == data.ServerDataSource.LibraryPlaylist)
+            {
+                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
+                dropInfo.Effects = DragDropEffects.Copy;
+            }
+            else if (dropInfo.Data is IEnumerable<PlaylistItem>)
             {
                 dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
                 dropInfo.Effects = DragDropEffects.Move;
             }
             else if (dropInfo.Data is DataObject && ((DataObject)dropInfo.Data).GetDataPresent(DataFormats.FileDrop))
-            {
-                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
-                dropInfo.Effects = DragDropEffects.Copy;
-            }
-            else if (dropInfo.Data is IEnumerable<string>)
             {
                 dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
                 dropInfo.Effects = DragDropEffects.Copy;
@@ -69,7 +71,13 @@ namespace HaMusic.DragDrop
 
         public void Drop(IDropInfo dropInfo)
         {
-            if (dropInfo.Data is IEnumerable<PlaylistItem>)
+            if (dropInfo.Data is IEnumerable<PlaylistItem> &&
+                dropInfo.DragInfo.VisualSource is FrameworkElement &&
+                ((FrameworkElement)dropInfo.DragInfo.VisualSource).DataContext == data.ServerDataSource.LibraryPlaylist)
+            {
+                parent.AddSongs(((IEnumerable<PlaylistItem>)dropInfo.Data).Select(x => x.Item), GetAfterFromDropInfo(dropInfo));
+            }
+            else if (dropInfo.Data is IEnumerable<PlaylistItem>)
             {
                 parent.DragMoveItems((IEnumerable<PlaylistItem>)dropInfo.Data, GetAfterFromDropInfo(dropInfo));
             }
@@ -77,10 +85,6 @@ namespace HaMusic.DragDrop
             {
                 string[] files = (string[])((DataObject)dropInfo.Data).GetData(DataFormats.FileDrop);
                 parent.AddSongs(files, GetAfterFromDropInfo(dropInfo));
-            }
-            else if (dropInfo.Data is IEnumerable<string>)
-            {
-                parent.AddSongs((IEnumerable<string>)dropInfo.Data, GetAfterFromDropInfo(dropInfo));
             }
         }
     }
