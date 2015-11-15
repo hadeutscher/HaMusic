@@ -151,7 +151,7 @@
                 IsEnabled="{Binding Enabled}"
                 Value="{Binding ServerDataSource.Position}"
                 Maximum="{Binding ServerDataSource.Maximum}"
-                ValueChanged="songSlider_ValueChanged" />
+                ValueChanged="songSlider_ValueChanged" IsMoveToPointEnabled="True" />
         <Grid Grid.Row="3" HorizontalAlignment="Stretch">
             <Grid.Resources>
                 <Style TargetType="{x:Type Button}">
@@ -231,10 +231,10 @@
                         <Image Source="/HaMusic;component/Images/next.png" />
                     </StackPanel>
                 </Button>
-                <Slider Grid.Column="1" x:Name="volumeSlider" Margin="10,0,10,5" VerticalAlignment="Center" HorizontalAlignment="Left" Maximum="100" Width="100" SmallChange="1" LargeChange="10"
+                <Slider Grid.Column="1" x:Name="volumeSlider" Margin="10,0,10,5" VerticalAlignment="Center" HorizontalAlignment="Left" Maximum="100" Width="150" SmallChange="1" LargeChange="10"
                         IsEnabled="{Binding Enabled}"
                         Value="{Binding ServerDataSource.Volume}"
-                        ValueChanged="volumeSlider_ValueChanged" />
+                        ValueChanged="volumeSlider_ValueChanged" IsMoveToPointEnabled="True" />
                 <Button Grid.Column="3" Margin="2,5,5,10">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/add.png" />
