@@ -313,14 +313,11 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.DELPL, new HaProtoImpl.DELPL() { uid = data.SelectedPlaylist.UID });
         }
 
-        public void DeleteItemsExecuted(ListView lv)
+        public void DeleteItemsExecuted(IEnumerable<PlaylistItem> items)
         {
-            Playlist pl = (Playlist)lv.DataContext;
-            List<long> uids = new List<long>();
-            foreach (object item in lv.SelectedItems)
-                uids.Add(((PlaylistItem)item).UID);
+            List<long> uids = items.Select(x => x.UID).ToList();
             if (uids.Count > 0)
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = pl.UID, items = uids });
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = GetSelectedPlaylist(), items = uids });
         }
 
         public void SelectItemExecuted(PlaylistItem item)
@@ -328,19 +325,51 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = item.UID });
         }
 
+        public void InjectionExecuted(PlaylistItem item, HaProtoImpl.InjectionType type)
+        {
+            switch (type)
+            {
+                case HaProtoImpl.InjectionType.INJECT_SONG:
+                    HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = item.UID, type = HaProtoImpl.InjectionType.INJECT_SONG });
+                    break;
+                case HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED:
+                    PlaylistItem curr = data.ServerDataSource.CurrentItem;
+                    SelectItemExecuted(item);
+                    HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = curr.UID, type = HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED });
+                    break;
+                case HaProtoImpl.InjectionType.INJECT_AND_RETURN:
+                    HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = item.UID, type = HaProtoImpl.InjectionType.INJECT_AND_RETURN });
+                    break;
+            }
+        }
+
         public void DragMoveItems(IEnumerable<PlaylistItem> items, long after)
         {
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REORDER, new HaProtoImpl.REORDER() { pid = data.SelectedPlaylist.UID, after = after, items = items.Select(x => x.UID).ToList() });
         }
 
+        private T GetEventArgsItem<T>(RoutedEventArgs e)
+        {
+            return (T)((FrameworkElement)e.OriginalSource).DataContext;
+        }
+
         private void items_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            PlaylistItem item = ((FrameworkElement)e.OriginalSource).DataContext as PlaylistItem;
-            if (item != null)
+            try
             {
-                SelectItemExecuted(item);
+                SelectItemExecuted(GetEventArgsItem<PlaylistItem>(e));
+                e.Handled = true;
             }
-            e.Handled = true;
+            catch (InvalidCastException) { }
+        }
+
+        private void mediaBrowser_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                InjectionExecuted(GetEventArgsItem<PlaylistItem>(e), HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED);
+            }
+            catch (InvalidCastException) { }
         }
 
         private void items_KeyDown(object sender, KeyEventArgs e)
@@ -348,7 +377,7 @@ namespace HaMusic
             switch (e.Key)
             {
                 case Key.Delete:
-                    DeleteItemsExecuted((ListView)sender);
+                    DeleteItemsExecuted(((ListView)sender).SelectedItems.Cast<PlaylistItem>());
                     e.Handled = true;
                     break;
             }
@@ -460,7 +489,7 @@ namespace HaMusic
 
         private void MenuItem_PlayItemNext(object sender, RoutedEventArgs e)
         {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = GetSenderItem<PlaylistItem>(sender).UID, type = HaProtoImpl.InjectionType.INJECT_SONG });
+            InjectionExecuted(GetSenderItem<PlaylistItem>(sender), HaProtoImpl.InjectionType.INJECT_SONG);
         }
 
 
@@ -471,20 +500,17 @@ namespace HaMusic
 
         private void MenuItem_PlayItemAndReturn(object sender, RoutedEventArgs e)
         {
-            PlaylistItem curr = data.ServerDataSource.CurrentItem;
-            SelectItemExecuted(GetSenderItem<PlaylistItem>(sender));
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = curr.UID, type = HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED });
+            InjectionExecuted(GetSenderItem<PlaylistItem>(sender), HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED);
         }
 
         private void MenuItem_PlayItemNextAndReturn(object sender, RoutedEventArgs e)
         {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = GetSenderItem<PlaylistItem>(sender).UID, type = HaProtoImpl.InjectionType.INJECT_AND_RETURN });
+            InjectionExecuted(GetSenderItem<PlaylistItem>(sender), HaProtoImpl.InjectionType.INJECT_AND_RETURN);
         }
 
         private void MenuItem_DeleteItem(object sender, RoutedEventArgs e)
         {
-
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = GetSelectedPlaylist(), items = new List<long> { GetSenderItem<PlaylistItem>(sender).UID } });
+            DeleteItemsExecuted(new List<PlaylistItem> { GetSenderItem<PlaylistItem>(sender) });
         }
 
         private void MenuItem_ImportPlaylist(object sender, RoutedEventArgs e)

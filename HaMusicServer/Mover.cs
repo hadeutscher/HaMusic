@@ -152,7 +152,7 @@ namespace HaMusicServer
                     switch (mainForm.DataSource.Mode)
                     {
                         case HaProtoImpl.MoveType.NEXT:
-                            return indexToItem(pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem) + 1, pl);
+                            return indexToItem((pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem) + 1) % pl.PlaylistItems.Count, pl);
                         case HaProtoImpl.MoveType.RANDOM:
                             return indexToItem(getRandomMove(pl), pl);
                         case HaProtoImpl.MoveType.SHUFFLE:

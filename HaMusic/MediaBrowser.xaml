@@ -82,7 +82,10 @@
                             </TextBlock.Style>
                             <TextBlock.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="aaaaa" />
+                                    <MenuItem Header="Play" Click="MenuItem_PlayItem" />
+                                    <MenuItem Header="Play and Return" Click="MenuItem_PlayItemAndReturn" FontWeight="ExtraBold" />
+                                    <MenuItem Header="Play Next" Click="MenuItem_PlayItemNext" />
+                                    <MenuItem Header="Play Next and Return" Click="MenuItem_PlayItemNextAndReturn" />
                                 </ContextMenu>
                             </TextBlock.ContextMenu>
                         </TextBlock>

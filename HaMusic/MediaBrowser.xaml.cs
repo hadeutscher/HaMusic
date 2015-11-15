@@ -7,6 +7,7 @@
 using HaMusic.DragDrop;
 using HaMusic.Wpf;
 using HaMusicLib;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -57,8 +58,9 @@ namespace HaMusic
             get { return mediaBrowserDragHandler ?? (mediaBrowserDragHandler = new SortedDragHandler<PlaylistItem>(this, SelectedDataProperty)); }
         }
 
-        public delegate void ItemDoubleClickedEventHandler(PlaylistItem item);
-        public event ItemDoubleClickedEventHandler ItemDoubleClicked;
+        //public delegate void ItemDoubleClickedEventHandler(PlaylistItem item);
+        //public event ItemDoubleClickedEventHandler ItemDoubleClicked;
+        public new event EventHandler<MouseButtonEventArgs> MouseDoubleClick;
 
         private void textBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -110,11 +112,37 @@ namespace HaMusic
 
         private void listView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (ItemDoubleClicked != null && e.OriginalSource is FrameworkElement && ((FrameworkElement)e.OriginalSource).DataContext is PlaylistItem)
-            {
-                ItemDoubleClicked((PlaylistItem)((FrameworkElement)e.OriginalSource).DataContext);
-            }
-            e.Handled = true;
+            if (MouseDoubleClick != null)
+                MouseDoubleClick(sender, e);
+        }
+
+        public event RoutedEventHandler PlayItemClick;
+        public event RoutedEventHandler PlayItemAndReturnClick;
+        public event RoutedEventHandler PlayItemNextClick;
+        public event RoutedEventHandler PlayItemNextAndReturnClick;
+
+        private void MenuItem_PlayItem(object sender, RoutedEventArgs e)
+        {
+            if (PlayItemClick != null)
+                PlayItemClick(sender, e);
+        }
+
+        private void MenuItem_PlayItemAndReturn(object sender, RoutedEventArgs e)
+        {
+            if (PlayItemAndReturnClick != null)
+                PlayItemAndReturnClick(sender, e);
+        }
+
+        private void MenuItem_PlayItemNext(object sender, RoutedEventArgs e)
+        {
+            if (PlayItemNextClick != null)
+                PlayItemNextClick(sender, e);
+        }
+
+        private void MenuItem_PlayItemNextAndReturn(object sender, RoutedEventArgs e)
+        {
+            if (PlayItemNextAndReturnClick != null)
+                PlayItemNextAndReturnClick(sender, e);
         }
     }
 }
