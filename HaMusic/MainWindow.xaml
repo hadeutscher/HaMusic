@@ -87,6 +87,7 @@
                                                 <MultiBinding Converter="{StaticResource EqualityToVisibilityConverter}">
                                                     <Binding Path="DataContext.ServerDataSource.NextItemOverride.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
                                                     <Binding Path="UID" />
+                                                    <Binding Path="DataContext.ServerDataSource.NextItemOverrideAction" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
                                                 </MultiBinding>
                                             </Image.Visibility>
                                         </Image>
