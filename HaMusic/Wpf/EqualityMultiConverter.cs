@@ -9,18 +9,12 @@ using System.Windows.Data;
 
 namespace HaMusic.Wpf
 {
-    public class VisibilityBindingConverter : IMultiValueConverter
+    public class EqualityMultiConverter : IMultiValueConverter
     {
-        public IMultiValueConverter Converter1 { get; set; }
-        public IValueConverter Converter2 { get; set; }
-
-        #region IValueConverter Members
-
         public object Convert(object[] values, Type targetType, object parameter,
             System.Globalization.CultureInfo culture)
         {
-            object convertedValue = Converter1.Convert(values, targetType, parameter, culture);
-            return Converter2.Convert(convertedValue, targetType, parameter, culture);
+            return values.Length == 2 && values[0] is long && values[1] is long && (long)values[0] == (long)values[1];
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter,
@@ -28,7 +22,5 @@ namespace HaMusic.Wpf
         {
             throw new NotImplementedException();
         }
-
-        #endregion
     }
 }

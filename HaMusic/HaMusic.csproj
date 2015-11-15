@@ -75,13 +75,13 @@
     <Compile Include="Wpf\MediaBrowserListEnableConverter.cs" />
     <Compile Include="Wpf\RelayCommand.cs" />
     <Compile Include="FunctionalFun\TwoListSynchronizer.cs" />
-    <Compile Include="Wpf\BindingConverter.cs" />
+    <Compile Include="Wpf\EqualityMultiConverter.cs" />
     <Compile Include="Wpf\EnumConverter.cs" />
     <Compile Include="Wpf\NullBooleanConverter.cs" />
     <Compile Include="Wpf\SeekTimeConverter.cs" />
     <Compile Include="Wpf\ListViewBehavior.cs" />
     <Compile Include="Wpf\SongPathConverter.cs" />
-    <Compile Include="Wpf\VisibilityBindingConverter.cs" />
+    <Compile Include="Wpf\ConverterChainConverter.cs" />
     <Page Include="AddressSelector.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

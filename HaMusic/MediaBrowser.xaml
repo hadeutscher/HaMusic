@@ -10,9 +10,9 @@
              d:DesignHeight="300" d:DesignWidth="300"
              x:Name="parent">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
-        <hmwpf:BindingConverter x:Key="BindingConverter" />
-        <hmwpf:VisibilityBindingConverter x:Key="MultiBindingToVisibilityConverter" Converter1="{StaticResource BindingConverter}" Converter2="{StaticResource VisibilityConverter}" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <hmwpf:EqualityMultiConverter x:Key="EqualityMultiConverter" />
+        <hmwpf:ConverterChainConverter x:Key="EqualityToVisibilityConverter" Converter1="{StaticResource EqualityMultiConverter}" Converter2="{StaticResource BooleanToVisibilityConverter}" />
         <hmwpf:MediaBrowserListEnableConverter x:Key="MediaBrowserListEnableConverter" />
     </UserControl.Resources>
     <Grid>
@@ -34,7 +34,7 @@
                     <DockPanel LastChildFill="True" HorizontalAlignment="Stretch">
                         <Image Source="/HaMusic;component/Images/next_target.png" Height="{Binding Path=FontSize, ElementName=txtBlock}" DockPanel.Dock="Left">
                             <Image.Visibility>
-                                <MultiBinding Converter="{StaticResource MultiBindingToVisibilityConverter}">
+                                <MultiBinding Converter="{StaticResource EqualityToVisibilityConverter}">
                                     <Binding Path="DataContext.ServerDataSource.NextItemOverride.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=UserControl}" UpdateSourceTrigger="PropertyChanged" />
                                     <Binding Path="UID" />
                                 </MultiBinding>
@@ -47,7 +47,7 @@
                                     <Style.Triggers>
                                         <DataTrigger Value="True">
                                             <DataTrigger.Binding>
-                                                <MultiBinding Converter="{StaticResource BindingConverter}">
+                                                <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
                                                     <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=UserControl}" UpdateSourceTrigger="PropertyChanged" />
                                                     <Binding Path="UID" />
                                                 </MultiBinding>

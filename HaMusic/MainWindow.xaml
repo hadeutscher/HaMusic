@@ -11,11 +11,11 @@
         WindowState="Maximized" Icon="HaLogo.ico" Loaded="RibbonWindow_Loaded">
     <Window.Resources>
         <hmwpf:EnumConverter x:Key="EnumConverter" />
-        <hmwpf:BindingConverter x:Key="BindingConverter" />
+        <hmwpf:EqualityMultiConverter x:Key="EqualityMultiConverter" />
         <hmwpf:SeekTimeConverter x:Key="SeekTimeConverter" />
         <hmwpf:SongPathConverter x:Key="SongPathConverter" />
-        <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
-        <hmwpf:VisibilityBindingConverter x:Key="MultiBindingToVisibilityConverter" Converter1="{StaticResource BindingConverter}" Converter2="{StaticResource VisibilityConverter}" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <hmwpf:ConverterChainConverter x:Key="EqualityToVisibilityConverter" Converter1="{StaticResource EqualityMultiConverter}" Converter2="{StaticResource BooleanToVisibilityConverter}" />
         <Style TargetType="Slider">
             <Setter Property="Focusable" Value="False" />
         </Style>
@@ -84,7 +84,7 @@
                                     <DockPanel LastChildFill="True" HorizontalAlignment="Stretch">
                                         <Image Source="/HaMusic;component/Images/next_target.png" Height="{Binding Path=FontSize,ElementName=txtBlock}" DockPanel.Dock="Left">
                                             <Image.Visibility>
-                                                <MultiBinding Converter="{StaticResource MultiBindingToVisibilityConverter}">
+                                                <MultiBinding Converter="{StaticResource EqualityToVisibilityConverter}">
                                                     <Binding Path="DataContext.ServerDataSource.NextItemOverride.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
                                                     <Binding Path="UID" />
                                                 </MultiBinding>
@@ -97,7 +97,7 @@
                                                     <Style.Triggers>
                                                         <DataTrigger Value="True">
                                                             <DataTrigger.Binding>
-                                                                <MultiBinding Converter="{StaticResource BindingConverter}">
+                                                                <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
                                                                     <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
                                                                     <Binding Path="UID" />
                                                                 </MultiBinding>
