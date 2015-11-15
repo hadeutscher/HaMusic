@@ -5,6 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 using HaMusicLib;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -92,6 +93,8 @@ namespace HaMusicServer
                         "\ttail [n] - print last n lines from the log, default 10",
                         "\tflush [path] - force DataSource flush, optionally into a specific path",
                         "\tload [path] - load DataSource, optionally from a specific path",
+                        "\tbackup [path] - backup playlists and songs in cross-version format",
+                        "\trestore [path] - restore playlists and songs from cross-version format",
                         "\texit - exit server"
                     });
                     goto ret;
@@ -252,6 +255,81 @@ namespace HaMusicServer
         public void command_exit(string[] args)
         {
             mainForm.Close();
+        }
+
+        // Protobuf-net is shit so it cant deal with nested list, so we nest LIST CONTAINERS!
+        [ProtoContract]
+        private class ListContainer<T>
+        {
+            [ProtoMember(1)]
+            public List<T> List = new List<T>();
+
+            public ListContainer()
+            {
+            }
+        }
+
+        public void command_backup(string[] args)
+        {
+            if (args.Length < 1)
+            {
+                ConsoleWriteLine("backup: not enough arguments, try `help`");
+                return;
+            }
+
+            ListContainer<ListContainer<string>> backup = new ListContainer<ListContainer<string>>();
+            lock(mainForm.DataSource.Lock)
+            {
+                foreach (Playlist pl in mainForm.DataSource.Playlists)
+                {
+                    ListContainer<string> plBackup = new ListContainer<string>();
+                    plBackup.List.Add(pl.Name);
+                    foreach (PlaylistItem item in pl.PlaylistItems)
+                    {
+                        plBackup.List.Add(item.Item);
+                    }
+                    backup.List.Add(plBackup);
+                }
+            }
+
+            using (FileStream fs = File.Create(args[0]))
+            {
+                Serializer.Serialize(fs, backup);
+            }
+
+            ConsoleWriteLine(string.Format("Backup written to {0}", args[0]));
+        }
+
+        public void command_restore(string[] args)
+        {
+            if (args.Length < 1)
+            {
+                ConsoleWriteLine("restore: not enough arguments, try `help`");
+                return;
+            }
+
+            ListContainer<ListContainer<string>> backup;
+            using (FileStream fs = File.OpenRead(args[0]))
+            {
+                backup = Serializer.Deserialize<ListContainer<ListContainer<string>>>(fs);
+            }
+            lock(mainForm.DataSource.Lock)
+            {
+                mainForm.DataSource.CurrentItem = null;
+                mainForm.DataSource.NextItemOverride = null;
+                mainForm.DataSource.Playlists.Clear();
+                foreach (ListContainer<string> plBackup in backup.List)
+                {
+                    Playlist pl = new Playlist() { Name = plBackup.List[0] };
+                    foreach (string item in plBackup.List.Skip(1))
+                    {
+                        pl.PlaylistItems.Add(new PlaylistItem() { Item = item });
+                    }
+                    mainForm.DataSource.Playlists.Add(pl);
+                }
+            }
+
+            ConsoleWriteLine("Loaded backup, please run `flush` and `load` to propagate changes");
         }
 
         private void ConsoleWrite(string data)
