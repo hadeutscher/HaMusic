@@ -99,6 +99,17 @@ namespace HaMusicServer
             return index < pl.PlaylistItems.Count ? pl.PlaylistItems[index] : null;
         }
 
+        private void ChangeNextItemOverride(PlaylistItem newOverride, HaProtoImpl.InjectionType? newType=null)
+        {
+            if (newType.HasValue)
+                mainForm.DataSource.NextItemOverrideAction = newType.Value;
+            mainForm.DataSource.NextItemOverride = newOverride;
+            mainForm.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() {
+                uid = newOverride != null ? newOverride.UID : -1,
+                type =newType.HasValue ? newType.Value : HaProtoImpl.InjectionType.INJECT_SONG
+            });
+        }
+
         public PlaylistItem Next()
         {
             lock (mainForm.DataSource.Lock)
@@ -107,10 +118,26 @@ namespace HaMusicServer
                 {
                     if (mainForm.DataSource.NextItemOverride != null)
                     {
-                        PlaylistItem result = mainForm.DataSource.NextItemOverride;
-                        mainForm.DataSource.NextItemOverride = null;
-                        mainForm.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = -1 });
-                        return result;
+                        PlaylistItem result;
+                        switch (mainForm.DataSource.NextItemOverrideAction)
+                        {
+                            case HaProtoImpl.InjectionType.INJECT_SONG:
+                                // Normal injection, set the song and disable nextItemOverride
+                                result = mainForm.DataSource.NextItemOverride;
+                                ChangeNextItemOverride(null);
+                                return result;
+                            case HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED:
+                                mainForm.DataSource.CurrentItem = mainForm.DataSource.NextItemOverride;
+                                ChangeNextItemOverride(null);
+                                // Purposely break and not return, this will cause the rest of the routine to advance CurrentItem
+                                break;
+                            case HaProtoImpl.InjectionType.INJECT_AND_RETURN:
+                                PlaylistItem curr = mainForm.DataSource.CurrentItem;
+                                result = mainForm.DataSource.NextItemOverride;
+                                ChangeNextItemOverride(curr, HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED);
+                                return result;
+                        }
+                        
                     }
                     if (mainForm.DataSource.CurrentItem == null)
                     {

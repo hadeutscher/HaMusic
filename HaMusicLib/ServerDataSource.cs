@@ -22,6 +22,7 @@ namespace HaMusicLib
         private Playlist library = new Playlist();
         private PlaylistItem currentItem = null;
         private PlaylistItem nextItemOverride = null;
+        private HaProtoImpl.InjectionType nextItemOverrideAction = HaProtoImpl.InjectionType.INJECT_SONG;
         private HaProtoImpl.MoveType mode = HaProtoImpl.MoveType.NEXT;
         private int volume = 50;
         private int position = 0;
@@ -181,6 +182,20 @@ namespace HaMusicLib
         }
 
         [ProtoMember(10)]
+        public HaProtoImpl.InjectionType NextItemOverrideAction
+        {
+            get
+            {
+                return nextItemOverrideAction;
+            }
+
+            set
+            {
+                SetField(ref nextItemOverrideAction, value);
+            }
+        }
+
+        [ProtoMember(11)]
         public Playlist LibraryPlaylist
         {
             get

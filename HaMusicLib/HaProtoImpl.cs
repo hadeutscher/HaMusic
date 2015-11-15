@@ -71,6 +71,13 @@ namespace HaMusicLib
             SHUFFLE
         }
 
+        public enum InjectionType
+        {
+            INJECT_SONG,
+            INJECT_AS_IF_SONG_ENDED,
+            INJECT_AND_RETURN
+        }
+
         public interface HaProtoPacket
         {
             byte[] Build();
@@ -710,6 +717,9 @@ namespace HaMusicLib
             [ProtoMember(1)]
             public long uid { get; set; }
 
+            [ProtoMember(2)]
+            public InjectionType type { get; set; }
+
             public INJECT()
             {
             }
@@ -734,6 +744,7 @@ namespace HaMusicLib
                 lock (dataSource.Lock)
                 {
                     dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid, true);
+                    dataSource.NextItemOverrideAction = type;
                 }
                 return false;
             }

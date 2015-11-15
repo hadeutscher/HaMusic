@@ -390,7 +390,6 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETSONG, new HaProtoImpl.SETSONG() { uid = -1 });
         }
 
-
         private void volumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (internalChanging)
@@ -424,15 +423,21 @@ namespace HaMusic
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.SETMOVE, new HaProtoImpl.SETMOVE() { move = data.ServerDataSource.Mode });
         }
 
+
+        private T GetSenderItem<T>(object sender)
+        {
+            return (T)((FrameworkElement)sender).DataContext;
+        }
+
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Playlist pl = (Playlist)((Control)sender).DataContext;
+            Playlist pl = GetSenderItem<Playlist>(sender);
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.RENPL, new HaProtoImpl.RENPL() { uid = pl.UID, name = pl.Name });
         }
 
         private void MenuItem_DeletePlaylist(object sender, RoutedEventArgs e)
         {
-            Playlist pl = (Playlist)((Control)sender).DataContext;
+            Playlist pl = GetSenderItem<Playlist>(sender);
             HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.DELPL, new HaProtoImpl.DELPL() { uid = pl.UID });
         }
 
@@ -449,19 +454,37 @@ namespace HaMusic
         {
             if (MessageBox.Show("Are you sure?", "Clear", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = ((Playlist)((MenuItem)sender).DataContext).UID });
+                HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.CLEAR, new HaProtoImpl.CLEAR() { uid = GetSenderItem<Playlist>(sender).UID });
             }
         }
 
         private void MenuItem_PlayItemNext(object sender, RoutedEventArgs e)
         {
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = ((PlaylistItem)((MenuItem)sender).DataContext).UID });
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = GetSenderItem<PlaylistItem>(sender).UID, type = HaProtoImpl.InjectionType.INJECT_SONG });
+        }
+
+
+        private void MenuItem_PlayItem(object sender, RoutedEventArgs e)
+        {
+            SelectItemExecuted(GetSenderItem<PlaylistItem>(sender));
+        }
+
+        private void MenuItem_PlayItemAndReturn(object sender, RoutedEventArgs e)
+        {
+            PlaylistItem curr = data.ServerDataSource.CurrentItem;
+            SelectItemExecuted(GetSenderItem<PlaylistItem>(sender));
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = curr.UID, type = HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED });
+        }
+
+        private void MenuItem_PlayItemNextAndReturn(object sender, RoutedEventArgs e)
+        {
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = GetSenderItem<PlaylistItem>(sender).UID, type = HaProtoImpl.InjectionType.INJECT_AND_RETURN });
         }
 
         private void MenuItem_DeleteItem(object sender, RoutedEventArgs e)
         {
 
-            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = GetSelectedPlaylist(), items = new List<long> { ((PlaylistItem)((MenuItem)sender).DataContext).UID } });
+            HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.REMOVE, new HaProtoImpl.REMOVE() { uid = GetSelectedPlaylist(), items = new List<long> { GetSenderItem<PlaylistItem>(sender).UID } });
         }
 
         private void MenuItem_ImportPlaylist(object sender, RoutedEventArgs e)
