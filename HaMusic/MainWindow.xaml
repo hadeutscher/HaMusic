@@ -246,7 +246,7 @@
                         IsEnabled="{Binding Enabled}"
                         Value="{Binding ServerDataSource.Volume}"
                         ValueChanged="volumeSlider_ValueChanged" IsMoveToPointEnabled="True" />
-                <Button Grid.Column="3" Margin="2,5,5,10">
+                <Button x:Name="aboutBtn" Grid.Column="3" Margin="2,5,5,10" Click="aboutBtn_Click">
                     <StackPanel>
                         <Image Source="/HaMusic;component/Images/add.png" />
                     </StackPanel>

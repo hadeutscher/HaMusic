@@ -58,6 +58,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AboutForm.xaml.cs">
+      <DependentUpon>AboutForm.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Data.cs" />
     <Compile Include="DragDrop\SortedDragHandler.cs" />
     <Compile Include="DragDrop\PlaylistDropHandler.cs" />
@@ -82,6 +85,10 @@
     <Compile Include="Wpf\ListViewBehavior.cs" />
     <Compile Include="Wpf\SongPathConverter.cs" />
     <Compile Include="Wpf\ConverterChainConverter.cs" />
+    <Page Include="AboutForm.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="AddressSelector.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -170,6 +177,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\next_target.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\HaLogo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

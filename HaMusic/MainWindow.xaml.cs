@@ -549,5 +549,10 @@ namespace HaMusic
             else
                 return pl.PlaylistItems[index - 1].UID;
         }
+        
+        private void aboutBtn_Click(object sender, RoutedEventArgs e)
+        {
+            new AboutForm().ShowDialog();
+        }
     }
 }

@@ -1,0 +1,36 @@
+﻿<Window x:Class="HaMusic.AboutForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HaMusic"
+        mc:Ignorable="d"
+        Title="About" Height="680" Width="906" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" ShowInTaskbar="False" WindowStyle="None"
+        MouseUp="Window_MouseUp"
+        Loaded="Window_Loaded">
+    <Grid>
+        <Grid.Style>
+            <Style TargetType="Grid">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding StartAnimation}" Value="True">
+                        <DataTrigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.0" To="1.0" Duration="0:0:1" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </DataTrigger.EnterActions>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Style>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Image x:Name="logoImg" Grid.Row="0" HorizontalAlignment="Center" Stretch="None" Source="/HaMusic;component/Images/HaLogo.png" />
+        <TextBlock x:Name="nameBlock" Grid.Row="1" HorizontalAlignment="Center" TextAlignment="Center" Text="HaMusic" FontSize="32" FontWeight="SemiBold" />
+        <TextBlock x:Name="creatorBlock" Grid.Row="2" HorizontalAlignment="Center" TextAlignment="Center" Text="by haha01haha01" FontSize="24" />
+    </Grid>
+</Window>
