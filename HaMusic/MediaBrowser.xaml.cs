@@ -71,9 +71,10 @@ namespace HaMusic
         public ObservableCollection<PlaylistItem> FilterData(IList<PlaylistItem> sourceData, string filter)
         {
             string[] terms = filter.ToLower().Split(' ');
+            ObservableCollection<PlaylistItem> results;
             if (terms.Length > 0 && terms[0] != "")
             {
-                ObservableCollection<PlaylistItem> results = new ObservableCollection<PlaylistItem>();
+                results = new ObservableCollection<PlaylistItem>();
                 foreach (PlaylistItem curr in sourceData)
                 {
                     bool pass = true;
@@ -94,7 +95,6 @@ namespace HaMusic
                         }
                     }
                 }
-                return results;
             }
             else
             {
@@ -104,10 +104,11 @@ namespace HaMusic
                 }
                 else
                 {
-                    return new ObservableCollection<PlaylistItem>(sourceData);
+                    results = new ObservableCollection<PlaylistItem>(sourceData);
                 }
             }
-            
+            results.OrderBy(x => x.Item);
+            return results;
         }
 
         private void listView_MouseDoubleClick(object sender, MouseButtonEventArgs e)

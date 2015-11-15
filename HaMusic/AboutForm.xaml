@@ -28,9 +28,11 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Image x:Name="logoImg" Grid.Row="0" HorizontalAlignment="Center" Stretch="None" Source="/HaMusic;component/Images/HaLogo.png" />
         <TextBlock x:Name="nameBlock" Grid.Row="1" HorizontalAlignment="Center" TextAlignment="Center" Text="HaMusic" FontSize="32" FontWeight="SemiBold" />
-        <TextBlock x:Name="creatorBlock" Grid.Row="2" HorizontalAlignment="Center" TextAlignment="Center" Text="by haha01haha01" FontSize="24" />
+        <TextBlock x:Name="creatorBlock" Grid.Row="2" HorizontalAlignment="Center" TextAlignment="Center" Text="by haha01haha01" FontSize="20" />
+        <TextBlock x:Name="versionBox" Grid.Row="3" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Version}" FontSize="20" />
     </Grid>
 </Window>
