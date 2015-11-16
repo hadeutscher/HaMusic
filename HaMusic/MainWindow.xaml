@@ -166,9 +166,21 @@
                                PlayItemNextClick="MenuItem_PlayItemNext"
                                PlayItemNextAndReturnClick="MenuItem_PlayItemNextAndReturn"
                                IsEnabled="{Binding Enabled}" />
-            <TextBox x:Name="findBox" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Top" Width="100"  Margin="5"
-                     KeyDown="findBox_KeyDown" TextChanged="findBox_TextChanged"
-                     Visibility="{Binding IsFinding, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <Grid Opacity="0.5" Background="Black" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="150" Margin="25"
+                  Visibility="{Binding IsFinding, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="findBox" Margin="10,10,2,10" Grid.Column="0" Background="Black" Foreground="White"
+                         KeyDown="findBox_KeyDown" PreviewKeyDown="findBox_PreviewKeyDown" TextChanged="findBox_TextChanged" />
+                <Button x:Name="closeFindButton" Margin="2,10,4,10" Width="16" Height="{Binding ActualWidth, ElementName=closeFindButton}" Grid.Column="1" Padding="0" 
+                        Click="closeFindButton_Click">
+                    <StackPanel Margin="0">
+                        <Image Source="/HaMusic;component/Images/x.png" Margin="0" />
+                    </StackPanel>
+                </Button>
+            </Grid>
         </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10"  Margin="10,5,10,0"
                 IsEnabled="{Binding Enabled}"

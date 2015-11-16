@@ -33,7 +33,6 @@ namespace HaMusic
         private Thread connThread = null;
         private Object connectLock = new Object();
         private bool internalChanging = false;
-        private PlaylistItem lastSearchResult = null;
 
         public static string defaultIndexPath = Path.Combine(GetLocalSettingsFolder(), "index.txt");
         public static readonly DependencyProperty SelectedPlaylistItemsProperty =
@@ -113,14 +112,25 @@ namespace HaMusic
                 try
                 {
                     data.SelectedPlaylist = data.ServerDataSource.GetPlaylistForItem(data.ServerDataSource.CurrentItem.UID, true);
-                    data.ItemInView = null;
-                    data.ItemInView = data.ServerDataSource.CurrentItem;
+                    SetItemInView(data.ServerDataSource.CurrentItem);
                 }
                 catch (Exception e)
                 {
                     MessageBox.Show(string.Format("Could not bring item to view, error: {0}", e.Message), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        public void SetItemInView(PlaylistItem item)
+        {
+            data.ItemInView = null;
+            data.ItemInView = item;
+        }
+
+        public void SetFocusItem(PlaylistItem item)
+        {
+            data.FocusedItem = null;
+            data.FocusedItem = item;
         }
         
         private void SockProc(Socket sock)
@@ -240,8 +250,7 @@ namespace HaMusic
 
                                         if (focusItem != null)
                                         {
-                                            data.FocusedItem = null;
-                                            data.FocusedItem = focusItem;
+                                            SetFocusItem(focusItem);
                                         }
                                     }
                                     break;
@@ -386,6 +395,7 @@ namespace HaMusic
                 case Key.F:
                     if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
                     {
+                        findBox.SelectAll();
                         data.IsFinding = true;
                         findBox.Focus();
                     }
@@ -568,17 +578,27 @@ namespace HaMusic
             new AboutForm().ShowDialog();
         }
 
+        private void CloseFinder()
+        {
+            data.FindResult = null;
+            data.IsFinding = false;
+            SetFocusItem(data.SelectedPlaylistItem);
+        }
+
         private void findBox_KeyDown(object sender, KeyEventArgs e)
         {
             e.Handled = true;
             switch (e.Key)
             {
                 case Key.Escape:
-                    data.FindResult = null;
-                    data.IsFinding = false;
-                    data.FocusedItem = data.SelectedPlaylistItem;
+                    CloseFinder();
                     break;
                 case Key.Enter:
+                case Key.Down:
+                    FindPlaylistItem(data.FindResult, true);
+                    break;
+                case Key.Up:
+                    FindPlaylistItem(data.FindResult, false);
                     break;
                 default:
                     e.Handled = false;
@@ -586,26 +606,68 @@ namespace HaMusic
             }
         }
 
-        private void findBox_TextChanged(object sender, TextChangedEventArgs e)
+        private PlaylistItem FindPlaylistItem(PlaylistItem startFrom, bool searchDown)
         {
             if (!string.IsNullOrWhiteSpace(findBox.Text))
             {
-                // Do finding action
+                // Get required info
                 Playlist pl = data.SelectedPlaylist;
                 string[] terms = findBox.Text.ToLower().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (PlaylistItem item in pl.PlaylistItems)
+
+                // Build search pool
+                IEnumerable<PlaylistItem> searchPool = pl.PlaylistItems;
+                if (startFrom != null)
+                {
+                    int index = pl.PlaylistItems.IndexOf(startFrom);
+                    if (index >= 0)
+                    {
+                        // Treat PlaylistItems as circular buffer, and map 1 round of it, with our start in index + 1, or index, depending on search direction
+                        int circleFirstIndex = searchDown ?
+                            (index + 1) % pl.PlaylistItems.Count : // If searching down, start of list is one after startFrom (circularly, of course)
+                            index; // If searching up, start of list is startFrom (since we search from bottom to top)
+                        searchPool = pl.PlaylistItems.Skip(circleFirstIndex).Concat(pl.PlaylistItems.Take(circleFirstIndex));
+                    }
+                }
+
+                // Do search
+                foreach (PlaylistItem item in searchDown ? searchPool : searchPool.Reverse())
                 {
                     if (item.MatchKeywords(terms))
                     {
                         data.FindResult = item;
                         data.SelectedPlaylistItems.Clear();
                         data.SelectedPlaylistItems.Add(item);
-                        data.ItemInView = item;
-                        return;
+                        SetItemInView(item);
+                        return item;
                     }
                 }
             }
             data.FindResult = null;
+            return null;
+        }
+
+        private void findBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            FindPlaylistItem(null, true);
+        }
+
+        private void findBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Up:
+                case Key.Down:
+                    // WPF is shit so it doesn't fire KeyDown on arrow keys
+                    // No probs, we'll do it ourselves
+                    findBox_KeyDown(sender, e);
+                    e.Handled = true;
+                    break;
+            }
+        }
+        
+        private void closeFindButton_Click(object sender, RoutedEventArgs e)
+        {
+            CloseFinder();
         }
     }
 }
