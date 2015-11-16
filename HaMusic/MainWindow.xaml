@@ -157,6 +157,9 @@
                                PlayItemNextClick="MenuItem_PlayItemNext"
                                PlayItemNextAndReturnClick="MenuItem_PlayItemNextAndReturn"
                                IsEnabled="{Binding Enabled}" />
+            <TextBox x:Name="findBox" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Top" Width="100"  Margin="5"
+                     KeyDown="findBox_KeyDown" TextChanged="findBox_TextChanged"
+                     Visibility="{Binding IsFinding, Converter={StaticResource BooleanToVisibilityConverter}}" />
         </Grid>
         <Slider x:Name="songSlider" Grid.Row="2" HorizontalAlignment="Stretch" SmallChange="1" LargeChange="10"  Margin="10,5,10,0"
                 IsEnabled="{Binding Enabled}"
@@ -195,12 +198,36 @@
                           SelectedValue="{Binding SelectedMove}"
                           ItemsSource="{Binding MoveTypes}"
                           SelectionChanged="moveType_SelectionChanged">
-                    <ListView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="DodgerBlue" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="DodgerBlue" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="White" />
-                    </ListView.Resources>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" HorizontalAlignment="Stretch">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="Background" Value="White" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                        <Style.Triggers>
+                                            <DataTrigger Value="True">
+                                                <DataTrigger.Binding>
+                                                    <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
+                                                        <Binding Path="DataContext.ServerDataSource.Mode" RelativeSource="{RelativeSource FindAncestor, AncestorType=ListView}" UpdateSourceTrigger="PropertyChanged" />
+                                                        <Binding Path="Type" />
+                                                    </MultiBinding>
+                                                </DataTrigger.Binding>
+                                                <Setter Property="Background" Value="DodgerBlue" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
                 </ListView>
                 <Label Grid.Column="2"
                        MinHeight="{Binding Height, ElementName=connectBtn}"

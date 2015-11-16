@@ -149,12 +149,28 @@ namespace HaMusic
             get { return _tabHeaderDropHandler ?? (_tabHeaderDropHandler = new TabHeaderDropHandler(this)); }
         }
 
-        private ObservableCollection<string> _moveTypes;
-        public ObservableCollection<string> MoveTypes
+        public class MoveType : PropertyNotifierBase
+        {
+            public string Name { get; }
+            public HaProtoImpl.MoveType Type { get; }
+
+            public MoveType(string name, HaProtoImpl.MoveType type)
+            {
+                this.Name = name;
+                this.Type = type;
+            }
+        }
+
+        private ObservableCollection<MoveType> _moveTypes;
+        public ObservableCollection<MoveType> MoveTypes
         {
             get
             {
-                return _moveTypes ?? (_moveTypes = new ObservableCollection<string> { "Next", "Random", "Shuffle" });
+                return _moveTypes ?? (_moveTypes = new ObservableCollection<MoveType> {
+                    new MoveType("Next", HaProtoImpl.MoveType.NEXT),
+                    new MoveType("Random", HaProtoImpl.MoveType.RANDOM),
+                    new MoveType("Shuffle", HaProtoImpl.MoveType.SHUFFLE)
+                });
             }
         }
 
@@ -251,7 +267,20 @@ namespace HaMusic
             }
         }
 
-        public string SelectedMove
+        private bool _isFinding = false;
+        public bool IsFinding
+        {
+            get
+            {
+                return _isFinding;
+            }
+            set
+            {
+                SetField(ref _isFinding, value);
+            }
+        }
+
+        public MoveType SelectedMove
         {
             get
             {

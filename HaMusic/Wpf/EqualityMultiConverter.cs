@@ -16,31 +16,27 @@ namespace HaMusic.Wpf
         public object Convert(object[] values, Type targetType, object parameter,
             System.Globalization.CultureInfo culture)
         {
-            bool first_long_set = false;
-            long curr_long = 0;
+            bool first_obj_set = false;
+            object curr_obj = 0;
             foreach (object val in values)
             {
-                if (val is long)
-                {
-                    if (first_long_set)
-                    {
-                        if ((long)val != curr_long)
-                            return false;
-                    }
-                    else
-                    {
-                        curr_long = (long)val;
-                        first_long_set = true;
-                    }
-                }
-                else if (val is HaProtoImpl.InjectionType)
+                if (val is HaProtoImpl.InjectionType)
                 {
                     if ((HaProtoImpl.InjectionType)val == HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED)
                         return false;
                 }
                 else
                 {
-                    return false;
+                    if (first_obj_set)
+                    {
+                        if (!curr_obj.Equals(val))
+                            return false;
+                    }
+                    else
+                    {
+                        curr_obj = val;
+                        first_obj_set = true;
+                    }
                 }
             }
             return true;

@@ -6,8 +6,10 @@
 
 using ProtoBuf;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Linq;
 
 namespace HaMusicLib
 {
@@ -49,6 +51,7 @@ namespace HaMusicLib
 
             set
             {
+                _cachedItemLower = null; // Must do this before setting field, since SetField may invoke external code depending on us
                 SetField(ref item, value);
             }
         }
@@ -63,6 +66,20 @@ namespace HaMusicLib
             set
             {
                 played = value;
+            }
+        }
+
+        public bool MatchKeywords(IEnumerable<string> keywords)
+        {
+            return keywords.Any(x => ItemLower.Contains(x));
+        }
+
+        private string _cachedItemLower = null;
+        private string ItemLower
+        {
+            get
+            {
+                return _cachedItemLower == null ? (_cachedItemLower = Item.ToLower()) : _cachedItemLower;
             }
         }
 

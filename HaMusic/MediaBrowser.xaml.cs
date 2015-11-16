@@ -70,23 +70,14 @@ namespace HaMusic
 
         public ObservableCollection<PlaylistItem> FilterData(IList<PlaylistItem> sourceData, string filter)
         {
-            string[] terms = filter.ToLower().Split(' ');
+            string[] terms = filter.ToLower().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             ObservableCollection<PlaylistItem> results;
             if (terms.Length > 0 && terms[0] != "")
             {
                 results = new ObservableCollection<PlaylistItem>();
                 foreach (PlaylistItem curr in sourceData)
                 {
-                    bool pass = true;
-                    foreach (string term in terms)
-                    {
-                        if (!curr.Item.ToLower().Contains(term))
-                        {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (pass)
+                    if (curr.MatchKeywords(terms))
                     {
                         results.Add(curr);
                         if (results.Count > 10000)

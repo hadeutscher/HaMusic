@@ -8,9 +8,11 @@ using HaMusicLib;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,6 +33,7 @@ namespace HaMusic
         private Thread connThread = null;
         private Object connectLock = new Object();
         private bool internalChanging = false;
+        private PlaylistItem lastSearchResult = null;
 
         public static string defaultIndexPath = Path.Combine(GetLocalSettingsFolder(), "index.txt");
         public static readonly DependencyProperty SelectedPlaylistItemsProperty =
@@ -374,11 +377,21 @@ namespace HaMusic
 
         private void items_KeyDown(object sender, KeyEventArgs e)
         {
+            e.Handled = true;
             switch (e.Key)
             {
                 case Key.Delete:
                     DeleteItemsExecuted(((ListView)sender).SelectedItems.Cast<PlaylistItem>());
-                    e.Handled = true;
+                    break;
+                case Key.F:
+                    if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+                    {
+                        data.IsFinding = true;
+                        findBox.Focus();
+                    }
+                    goto default; // FALLTHROUGH
+                default:
+                    e.Handled = false;
                     break;
             }
         }
@@ -553,6 +566,44 @@ namespace HaMusic
         private void aboutBtn_Click(object sender, RoutedEventArgs e)
         {
             new AboutForm().ShowDialog();
+        }
+
+        private void findBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            e.Handled = true;
+            switch (e.Key)
+            {
+                case Key.Escape:
+                    data.IsFinding = false;
+                    data.FocusedItem = data.SelectedPlaylistItem;
+                    break;
+                case Key.Enter:
+                    break;
+                default:
+                    e.Handled = false;
+                    break;
+            }
+        }
+
+        private void findBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(findBox.Text))
+            {
+                // Do finding action
+                Playlist pl = data.SelectedPlaylist;
+                string[] terms = findBox.Text.ToLower().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (PlaylistItem item in pl.PlaylistItems)
+                {
+                    if (item.MatchKeywords(terms))
+                    {
+                        lastSearchResult = item;
+                        data.SelectedPlaylistItems.Clear();
+                        data.SelectedPlaylistItems.Add(item);
+                        data.ItemInView = item;
+                        return;
+                    }
+                }
+            }
         }
     }
 }
