@@ -30,7 +30,7 @@ namespace HaMusic.Wpf
         {
             ListView element = (ListView)d;
             PlaylistItem item = (PlaylistItem)element.GetValue(ItemInViewProperty);
-            Playlist pl = (Playlist)element.DataContext;
+            Playlist pl = element.DataContext as Playlist;
             if (item != null && pl != null && pl.PlaylistItems.Contains(item))
             {
                 element.ScrollIntoView(item);

@@ -31,7 +31,7 @@ namespace HaMusic.Wpf
             Image element = (Image)d;
             PlaylistItem next = (PlaylistItem)element.GetValue(NextItemImageProperty);
             PlaylistItem item = element.DataContext as PlaylistItem;
-            if (next != null && next.UID == item.UID && 
+            if (next != null && item != null && next.UID == item.UID && 
                 element.Tag is ServerDataSource &&
                 ((ServerDataSource)element.Tag).NextItemOverrideAction != HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED)
                 element.Visibility = Visibility.Visible;

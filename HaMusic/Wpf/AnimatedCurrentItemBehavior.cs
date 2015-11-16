@@ -39,7 +39,7 @@ namespace HaMusic.Wpf
             TextBlock element = (TextBlock)d;
             PlaylistItem curr = (PlaylistItem)element.GetValue(AnimatedCurrentItemProperty);
             PlaylistItem item = element.DataContext as PlaylistItem;
-            if (curr != null && curr.UID == item.UID)
+            if (curr != null && item != null && curr.UID == item.UID)
             {
                 GradientStop stop1 = new GradientStop(Color1, -2d);
                 GradientStop stop2 = new GradientStop(Color2, -1d);

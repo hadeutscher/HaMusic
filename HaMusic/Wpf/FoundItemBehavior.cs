@@ -34,7 +34,7 @@ namespace HaMusic.Wpf
             TextBlock element = (TextBlock)d;
             PlaylistItem curr = (PlaylistItem)element.GetValue(FoundItemProperty);
             PlaylistItem item = element.DataContext as PlaylistItem;
-            if (curr != null && curr.UID == item.UID)
+            if (curr != null && item != null && curr.UID == item.UID)
                 element.Background = Brushes.Yellow;
             else
                 element.Background = Brushes.Transparent;
