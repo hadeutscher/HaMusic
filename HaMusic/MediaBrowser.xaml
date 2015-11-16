@@ -14,6 +14,12 @@
         <hmwpf:EqualityMultiConverter x:Key="EqualityMultiConverter" />
         <hmwpf:ConverterChainConverter x:Key="EqualityToVisibilityConverter" Converter1="{StaticResource EqualityMultiConverter}" Converter2="{StaticResource BooleanToVisibilityConverter}" />
         <hmwpf:MediaBrowserListEnableConverter x:Key="MediaBrowserListEnableConverter" />
+        <ContextMenu x:Key="contextMenu"> <!-- For some reason making context menus a StaticResource improves performance, dunno why -->
+            <MenuItem Header="Play" Click="MenuItem_PlayItem" />
+            <MenuItem Header="Play and Return" Click="MenuItem_PlayItemAndReturn" FontWeight="ExtraBold" />
+            <MenuItem Header="Play Next" Click="MenuItem_PlayItemNext" />
+            <MenuItem Header="Play Next and Return" Click="MenuItem_PlayItemNextAndReturn" />
+        </ContextMenu>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -41,7 +47,7 @@
                                 </MultiBinding>
                             </Image.Visibility>
                         </Image>
-                        <TextBlock x:Name="txtBlock" HorizontalAlignment="Stretch" Text="{Binding Item}" Width="Auto">
+                        <TextBlock x:Name="txtBlock" HorizontalAlignment="Stretch" Text="{Binding Item}" Width="Auto" ContextMenu="{StaticResource contextMenu}">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="Background" Value="Transparent" />
@@ -81,14 +87,6 @@
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
-                            <TextBlock.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Play" Click="MenuItem_PlayItem" />
-                                    <MenuItem Header="Play and Return" Click="MenuItem_PlayItemAndReturn" FontWeight="ExtraBold" />
-                                    <MenuItem Header="Play Next" Click="MenuItem_PlayItemNext" />
-                                    <MenuItem Header="Play Next and Return" Click="MenuItem_PlayItemNextAndReturn" />
-                                </ContextMenu>
-                            </TextBlock.ContextMenu>
                         </TextBlock>
                     </DockPanel>
                 </DataTemplate>
