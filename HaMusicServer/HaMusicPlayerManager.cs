@@ -96,6 +96,8 @@ namespace HaMusicServer
                 if (length != -1 || string.IsNullOrEmpty(path))
                 {
                     mainForm.Mover.ResetErrors();
+                    if (length != -1)
+                        player.SetVolume(volume);
                     PlayingChanged(this, length != -1);
                     break;
                 }

@@ -74,6 +74,9 @@
       <DependentUpon>MediaBrowser.xaml</DependentUpon>
     </Compile>
     <Compile Include="FunctionalFun\MultiSelectorBehaviours.cs" />
+    <Compile Include="Wpf\FoundItemBehavior.cs" />
+    <Compile Include="Wpf\AnimatedCurrentItemBehavior.cs" />
+    <Compile Include="Wpf\NextItemImageBehavior.cs" />
     <Compile Include="Wpf\MediaBrowserFilterConverter.cs" />
     <Compile Include="Wpf\MediaBrowserListEnableConverter.cs" />
     <Compile Include="Wpf\RelayCommand.cs" />
@@ -84,7 +87,6 @@
     <Compile Include="Wpf\SeekTimeConverter.cs" />
     <Compile Include="Wpf\ListViewBehavior.cs" />
     <Compile Include="Wpf\SongPathConverter.cs" />
-    <Compile Include="Wpf\ConverterChainConverter.cs" />
     <Page Include="AboutForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

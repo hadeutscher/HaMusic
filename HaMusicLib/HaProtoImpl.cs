@@ -743,8 +743,10 @@ namespace HaMusicLib
             {
                 lock (dataSource.Lock)
                 {
-                    dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid, true);
+                    // Note - we MUST change Action before the item itself, because bindings to NextItemOverride may check Action and assume
+                    // it is the current action.
                     dataSource.NextItemOverrideAction = type;
+                    dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid, true);
                 }
                 return false;
             }
