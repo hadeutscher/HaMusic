@@ -347,7 +347,8 @@ namespace HaMusic
                 case HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED:
                     PlaylistItem curr = data.ServerDataSource.CurrentItem;
                     SelectItemExecuted(item);
-                    HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = curr.UID, type = HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED });
+                    if (curr != null)
+                        HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = curr.UID, type = HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED });
                     break;
                 case HaProtoImpl.InjectionType.INJECT_AND_RETURN:
                     HaProtoImpl.Send(globalSocket, HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() { uid = item.UID, type = HaProtoImpl.InjectionType.INJECT_AND_RETURN });
