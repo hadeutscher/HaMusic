@@ -79,78 +79,90 @@
                                                 dd:DragDrop.IsDragSource="True" dd:DragDrop.DragHandler="{Binding DataContext.PlaylistDragHandler, ElementName=playlistTabs}"
                                                 dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding DataContext.PlaylistDropHandler, ElementName=playlistTabs}"
                                                 hmwpf:ListViewBehavior.ItemInView="{Binding DataContext.ItemInView, ElementName=playlistTabs}">
+                            <this:FocusableListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Path">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <DockPanel LastChildFill="True" HorizontalAlignment="Stretch">
+                                                    <Image Source="/HaMusic;component/Images/next_target.png" Height="{Binding Path=FontSize,ElementName=txtBlock}" DockPanel.Dock="Left">
+                                                        <Image.Visibility>
+                                                            <MultiBinding Converter="{StaticResource EqualityToVisibilityConverter}">
+                                                                <Binding Path="DataContext.ServerDataSource.NextItemOverride.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
+                                                                <Binding Path="UID" />
+                                                                <Binding Path="DataContext.ServerDataSource.NextItemOverrideAction" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
+                                                            </MultiBinding>
+                                                        </Image.Visibility>
+                                                    </Image>
+                                                    <TextBlock x:Name="txtBlock" HorizontalAlignment="Stretch" Text="{Binding Item}" Width="Auto">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="{x:Type TextBlock}">
+                                                                <Setter Property="Background" Value="Transparent" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Value="True">
+                                                                        <DataTrigger.Binding>
+                                                                            <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
+                                                                                <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
+                                                                                <Binding Path="UID" />
+                                                                            </MultiBinding>
+                                                                        </DataTrigger.Binding>
+                                                                        <Setter Property="Background">
+                                                                            <Setter.Value>
+                                                                                <LinearGradientBrush EndPoint="1,0.5" MappingMode="RelativeToBoundingBox" StartPoint="0,0.5">
+                                                                                    <GradientStop Offset="-2" Color="#4095FF" />
+                                                                                    <GradientStop Offset="-1" Color="White" />
+                                                                                    <GradientStop Offset="0" Color="#4095FF" />
+                                                                                    <GradientStop Offset="1" Color="White" />
+                                                                                </LinearGradientBrush>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <DataTrigger.EnterActions>
+                                                                            <BeginStoryboard>
+                                                                                <Storyboard>
+                                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[0].(GradientStop.Offset)"
+                                                                        From="-2" To="0" Duration="0:0:4" RepeatBehavior="Forever" />
+                                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[1].(GradientStop.Offset)"
+                                                                        From="-1" To="1" Duration="0:0:4" RepeatBehavior="Forever" />
+                                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[2].(GradientStop.Offset)"
+                                                                        From="0" To="2" Duration="0:0:4" RepeatBehavior="Forever" />
+                                                                                    <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[3].(GradientStop.Offset)"
+                                                                        From="1" To="3" Duration="0:0:4" RepeatBehavior="Forever" />
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </DataTrigger.EnterActions>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Value="True">
+                                                                        <DataTrigger.Binding>
+                                                                            <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
+                                                                                <Binding Path="DataContext.FindResult.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
+                                                                                <Binding Path="UID" />
+                                                                            </MultiBinding>
+                                                                        </DataTrigger.Binding>
+                                                                        <Setter Property="Background" Value="Yellow" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                        <TextBlock.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Play" Click="MenuItem_PlayItem" FontWeight="ExtraBold" />
+                                                                <MenuItem Header="Play and Return" Click="MenuItem_PlayItemAndReturn" />
+                                                                <MenuItem Header="Play Next" Click="MenuItem_PlayItemNext" />
+                                                                <MenuItem Header="Play Next and Return" Click="MenuItem_PlayItemNextAndReturn" />
+                                                                <MenuItem Header="Delete" Click="MenuItem_DeleteItem" />
+                                                            </ContextMenu>
+                                                        </TextBlock.ContextMenu>
+                                                    </TextBlock>
+                                                </DockPanel>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Album" DisplayMemberBinding="{Binding Metadata.Album}" />
+                                </GridView>
+                            </this:FocusableListView.View>
                             <this:FocusableListView.ItemTemplate>
                                 <DataTemplate>
-                                    <DockPanel LastChildFill="True" HorizontalAlignment="Stretch">
-                                        <Image Source="/HaMusic;component/Images/next_target.png" Height="{Binding Path=FontSize,ElementName=txtBlock}" DockPanel.Dock="Left">
-                                            <Image.Visibility>
-                                                <MultiBinding Converter="{StaticResource EqualityToVisibilityConverter}">
-                                                    <Binding Path="DataContext.ServerDataSource.NextItemOverride.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
-                                                    <Binding Path="UID" />
-                                                    <Binding Path="DataContext.ServerDataSource.NextItemOverrideAction" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
-                                                </MultiBinding>
-                                            </Image.Visibility>
-                                        </Image>
-                                        <TextBlock x:Name="txtBlock" HorizontalAlignment="Stretch" Text="{Binding Item}" Width="Auto">
-                                            <TextBlock.Style>
-                                                <Style TargetType="{x:Type TextBlock}">
-                                                    <Setter Property="Background" Value="Transparent" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Value="True">
-                                                            <DataTrigger.Binding>
-                                                                <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
-                                                                    <Binding Path="DataContext.ServerDataSource.CurrentItem.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
-                                                                    <Binding Path="UID" />
-                                                                </MultiBinding>
-                                                            </DataTrigger.Binding>
-                                                            <Setter Property="Background">
-                                                                <Setter.Value>
-                                                                    <LinearGradientBrush EndPoint="1,0.5" MappingMode="RelativeToBoundingBox" StartPoint="0,0.5">
-                                                                        <GradientStop Offset="-2" Color="#4095FF" />
-                                                                        <GradientStop Offset="-1" Color="White" />
-                                                                        <GradientStop Offset="0" Color="#4095FF" />
-                                                                        <GradientStop Offset="1" Color="White" />
-                                                                    </LinearGradientBrush>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                            <DataTrigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[0].(GradientStop.Offset)"
-                                                                        From="-2" To="0" Duration="0:0:4" RepeatBehavior="Forever" />
-                                                                        <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[1].(GradientStop.Offset)"
-                                                                        From="-1" To="1" Duration="0:0:4" RepeatBehavior="Forever" />
-                                                                        <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[2].(GradientStop.Offset)"
-                                                                        From="0" To="2" Duration="0:0:4" RepeatBehavior="Forever" />
-                                                                        <DoubleAnimation Storyboard.TargetProperty="Background.(GradientBrush.GradientStops)[3].(GradientStop.Offset)"
-                                                                        From="1" To="3" Duration="0:0:4" RepeatBehavior="Forever" />
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </DataTrigger.EnterActions>
-                                                        </DataTrigger>
-                                                        <DataTrigger Value="True">
-                                                            <DataTrigger.Binding>
-                                                                <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
-                                                                    <Binding Path="DataContext.FindResult.UID" RelativeSource="{RelativeSource FindAncestor, AncestorType=TabControl}" UpdateSourceTrigger="PropertyChanged" />
-                                                                    <Binding Path="UID" />
-                                                                </MultiBinding>
-                                                            </DataTrigger.Binding>
-                                                            <Setter Property="Background" Value="Yellow" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                            <TextBlock.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="Play" Click="MenuItem_PlayItem" FontWeight="ExtraBold" />
-                                                    <MenuItem Header="Play and Return" Click="MenuItem_PlayItemAndReturn" />
-                                                    <MenuItem Header="Play Next" Click="MenuItem_PlayItemNext" />
-                                                    <MenuItem Header="Play Next and Return" Click="MenuItem_PlayItemNextAndReturn" />
-                                                    <MenuItem Header="Delete" Click="MenuItem_DeleteItem" />
-                                                </ContextMenu>
-                                            </TextBlock.ContextMenu>
-                                        </TextBlock>
-                                    </DockPanel>
+                                    
                                 </DataTemplate>
                             </this:FocusableListView.ItemTemplate>
                         </this:FocusableListView>

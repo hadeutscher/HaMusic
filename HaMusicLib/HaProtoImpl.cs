@@ -156,6 +156,9 @@ namespace HaMusicLib
             public List<long> pathUids { get; set; }
 
             [ProtoMember(4, IsRequired = true)]
+            public List<Metadata> metadatas { get; set; }
+
+            [ProtoMember(5, IsRequired = true)]
             public long after { get; set; }
 
             public ADD()
@@ -180,19 +183,35 @@ namespace HaMusicLib
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
                 if (IsServer())
+                {
                     pathUids = new List<long>();
+                    metadatas = new List<Metadata>();
+                }
+
+                // To avoid locking the DataSource for large amounts of time, all async logic will be done unlocked and the new items
+                // will be placed here. Afterwards, the locked portion only inserts items from here to the playlist.
+                List<PlaylistItem> newItems = new List<PlaylistItem>(paths.Count);
+
+                // UNLOCKED CODE, do not touch DataSource (generating UIDs for new PlaylistItem() is fine because they have their own sync)
+                int i = 0, j = 0;
+                foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
+                                                       : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++], Metadata = metadatas[j++] }))
+                {
+                    if (IsServer())
+                    {
+                        pathUids.Add(pi.UID);
+                        pi.ParseMetadata();
+                        metadatas.Add(pi.Metadata);
+                    }
+                    newItems.Add(pi);
+                }
+
+                // LOCKED CODE, do everything as fast as possible
                 lock (dataSource.Lock)
                 {
                     Playlist pl = dataSource.Playlists.FastGet(uid);
-                    int i = 0;
                     int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
-                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
-                                                           : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
-                    {
-                        pl.PlaylistItems.Insert(index++, pi);
-                        if (IsServer())
-                            pathUids.Add(pi.UID);
-                    }
+                    newItems.ForEach(x => pl.PlaylistItems.Insert(index++, x));
                 }
                 return false;
             }

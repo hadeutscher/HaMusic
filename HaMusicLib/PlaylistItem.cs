@@ -21,6 +21,7 @@ namespace HaMusicLib
         private long uid;
         private string item;
         private bool played = false;
+        private Metadata metadata = null;
 
         public PlaylistItem()
         {
@@ -56,6 +57,20 @@ namespace HaMusicLib
             }
         }
 
+        [ProtoMember(4, IsRequired = true)]
+        public Metadata Metadata
+        {
+            get
+            {
+                return metadata;
+            }
+
+            set
+            {
+                SetField(ref metadata, value);
+            }
+        }
+
         public bool Played
         {
             get
@@ -72,6 +87,14 @@ namespace HaMusicLib
         public bool MatchKeywords(IEnumerable<string> keywords)
         {
             return keywords.Any(x => ItemLower.Contains(x));
+        }
+
+        public void ParseMetadata()
+        {
+            using (TagLib.File f = TagLib.File.Create(Item))
+            {
+                Metadata = new Metadata(f.Tag);
+            }
         }
 
         private string _cachedItemLower = null;
