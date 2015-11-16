@@ -4,16 +4,10 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using HaMusicLib;
 using ProtoBuf;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace HaMusicLib
 {
@@ -31,7 +25,7 @@ namespace HaMusicLib
             uid = Interlocked.Increment(ref nextUid);
         }
 
-        [ProtoMember(1)]
+        [ProtoMember(1, IsRequired = true)]
         public long UID
         {
             get
@@ -45,7 +39,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(2)]
+        [ProtoMember(2, IsRequired = true)]
         public FastAccessList<long, PlaylistItem> PlaylistItems
         {
             get
@@ -59,7 +53,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(3)]
+        [ProtoMember(3, IsRequired = true)]
         public string Name
         {
             get

@@ -27,7 +27,7 @@ namespace HaMusicLib
             this.uid = Interlocked.Increment(ref nextUid);
         }
 
-        [ProtoMember(1)]
+        [ProtoMember(1, IsRequired = true)]
         public long UID
         {
             get
@@ -41,7 +41,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(2)]
+        [ProtoMember(2, IsRequired = true)]
         public string Item
         {
             get

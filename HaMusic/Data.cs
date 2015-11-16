@@ -280,6 +280,19 @@ namespace HaMusic
             }
         }
 
+        public PlaylistItem _findResult = null;
+        public PlaylistItem FindResult
+        {
+            get
+            {
+                return _findResult;
+            }
+            set
+            {
+                SetField(ref _findResult, value);
+            }
+        }
+
         public MoveType SelectedMove
         {
             get

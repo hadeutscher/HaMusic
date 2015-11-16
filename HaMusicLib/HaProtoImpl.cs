@@ -115,7 +115,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class SETDB : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public ServerDataSource dataSource { get; set; }
 
             public SETDB()
@@ -146,16 +146,16 @@ namespace HaMusicLib
         [ProtoContract]
         public class ADD : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public List<string> paths { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoMember(3, IsRequired = true)]
             public List<long> pathUids { get; set; }
 
-            [ProtoMember(4)]
+            [ProtoMember(4, IsRequired = true)]
             public long after { get; set; }
 
             public ADD()
@@ -201,10 +201,10 @@ namespace HaMusicLib
         [ProtoContract]
         public class REMOVE : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public List<long> items { get; set; }
 
             public REMOVE()
@@ -260,7 +260,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class CLEAR : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
             public CLEAR()
@@ -306,7 +306,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class SETSONG : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
             public SETSONG()
@@ -373,7 +373,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class ADDPL : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
             public ADDPL()
@@ -412,7 +412,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class DELPL : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
             public DELPL()
@@ -462,10 +462,10 @@ namespace HaMusicLib
         [ProtoContract]
         public class RENPL : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public string name { get; set; }
 
             public RENPL()
@@ -501,7 +501,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class SETVOL : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public int volume { get; set; }
 
             public SETVOL()
@@ -532,10 +532,10 @@ namespace HaMusicLib
         [ProtoContract]
         public class SEEK : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public int pos { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public int max { get; set; }
 
             public SEEK()
@@ -566,7 +566,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class SETPLAYING : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public bool playing { get; set; }
 
             public SETPLAYING()
@@ -597,7 +597,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class SETMOVE : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public HaProtoImpl.MoveType move { get; set; }
 
             public SETMOVE()
@@ -629,13 +629,13 @@ namespace HaMusicLib
         [ProtoContract]
         public class REORDER : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long pid { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public long after { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoMember(3, IsRequired = true)]
             public List<long> items { get; set; }
 
             public REORDER()
@@ -714,10 +714,10 @@ namespace HaMusicLib
         [ProtoContract]
         public class INJECT : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public long uid { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public InjectionType type { get; set; }
 
             public INJECT()
@@ -753,10 +753,10 @@ namespace HaMusicLib
         [ProtoContract]
         public class LIBRARY_ADD : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public List<string> paths { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public List<long> pathUids { get; set; }
 
             public LIBRARY_ADD()
@@ -800,7 +800,7 @@ namespace HaMusicLib
         [ProtoContract]
         public class LIBRARY_REMOVE : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public List<string> paths { get; set; }
 
             public LIBRARY_REMOVE()
@@ -849,10 +849,10 @@ namespace HaMusicLib
         [ProtoContract]
         public class LIBRARY_RESET : HaProtoImpl.HaProtoPacket
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public List<string> paths { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoMember(2, IsRequired = true)]
             public List<long> pathUids { get; set; }
 
             public LIBRARY_RESET()

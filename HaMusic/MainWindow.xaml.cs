@@ -574,6 +574,7 @@ namespace HaMusic
             switch (e.Key)
             {
                 case Key.Escape:
+                    data.FindResult = null;
                     data.IsFinding = false;
                     data.FocusedItem = data.SelectedPlaylistItem;
                     break;
@@ -596,7 +597,7 @@ namespace HaMusic
                 {
                     if (item.MatchKeywords(terms))
                     {
-                        lastSearchResult = item;
+                        data.FindResult = item;
                         data.SelectedPlaylistItems.Clear();
                         data.SelectedPlaylistItems.Add(item);
                         data.ItemInView = item;
@@ -604,6 +605,7 @@ namespace HaMusic
                     }
                 }
             }
+            data.FindResult = null;
         }
     }
 }

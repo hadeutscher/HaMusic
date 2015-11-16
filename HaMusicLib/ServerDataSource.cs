@@ -56,7 +56,7 @@ namespace HaMusicLib
             return data.ToArray();
         }
 
-        [ProtoMember(1)]
+        [ProtoMember(1, IsRequired = true)]
         public FastAccessList<long, Playlist> Playlists
         {
             get
@@ -70,7 +70,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(2)]
+        [ProtoMember(2, IsRequired = true)]
         public PlaylistItem CurrentItem
         {
             get
@@ -84,7 +84,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(3)]
+        [ProtoMember(3, IsRequired = true)]
         public HaProtoImpl.MoveType Mode
         {
             get
@@ -97,7 +97,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(4)]
+        [ProtoMember(4, IsRequired = true)]
         public int Volume
         {
             get
@@ -111,7 +111,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(5)]
+        [ProtoMember(5, IsRequired = true)]
         public int Position
         {
             get
@@ -125,7 +125,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(6)]
+        [ProtoMember(6, IsRequired = true)]
         public int Maximum
         {
             get
@@ -139,7 +139,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(7)]
+        [ProtoMember(7, IsRequired = true)]
         public bool Playing
         {
             get
@@ -153,7 +153,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(8)]
+        [ProtoMember(8, IsRequired = true)]
         public string RemoteVersion
         {
             get
@@ -167,7 +167,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(9)]
+        [ProtoMember(9, IsRequired = true)]
         public PlaylistItem NextItemOverride
         {
             get
@@ -181,7 +181,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(10)]
+        [ProtoMember(10, IsRequired = true)]
         public HaProtoImpl.InjectionType NextItemOverrideAction
         {
             get
@@ -195,7 +195,7 @@ namespace HaMusicLib
             }
         }
 
-        [ProtoMember(11)]
+        [ProtoMember(11, IsRequired = true)]
         public Playlist LibraryPlaylist
         {
             get

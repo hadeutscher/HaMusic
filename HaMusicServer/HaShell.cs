@@ -359,7 +359,7 @@ namespace HaMusicServer
         [ProtoContract]
         private class ListContainer<T>
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, IsRequired = true)]
             public List<T> List = new List<T>();
 
             public ListContainer()
