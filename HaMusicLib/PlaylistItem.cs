@@ -71,7 +71,7 @@ namespace HaMusicLib
 
         public bool MatchKeywords(IEnumerable<string> keywords)
         {
-            return keywords.Any(x => ItemLower.Contains(x));
+            return keywords.All(x => ItemLower.Contains(x));
         }
 
         private string _cachedItemLower = null;
