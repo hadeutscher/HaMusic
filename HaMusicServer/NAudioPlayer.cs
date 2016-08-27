@@ -31,8 +31,7 @@ namespace HaMusicServer
 
         void player_PlaybackStopped(object sender, StoppedEventArgs e)
         {
-            if (SongEnded != null)
-                SongEnded(this, new EventArgs());
+            SongEnded?.Invoke(this, new EventArgs());
         }
 
         private void SetVolumeInternal(int vol)

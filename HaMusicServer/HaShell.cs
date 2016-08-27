@@ -78,7 +78,7 @@ namespace HaMusicServer
             }
         }
 
-        private void Console_OnConsoleInput(object sender, ConsoleControl.ConsoleEventArgs args)
+        public void Console_OnConsoleInput(object sender, ConsoleControl.ConsoleEventArgs args)
         {
             try
             {
@@ -430,17 +430,17 @@ namespace HaMusicServer
             ConsoleWriteLine("Loaded backup, please run `flush` and `load` to propagate changes");
         }
 
-        private void ConsoleWrite(string data)
+        public void ConsoleWrite(string data)
         {
             console.WriteOutput(data, console.InternalRichTextBox.ForeColor);
         }
 
-        private void ConsoleWriteLine(string line)
+        public void ConsoleWriteLine(string line)
         {
             console.WriteOutput(line + "\r\n", console.InternalRichTextBox.ForeColor);
         }
 
-        private void ConsoleWriteLines(List<string> lines)
+        public void ConsoleWriteLines(List<string> lines)
         {
             lines.ForEach(x => console.WriteOutput(x + "\r\n", console.InternalRichTextBox.ForeColor));
         }

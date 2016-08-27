@@ -16,7 +16,7 @@ namespace HaMusicLib
     [ProtoContract]
     public class ServerDataSource : PropertyNotifierBase
     {
-        public const string LocalVersion = "3.5";
+        public const string LocalVersion = "3.6";
         public object Lock = new object();
         private FastAccessList<long, Playlist> playlists = new FastAccessList<long, Playlist>(x => x.UID);
         private Playlist library = new Playlist();

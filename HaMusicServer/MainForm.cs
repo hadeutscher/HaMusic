@@ -59,6 +59,69 @@ namespace HaMusicServer
             RestoreState();
             BeginReloadLibrary();
             hashell = new HaShell(this, console);
+            ParseCommandLine();
+        }
+
+        private void ShowHelpAndExit()
+        {
+            Console.WriteLine("usage: HaMusicServer [OPTIONS]");
+            Console.WriteLine("");
+            Console.WriteLine("Options:");
+            Console.WriteLine("  -c, --command      run command at boot");
+            Console.WriteLine("  -C, --clean        do not load previous database");
+            Console.WriteLine("  -h, --help         show this help");
+            Environment.Exit(0);
+        }
+
+        private void ParseCommandLine()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            List<string> commands = new List<string>();
+            bool load = true;
+            for (int i = 1; i < args.Length; i++)
+            {
+                switch (args[i])
+                {
+                    case "-c":
+                    case "--command":
+                        i++;
+                        if (i >= args.Length)
+                        {
+                            ShowHelpAndExit();
+                        }
+                        commands.Add(args[i]);
+                        break;
+                    case "-C":
+                    case "--clean":
+                        load = false;
+                        break;
+                    case "-h":
+                    case "--help":
+                        ShowHelpAndExit();
+                        break;
+                    default:
+                        ShowHelpAndExit();
+                        break;
+                }
+            }
+            if (load)
+            {
+                try
+                {
+                    LoadSourceState(defaultSourcePath);
+                }
+                catch (FileNotFoundException)
+                {
+                }
+                catch (Exception e)
+                {
+                    log(e.ToString());
+                }
+            }
+            foreach (string command in commands)
+            {
+                hashell.Console_OnConsoleInput(this, new ConsoleControl.ConsoleEventArgs(command));
+            }
         }
 
         private void CreateLogger()
@@ -68,9 +131,16 @@ namespace HaMusicServer
             sw = new StreamWriter(fs);
             log = delegate (string x)
             {
-                lock (sw)
+                try
                 {
-                    sw.Write(x + "\r\n");
+                    lock (sw)
+                    {
+                        sw.Write(x + "\r\n");
+                    }
+                }
+                catch (Exception e)
+                {
+                    hashell.ConsoleWriteLines(new List<string> { "Exception when trying to log:\n", x, "Exception was: " + e.Message, e.StackTrace });
                 }
             };
         }
@@ -257,15 +327,21 @@ namespace HaMusicServer
 
         public void SaveSourceState(string path)
         {
-            lock (DataSource.Lock)
+            using (FileStream fs = File.Create(path + "$TMP"))
             {
-                using (FileStream fs = File.Create(path))
+                lock (DataSource.Lock)
                 {
                     Playlist.SerializeCounters(fs);
                     PlaylistItem.SerializeCounters(fs);
                     DataSource.Serialize(fs);
                 }
             }
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+            // Racy...
+            File.Move(path + "$TMP", path);
         }
 
         private void WriteConfigInternal(Dictionary<string, List<string>> conf)

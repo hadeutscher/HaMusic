@@ -29,8 +29,7 @@ namespace HaMusicServer
             lock (mainForm.DataSource.Lock)
             {
                 PlaylistItem item = mainForm.DataSource.CurrentItem = mainForm.Mover.Next();
-                if (SongChanged != null)
-                    SongChanged(this, item);
+                SongChanged?.Invoke(this, item);
                 return item;
             }
         }
