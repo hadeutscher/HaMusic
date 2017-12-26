@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HaMusicServer", "HaMusicServer\HaMusicServer.csproj", "{AA58B805-6643-45D9-BDA2-AEFE05F1CB88}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HaMusicServer", "HaMusicServer\HaMusicServer.csproj", "{76F9297B-44F0-4787-86B7-CE3E27EFD8CC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HaMusic", "HaMusic\HaMusic.csproj", "{3DA53249-A123-4679-82F1-473D398D5A99}"
 EndProject
@@ -25,10 +25,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AA58B805-6643-45D9-BDA2-AEFE05F1CB88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AA58B805-6643-45D9-BDA2-AEFE05F1CB88}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AA58B805-6643-45D9-BDA2-AEFE05F1CB88}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AA58B805-6643-45D9-BDA2-AEFE05F1CB88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76F9297B-44F0-4787-86B7-CE3E27EFD8CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76F9297B-44F0-4787-86B7-CE3E27EFD8CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76F9297B-44F0-4787-86B7-CE3E27EFD8CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76F9297B-44F0-4787-86B7-CE3E27EFD8CC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3DA53249-A123-4679-82F1-473D398D5A99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3DA53249-A123-4679-82F1-473D398D5A99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3DA53249-A123-4679-82F1-473D398D5A99}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -60,5 +60,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {30470F9B-ADC1-4C9C-A1CB-4D8B1B95C214}
 	EndGlobalSection
 EndGlobal

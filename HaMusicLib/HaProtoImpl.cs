@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2015 haha01haha01
+﻿/* Copyright (C) 2017 Yuval Deutscher
 
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace HaMusicLib
 {
@@ -181,18 +181,15 @@ namespace HaMusicLib
             {
                 if (IsServer())
                     pathUids = new List<long>();
-                lock (dataSource.Lock)
+                Playlist pl = dataSource.Playlists.FastGet(uid);
+                int i = 0;
+                int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
+                foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
+                                                       : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
                 {
-                    Playlist pl = dataSource.Playlists.FastGet(uid);
-                    int i = 0;
-                    int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
-                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
-                                                           : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
-                    {
-                        pl.PlaylistItems.Insert(index++, pi);
-                        if (IsServer())
-                            pathUids.Add(pi.UID);
-                    }
+                    pl.PlaylistItems.Insert(index++, pi);
+                    if (IsServer())
+                        pathUids.Add(pi.UID);
                 }
                 return false;
             }
@@ -229,29 +226,26 @@ namespace HaMusicLib
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
                 bool result = false;
-                lock (dataSource.Lock)
+                Playlist pl = dataSource.Playlists.FastGet(uid);
+                if (dataSource.CurrentItem != null && items.Contains(dataSource.CurrentItem.UID))
                 {
-                    Playlist pl = dataSource.Playlists.FastGet(uid);
-                    if (dataSource.CurrentItem != null && items.Contains(dataSource.CurrentItem.UID))
-                    {
-                        dataSource.CurrentItem = null;
-                        result = true;
-                    }
-                    if (dataSource.NextItemOverride != null && items.Contains(dataSource.NextItemOverride.UID))
-                    {
-                        dataSource.NextItemOverride = null;
-                    }
+                    dataSource.CurrentItem = null;
+                    result = true;
+                }
+                if (dataSource.NextItemOverride != null && items.Contains(dataSource.NextItemOverride.UID))
+                {
+                    dataSource.NextItemOverride = null;
+                }
 
-                    // This is a performance-critical area in the client, because Remove is a costly operation on INotifyCollectionChanged objects
-                    if (items.Count > 1)
-                    {
-                        HashSet<long> fastItems = new HashSet<long>(items);
-                        pl.PlaylistItems.RemoveAll(x => fastItems.Contains(x.UID));
-                    }
-                    else if (items.Count > 0)
-                    {
-                        pl.PlaylistItems.Remove(pl.PlaylistItems.FastGet(items[0]));
-                    }
+                // This is a performance-critical area in the client, because Remove is a costly operation on INotifyCollectionChanged objects
+                if (items.Count > 1)
+                {
+                    HashSet<long> fastItems = new HashSet<long>(items);
+                    pl.PlaylistItems.RemoveAll(x => fastItems.Contains(x.UID));
+                }
+                else if (items.Count > 0)
+                {
+                    pl.PlaylistItems.Remove(pl.PlaylistItems.FastGet(items[0]));
                 }
                 return result;
             }
@@ -285,20 +279,17 @@ namespace HaMusicLib
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
                 bool result = false;
-                lock (dataSource.Lock)
+                Playlist pl = dataSource.Playlists.FastGet(uid);
+                if (dataSource.CurrentItem != null && pl.PlaylistItems.ContainsKey(dataSource.CurrentItem.UID))
                 {
-                    Playlist pl = dataSource.Playlists.FastGet(uid);
-                    if (dataSource.CurrentItem != null && pl.PlaylistItems.ContainsKey(dataSource.CurrentItem.UID))
-                    {
-                        dataSource.CurrentItem = null;
-                        result = true;
-                    }
-                    if (dataSource.NextItemOverride != null && pl.PlaylistItems.ContainsKey(dataSource.NextItemOverride.UID))
-                    {
-                        dataSource.NextItemOverride = null;
-                    }
-                    pl.PlaylistItems.Clear();
+                    dataSource.CurrentItem = null;
+                    result = true;
                 }
+                if (dataSource.NextItemOverride != null && pl.PlaylistItems.ContainsKey(dataSource.NextItemOverride.UID))
+                {
+                    dataSource.NextItemOverride = null;
+                }
+                pl.PlaylistItems.Clear();
                 return result;
             }
         }
@@ -330,13 +321,10 @@ namespace HaMusicLib
 
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
-                lock (dataSource.Lock)
+                dataSource.CurrentItem = uid < 0 ? null : dataSource.GetItem(uid, true);
+                if (dataSource.NextItemOverride != null && dataSource.NextItemOverride.UID == uid)
                 {
-                    dataSource.CurrentItem = uid < 0 ? null : dataSource.GetItem(uid, true);
-                    if (dataSource.NextItemOverride != null && dataSource.NextItemOverride.UID == uid)
-                    {
-                        dataSource.NextItemOverride = null;
-                    }
+                    dataSource.NextItemOverride = null;
                 }
                 return true;
             }
@@ -397,14 +385,11 @@ namespace HaMusicLib
 
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
-                lock (dataSource.Lock)
-                {
-                    Playlist pl = IsServer() ? new Playlist()
-                                             : new Playlist() { UID = uid };
-                    dataSource.Playlists.Add(pl);
-                    if (IsServer())
-                        uid = pl.UID;
-                }
+                Playlist pl = IsServer() ? new Playlist()
+                                         : new Playlist() { UID = uid };
+                dataSource.Playlists.Add(pl);
+                if (IsServer())
+                    uid = pl.UID;
                 return false;
             }
         }
@@ -437,24 +422,21 @@ namespace HaMusicLib
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
                 bool result = false;
-                lock (dataSource.Lock)
+                if (dataSource.Playlists.Count < 2)
                 {
-                    if (dataSource.Playlists.Count < 2)
-                    {
-                        return result;
-                    }
-                    Playlist pl = dataSource.Playlists.FastGet(uid);
-                    if (dataSource.CurrentItem != null && pl.PlaylistItems.ContainsKey(dataSource.CurrentItem.UID))
-                    {
-                        dataSource.CurrentItem = null;
-                        result = true;
-                    }
-                    if (dataSource.NextItemOverride != null && pl.PlaylistItems.ContainsKey(dataSource.NextItemOverride.UID))
-                    {
-                        dataSource.NextItemOverride = null;
-                    }
-                    dataSource.Playlists.Remove(pl);
+                    return result;
                 }
+                Playlist pl = dataSource.Playlists.FastGet(uid);
+                if (dataSource.CurrentItem != null && pl.PlaylistItems.ContainsKey(dataSource.CurrentItem.UID))
+                {
+                    dataSource.CurrentItem = null;
+                    result = true;
+                }
+                if (dataSource.NextItemOverride != null && pl.PlaylistItems.ContainsKey(dataSource.NextItemOverride.UID))
+                {
+                    dataSource.NextItemOverride = null;
+                }
+                dataSource.Playlists.Remove(pl);
                 return result;
             }
         }
@@ -489,11 +471,8 @@ namespace HaMusicLib
 
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
-                lock (dataSource.Lock)
-                {
-                    Playlist pl = dataSource.Playlists.FastGet(uid);
-                    pl.Name = name;
-                }
+                Playlist pl = dataSource.Playlists.FastGet(uid);
+                pl.Name = name;
                 return false;
             }
         }
@@ -663,44 +642,41 @@ namespace HaMusicLib
                 List<long> needles;
                 if (items.Contains(after))
                     return false;
-                lock (dataSource.Lock)
+                List<PlaylistItem> foundNeedles = new List<PlaylistItem>();
+                needles = items.ToList();
+                HashSet<Playlist> relevantPlaylists = new HashSet<Playlist>();
+                for (int haystackIndex = 0; haystackIndex < dataSource.Playlists.Count && needles.Count > 0; haystackIndex++)
                 {
-                    List<PlaylistItem> foundNeedles = new List<PlaylistItem>();
-                    needles = items.ToList();
-                    HashSet<Playlist> relevantPlaylists = new HashSet<Playlist>();
-                    for (int haystackIndex = 0; haystackIndex < dataSource.Playlists.Count && needles.Count > 0; haystackIndex++)
+                    Playlist haystack = dataSource.Playlists[haystackIndex];
+                    for (int needleIndex = 0; needleIndex < needles.Count; needleIndex++)
                     {
-                        Playlist haystack = dataSource.Playlists[haystackIndex];
-                        for (int needleIndex = 0; needleIndex < needles.Count; needleIndex++)
+                        PlaylistItem foundNeedle;
+                        long uid = needles[needleIndex];
+                        if (haystack.PlaylistItems.FastTryGet(uid, out foundNeedle))
                         {
-                            PlaylistItem foundNeedle;
-                            long uid = needles[needleIndex];
-                            if (haystack.PlaylistItems.FastTryGet(uid, out foundNeedle))
-                            {
-                                foundNeedles.Add(foundNeedle);
-                                relevantPlaylists.Add(haystack);
-                            }
+                            foundNeedles.Add(foundNeedle);
+                            relevantPlaylists.Add(haystack);
                         }
                     }
+                }
 
-                    if (needles.Count != foundNeedles.Count)
-                    {
-                        // This is bad, some UIDs were not found - abort the client, but only after we re-add the items we removed
-                        abortClient = true;
-                    }
+                if (needles.Count != foundNeedles.Count)
+                {
+                    // This is bad, some UIDs were not found - abort the client, but only after we re-add the items we removed
+                    abortClient = true;
+                }
 
-                    HashSet<long> fastNeedles = new HashSet<long>(needles);
-                    foreach (Playlist haystack in relevantPlaylists)
-                    {
-                        haystack.PlaylistItems.RemoveAll(x => fastNeedles.Contains(x.UID));
-                    }
+                HashSet<long> fastNeedles = new HashSet<long>(needles);
+                foreach (Playlist haystack in relevantPlaylists)
+                {
+                    haystack.PlaylistItems.RemoveAll(x => fastNeedles.Contains(x.UID));
+                }
 
-                    Playlist pl = dataSource.Playlists.FastGet(pid);
-                    int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
-                    foreach (PlaylistItem currItem in foundNeedles)
-                    {
-                        pl.PlaylistItems.Insert(index++, currItem);
-                    }
+                Playlist pl = dataSource.Playlists.FastGet(pid);
+                int index = after < 0 ? 0 : pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
+                foreach (PlaylistItem currItem in foundNeedles)
+                {
+                    pl.PlaylistItems.Insert(index++, currItem);
                 }
 
                 if (abortClient)
@@ -741,13 +717,10 @@ namespace HaMusicLib
 
             public bool ApplyToDatabase(ServerDataSource dataSource)
             {
-                lock (dataSource.Lock)
-                {
-                    // Note - we MUST change Action before the item itself, because bindings to NextItemOverride may check Action and assume
-                    // it is the current action.
-                    dataSource.NextItemOverrideAction = type;
-                    dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid, true);
-                }
+                // Note - we MUST change Action before the item itself, because bindings to NextItemOverride may check Action and assume
+                // it is the current action.
+                dataSource.NextItemOverrideAction = type;
+                dataSource.NextItemOverride = uid < 0 ? null : dataSource.GetItem(uid, true);
                 return false;
             }
         }
@@ -784,16 +757,13 @@ namespace HaMusicLib
             {
                 if (IsServer())
                     pathUids = new List<long>();
-                lock (dataSource.Lock)
+                int i = 0;
+                foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
+                                                       : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
                 {
-                    int i = 0;
-                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
-                                                           : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
-                    {
-                        dataSource.LibraryPlaylist.PlaylistItems.Add(pi);
-                        if (IsServer())
-                            pathUids.Add(pi.UID);
-                    }
+                    dataSource.LibraryPlaylist.PlaylistItems.Add(pi);
+                    if (IsServer())
+                        pathUids.Add(pi.UID);
                 }
                 return false;
             }
@@ -828,21 +798,18 @@ namespace HaMusicLib
             {
                 HashSet<string> paths_set = new HashSet<string>(paths);
                 bool result = false;
-                lock (dataSource.Lock)
+                if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.CurrentItem) && paths_set.Contains(dataSource.CurrentItem.Item))
                 {
-                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.CurrentItem) && paths_set.Contains(dataSource.CurrentItem.Item))
-                    {
-                        dataSource.CurrentItem = null;
-                        result = true;
-                    }
-                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.NextItemOverride) && paths_set.Contains(dataSource.NextItemOverride.Item))
-                    {
-                        dataSource.NextItemOverride = null;
-                    }
-                    foreach (string path in paths)
-                    {
-                        dataSource.LibraryPlaylist.PlaylistItems.RemoveAll(x => paths_set.Contains(x.Item));
-                    }
+                    dataSource.CurrentItem = null;
+                    result = true;
+                }
+                if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.NextItemOverride) && paths_set.Contains(dataSource.NextItemOverride.Item))
+                {
+                    dataSource.NextItemOverride = null;
+                }
+                foreach (string path in paths)
+                {
+                    dataSource.LibraryPlaylist.PlaylistItems.RemoveAll(x => paths_set.Contains(x.Item));
                 }
                 return result;
             }
@@ -881,30 +848,27 @@ namespace HaMusicLib
                 if (IsServer())
                     pathUids = new List<long>();
                 bool result = false;
-                lock (dataSource.Lock)
+                if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.CurrentItem))
                 {
-                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.CurrentItem))
-                    {
-                        dataSource.CurrentItem = null;
-                        result = true;
-                    }
-                    if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.NextItemOverride))
-                    {
-                        dataSource.NextItemOverride = null;
-                    }
-                    dataSource.LibraryPlaylist.PlaylistItems.Clear();
+                    dataSource.CurrentItem = null;
+                    result = true;
+                }
+                if (dataSource.LibraryPlaylist.PlaylistItems.Contains(dataSource.NextItemOverride))
+                {
+                    dataSource.NextItemOverride = null;
+                }
+                dataSource.LibraryPlaylist.PlaylistItems.Clear();
 
-                    if (paths == null)
-                        return result;
+                if (paths == null)
+                    return result;
 
-                    int i = 0;
-                    foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
-                                                           : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
-                    {
-                        dataSource.LibraryPlaylist.PlaylistItems.Add(pi);
-                        if (IsServer())
-                            pathUids.Add(pi.UID);
-                    }
+                int i = 0;
+                foreach (PlaylistItem pi in IsServer() ? paths.Select(x => new PlaylistItem() { Item = x })
+                                                       : paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] }))
+                {
+                    dataSource.LibraryPlaylist.PlaylistItems.Add(pi);
+                    if (IsServer())
+                        pathUids.Add(pi.UID);
                 }
                 return result;
             }
@@ -1032,6 +996,77 @@ namespace HaMusicLib
         public static void Send(Socket s, Opcode type, byte[] x)
         {
             SafeSendBlock(s, x, (int)type);
+        }
+
+        private static async Task<byte[]> ReceiveAllAsync(this NetworkStream stream, int len)
+        {
+            int totalRead = 0, bRead = 0;
+            byte[] result = new byte[len];
+            while (totalRead < len)
+            {
+                bRead = await stream.ReadAsync(result, totalRead, len - totalRead);
+                if (bRead <= 0)
+                {
+                    throw new IOException();
+                }
+                totalRead += bRead;
+            }
+            return result;
+        }
+
+        private static async Task<Tuple<int, byte[]>> ReceiveBlockAsync(this NetworkStream stream)
+        {
+            // Type
+            int type = BitConverter.ToInt32(await stream.ReceiveAllAsync(4), 0);
+
+            // Length
+            int len = BitConverter.ToInt32(await stream.ReceiveAllAsync(4), 0);
+
+            // Value
+            return new Tuple<int, byte[]>(type, len > 0 ? await stream.ReceiveAllAsync(len) : new byte[0]);
+        }
+
+        public static async Task<Tuple<Opcode, byte[]>> ReceiveAsync(NetworkStream stream)
+        {
+            var result = await ReceiveBlockAsync(stream);
+            return new Tuple<Opcode, byte[]>((Opcode)result.Item1, result.Item2);
+        }
+
+        private static async Task SendBlockAsync(NetworkStream stream, byte[] x, int type)
+        {
+            byte[] typeBuf = BitConverter.GetBytes(type);
+            byte[] dataBuf = x;
+            byte[] lenBuf = BitConverter.GetBytes(dataBuf.Length);
+
+            await stream.WriteAsync(typeBuf, 0, typeBuf.Length);
+            await stream.WriteAsync(lenBuf, 0, lenBuf.Length);
+            await stream.WriteAsync(dataBuf, 0, dataBuf.Length);
+        }
+
+        private static async Task SafeSendBlockAsync(NetworkStream stream, byte[] x, int type)
+        {
+            try
+            {
+                await SendBlockAsync(stream, x, type);
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    stream.Close();
+                }
+                catch { }
+            }
+        }
+
+        public static async Task SendAsync(NetworkStream stream, Opcode type, HaProtoImpl.HaProtoPacket x)
+        {
+            await SendAsync(stream, type, x.Build());
+        }
+
+        public static async Task SendAsync(NetworkStream stream, Opcode type, byte[] x)
+        {
+            await SafeSendBlockAsync(stream, x, (int)type);
         }
     }
 }

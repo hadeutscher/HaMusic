@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2015 haha01haha01
+﻿/* Copyright (C) 2017 Yuval Deutscher
 
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,22 +12,19 @@ using System.Security.Cryptography;
 
 namespace HaMusicServer
 {
-    // All mover actions may lock the data source
     public class Mover
     {
-        private MainForm mainForm;
         private static RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
         private int consecErrors = 0;
 
-        public Mover(MainForm mainForm)
+        public Mover()
         {
-            this.mainForm = mainForm;
             OnSetDataSource();
         }
 
         public void OnSetDataSource()
         {
-            mainForm.DataSource.PropertyChanged += dataSource_PropertyChanged;
+            Program.Core.DataSource.PropertyChanged += dataSource_PropertyChanged;
         }
 
         private void dataSource_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -40,12 +37,9 @@ namespace HaMusicServer
 
         private void resetShuffle()
         {
-            lock (mainForm.DataSource.Lock)
+            foreach (Playlist pl in Program.Core.DataSource.Playlists)
             {
-                foreach (Playlist pl in mainForm.DataSource.Playlists)
-                {
-                    resetShuffle(pl);
-                }
+                resetShuffle(pl);
             }
         }
 
@@ -78,7 +72,7 @@ namespace HaMusicServer
         private int getRandomMove(Playlist pl)
         {
             List<int> candidates = new List<int>();
-            int currIdx = pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem);
+            int currIdx = pl.PlaylistItems.IndexOf(Program.Core.DataSource.CurrentItem);
             for (int i = 0; i < pl.PlaylistItems.Count; i++)
             {
                 if (i != currIdx)
@@ -99,92 +93,90 @@ namespace HaMusicServer
             return index < pl.PlaylistItems.Count ? pl.PlaylistItems[index] : null;
         }
 
-        private void ChangeNextItemOverride(PlaylistItem newOverride, HaProtoImpl.InjectionType? newType=null)
+        private void ChangeNextItemOverride(PlaylistItem newOverride, HaProtoImpl.InjectionType? newType = null)
         {
             if (newType.HasValue)
-                mainForm.DataSource.NextItemOverrideAction = newType.Value;
-            mainForm.DataSource.NextItemOverride = newOverride;
-            mainForm.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT() {
+                Program.Core.DataSource.NextItemOverrideAction = newType.Value;
+            Program.Core.DataSource.NextItemOverride = newOverride;
+            Program.Server.BroadcastMessage(HaProtoImpl.Opcode.INJECT, new HaProtoImpl.INJECT()
+            {
                 uid = newOverride != null ? newOverride.UID : -1,
-                type =newType.HasValue ? newType.Value : HaProtoImpl.InjectionType.INJECT_SONG
+                type = newType.HasValue ? newType.Value : HaProtoImpl.InjectionType.INJECT_SONG
             });
         }
 
         public PlaylistItem Next()
         {
-            lock (mainForm.DataSource.Lock)
+            try
             {
-                try
+                if (Program.Core.DataSource.NextItemOverride != null)
                 {
-                    if (mainForm.DataSource.NextItemOverride != null)
+                    PlaylistItem result;
+                    switch (Program.Core.DataSource.NextItemOverrideAction)
                     {
-                        PlaylistItem result;
-                        switch (mainForm.DataSource.NextItemOverrideAction)
-                        {
-                            case HaProtoImpl.InjectionType.INJECT_SONG:
-                                // Normal injection, set the song and disable nextItemOverride
-                                result = mainForm.DataSource.NextItemOverride;
-                                ChangeNextItemOverride(null);
-                                return result;
-                            case HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED:
-                                mainForm.DataSource.CurrentItem = mainForm.DataSource.NextItemOverride;
-                                ChangeNextItemOverride(null);
-                                // Purposely break and not return, this will cause the rest of the routine to advance CurrentItem
-                                break;
-                            case HaProtoImpl.InjectionType.INJECT_AND_RETURN:
-                                PlaylistItem curr = mainForm.DataSource.CurrentItem;
-                                result = mainForm.DataSource.NextItemOverride;
-                                ChangeNextItemOverride(curr, HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED);
-                                return result;
-                        }
-                        
+                        case HaProtoImpl.InjectionType.INJECT_SONG:
+                            // Normal injection, set the song and disable nextItemOverride
+                            result = Program.Core.DataSource.NextItemOverride;
+                            ChangeNextItemOverride(null);
+                            return result;
+                        case HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED:
+                            Program.Core.DataSource.CurrentItem = Program.Core.DataSource.NextItemOverride;
+                            ChangeNextItemOverride(null);
+                            // Purposely break and not return, this will cause the rest of the routine to advance CurrentItem
+                            break;
+                        case HaProtoImpl.InjectionType.INJECT_AND_RETURN:
+                            PlaylistItem curr = Program.Core.DataSource.CurrentItem;
+                            result = Program.Core.DataSource.NextItemOverride;
+                            ChangeNextItemOverride(curr, HaProtoImpl.InjectionType.INJECT_AS_IF_SONG_ENDED);
+                            return result;
                     }
-                    if (mainForm.DataSource.CurrentItem == null)
-                    {
-                        return null;
-                    }
-                    Playlist pl = mainForm.DataSource.GetPlaylistForItem(mainForm.DataSource.CurrentItem.UID, true);
-                    if (consecErrors > pl.PlaylistItems.Count || pl.PlaylistItems.Count == 0)
-                    {
-                        // Too many errors in a row, or nothing to play, just stop
-                        return null;
-                    }
-                    switch (mainForm.DataSource.Mode)
-                    {
-                        case HaProtoImpl.MoveType.NEXT:
-                            return indexToItem((pl.PlaylistItems.IndexOf(mainForm.DataSource.CurrentItem) + 1) % pl.PlaylistItems.Count, pl);
-                        case HaProtoImpl.MoveType.RANDOM:
-                            return indexToItem(getRandomMove(pl), pl);
-                        case HaProtoImpl.MoveType.SHUFFLE:
-                            List<int> candidates = new List<int>();
-                            for (int i = 0; i < pl.PlaylistItems.Count; i++)
-                            {
-                                if (!pl.PlaylistItems[i].Played)
-                                {
-                                    candidates.Add(i);
-                                }
-                            }
-                            int winner;
-                            if (candidates.Count > 0)
-                            {
-                                winner = candidates[(int)GetRandom(0, candidates.Count)];
-                            }
-                            else
-                            {
-                                resetShuffle(pl);
-                                winner = getRandomMove(pl); // Fallback to random when we just cleared the shuffle set
-                            }
-                            // Winner will be marked as playing when it gets pulled from the playlist by the media player
-                            return indexToItem(winner, pl);
-                        default:
-                            return null;
-                    }
+
                 }
-                catch (Exception e)
+                if (Program.Core.DataSource.CurrentItem == null)
                 {
-                    mainForm.log(Program.GetErrorException(e));
                     return null;
                 }
+                Playlist pl = Program.Core.DataSource.GetPlaylistForItem(Program.Core.DataSource.CurrentItem.UID, true);
+                if (consecErrors > pl.PlaylistItems.Count || pl.PlaylistItems.Count == 0)
+                {
+                    // Too many errors in a row, or nothing to play, just stop
+                    return null;
+                }
+                switch (Program.Core.DataSource.Mode)
+                {
+                    case HaProtoImpl.MoveType.NEXT:
+                        return indexToItem((pl.PlaylistItems.IndexOf(Program.Core.DataSource.CurrentItem) + 1) % pl.PlaylistItems.Count, pl);
+                    case HaProtoImpl.MoveType.RANDOM:
+                        return indexToItem(getRandomMove(pl), pl);
+                    case HaProtoImpl.MoveType.SHUFFLE:
+                        List<int> candidates = new List<int>();
+                        for (int i = 0; i < pl.PlaylistItems.Count; i++)
+                        {
+                            if (!pl.PlaylistItems[i].Played)
+                            {
+                                candidates.Add(i);
+                            }
+                        }
+                        int winner;
+                        if (candidates.Count > 0)
+                        {
+                            winner = candidates[(int)GetRandom(0, candidates.Count)];
+                        }
+                        else
+                        {
+                            resetShuffle(pl);
+                            winner = getRandomMove(pl); // Fallback to random when we just cleared the shuffle set
+                        }
+                        // Winner will be marked as playing when it gets pulled from the playlist by the media player
+                        return indexToItem(winner, pl);
+                    default:
+                        return null;
+                }
+            }
+            catch (Exception e)
+            {
+                Program.Logger.Log(Utils.GetErrorException(e));
+                return null;
             }
         }
     }

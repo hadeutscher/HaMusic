@@ -1,23 +1,19 @@
-﻿/* Copyright (C) 2015 haha01haha01
+﻿/* Copyright (C) 2017 Yuval Deutscher
 
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using System.Collections.Generic;
 using ProtoBuf;
+using System.Collections.Generic;
 using System.IO;
-using HaMusicLib;
-using System.Linq;
-using System;
 
 namespace HaMusicLib
 {
     [ProtoContract]
     public class ServerDataSource : PropertyNotifierBase
     {
-        public const string LocalVersion = "3.6";
-        public object Lock = new object();
+        public const string LocalVersion = "4.0";
         private FastAccessList<long, Playlist> playlists = new FastAccessList<long, Playlist>(x => x.UID);
         private Playlist library = new Playlist();
         private PlaylistItem currentItem = null;
