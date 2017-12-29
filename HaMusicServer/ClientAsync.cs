@@ -29,6 +29,27 @@ namespace HaMusicServer
         public IPAddress IP { get => ip; }
         public NetworkStream Stream { get => stream; }
 
+        public void Send(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet)
+        {
+            Send(type, packet.Build());
+        }
+
+        public async void Send(HaProtoImpl.Opcode type, byte[] data)
+        {
+            try
+            {
+                await HaProtoImpl.SendAsync(stream, type, data);
+            }
+            catch (Exception e)
+            {
+                if (e is SocketException && ((SocketException)e).ErrorCode == 0)
+                    Program.Logger.Log(string.Format("{0} exited normally", id));
+                else
+                    Program.Logger.Log(string.Format("Exception in {0} : {1}", id, Utils.GetErrorException(e)));
+                Kill();
+            }
+        }
+
         public void Kill()
         {
             try
@@ -56,7 +77,7 @@ namespace HaMusicServer
                     {
                         case HaProtoImpl.Opcode.GETDB:
                             // Intentionally waiting synchronously to prevent multiple-sends, e.g. by BroadcastMessage sending to this client
-                            HaProtoImpl.SendAsync(stream, HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = Program.Core.DataSource }).Wait();
+                            Send(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = Program.Core.DataSource });
                             break;
                         case HaProtoImpl.Opcode.SETDB:
                         case HaProtoImpl.Opcode.LIBRARY_ADD:
@@ -118,7 +139,6 @@ namespace HaMusicServer
                 else
                     Program.Logger.Log(string.Format("Exception in {0} : {1}", id, Utils.GetErrorException(e)));
                 Kill();
-                return;
             }
         }
     }

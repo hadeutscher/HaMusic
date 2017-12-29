@@ -1066,7 +1066,7 @@ namespace HaMusicLib
 
         public static async Task SendAsync(NetworkStream stream, Opcode type, byte[] x)
         {
-            await SafeSendBlockAsync(stream, x, (int)type);
+            await SendBlockAsync(stream, x, (int)type);
         }
     }
 }

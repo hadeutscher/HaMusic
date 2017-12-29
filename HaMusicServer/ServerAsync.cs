@@ -6,8 +6,10 @@
 
 using HaMusicLib;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace HaMusicServer
 {
@@ -40,13 +42,12 @@ namespace HaMusicServer
         public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, ClientAsync exempt = null)
         {
             byte[] data = packet.Build();
-            for (int i = 0; i < clients.Count; i++)
+            foreach (ClientAsync c in clients)
             {
-                ClientAsync c = clients[i];
-                if (c == exempt)
-                    continue;
-                // Intentionally not awaiting to disallow races with "clients" changes, e.g. from accept
-                HaProtoImpl.SendAsync(c.Stream, type, data).Wait();
+                if (c != exempt)
+                {
+                    c.Send(type, data);
+                }
             }
         }
     }
