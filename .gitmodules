@@ -1,0 +1,3 @@
+[submodule "MPlayerControl"]
+	path = MPlayerControl
+	url = git@github.com:haha01haha01/MPlayerControl.git

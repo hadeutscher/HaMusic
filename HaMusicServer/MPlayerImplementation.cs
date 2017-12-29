@@ -6,6 +6,7 @@
 
 using LibMPlayerCommon;
 using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace HaMusicServer
@@ -13,6 +14,8 @@ namespace HaMusicServer
     class MPlayerImplementation : IMediaPlayerImplementation
     {
         private MPlayer player;
+        private int vol = 0;
+        private int pos = 0;
 
         public MPlayerImplementation()
         {
@@ -31,23 +34,42 @@ namespace HaMusicServer
                 backend = MplayerBackends.Direct3D;
             }
             player = new MPlayer(0, backend);
-            player.VideoExited += Player_VideoExited;
+            player.Finalfile += Player_Finalfile;
+            player.MplayerError += Player_MplayerError;
+            player.CurrentPosition += Player_CurrentPosition;
         }
 
-        private void Player_VideoExited(object sender, MplayerEvent e)
+        private void Player_CurrentPosition(object sender, MplayerEvent e)
         {
-            SongEnded?.Invoke(sender, e);
+            pos = (int)e.Value;
+        }
+
+        private void Player_Finalfile(object sender, MplayerEvent e)
+        {
+            if (e.Message == " 1  ")
+            {
+                SongEnded?.Invoke(sender, e);
+            }
+        }
+
+        private void Player_MplayerError(object sender, DataReceivedEventArgs e)
+        {
+            Program.Logger.Log(e.Data);
         }
 
         public event EventHandler SongEnded;
 
         public int GetPos()
         {
-            return (int)player.GetCurrentPosition();
+            return pos;
         }
 
         public int PlaySong(string path)
         {
+            player.Stop();
+            pos = 0;
+            if (string.IsNullOrEmpty(path))
+                return -1;
             try
             {
                 player.Play(path);
@@ -73,11 +95,13 @@ namespace HaMusicServer
 
         public void SetPos(int time)
         {
-            player.Seek(time, Seek.Percentage);
+            player.Seek(time, Seek.Absolute);
+            player.Volume(vol);
         }
 
         public void SetVolume(int vol)
         {
+            this.vol = vol;
             player.Volume(vol);
         }
 
