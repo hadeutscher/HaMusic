@@ -79,6 +79,9 @@
     <Reference Include="LibMplayerCommon, Version=1.2.6408.15190, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MPlayerControl.1.2.0\lib\net45\LibMplayerCommon.dll</HintPath>
     </Reference>
+    <Reference Include="Mono.Terminal, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Terminal.5.3.0\lib\net4-client\Mono.Terminal.dll</HintPath>
+    </Reference>
     <Reference Include="NAudio, Version=1.8.4.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.1.8.4\lib\net35\NAudio.dll</HintPath>
     </Reference>

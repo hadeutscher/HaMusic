@@ -16,8 +16,9 @@ namespace HaMusicServer
     public class ServerCore
     {
         private static readonly Dictionary<PlatformID, string> defaultPlayer = new Dictionary<PlatformID, string> {
+            { PlatformID.Win32Windows, "naudio" },
+            { PlatformID.Win32NT, "naudio" },
             { PlatformID.Unix, "mplayer" },
-            { PlatformID.Win32Windows, "naudio" }
         };
 
         public MediaPlayer Player;

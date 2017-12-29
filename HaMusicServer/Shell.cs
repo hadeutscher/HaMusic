@@ -5,6 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 using HaMusicLib;
+using Mono.Terminal;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,11 @@ namespace HaMusicServer
 {
     public class Shell
     {
+        private struct Command
+        {
+            public Action<string[]> action;
+            public string[] subcommands;
+        }
         private static Regex commandLineParser = new Regex("([^\" ][^ ]*)|(\"[^\"]*\")");
 
         public static string[] CommandLineToArgs(string commandLine)
@@ -47,26 +53,6 @@ namespace HaMusicServer
                 string command = cmd[0];
                 cmd = Enumerable.Skip(cmd, 1).ToArray();
                 MethodInfo mi = null;
-                if (command == "help")
-                {
-                    WriteLines(new List<string> {
-                        string.Format("HaShell [Version {0}]", ServerDataSource.LocalVersion),
-                        "",
-                        "\thelp - show this help",
-                        "\tclients - print all clients",
-                        "\tkick [--ban] <ip> - disconnect client, optionally banning it",
-                        "\tunban <ip> - unban client",
-                        "\tbanlist - print banlist",
-                        "\tsource [add|remove|reload|addext|removeext|list] <path|ext>",
-                        "\ttail [n] - print last n lines from the log, default 10",
-                        "\tflush [path] - force DataSource flush, optionally into a specific path",
-                        "\tload [path] - load DataSource, optionally from a specific path",
-                        "\tbackup [path] - backup playlists and songs in cross-version format",
-                        "\trestore [path] - restore playlists and songs from cross-version format",
-                        "\texit - exit server"
-                    });
-                    return;
-                }
                 try
                 {
                     mi = GetType().GetMethod("command_" + command);
@@ -85,6 +71,26 @@ namespace HaMusicServer
                     e = e.InnerException;
                 Console.WriteLine("Unhandled exception occurred: " + e.Message + "\r\n" + e.StackTrace);
             }
+        }
+
+        public void command_help(string[] args)
+        {
+            WriteLines(new List<string> {
+                        string.Format("HaShell [Version {0}]", ServerDataSource.LocalVersion),
+                        "",
+                        "\thelp - show this help",
+                        "\tclients - print all clients",
+                        "\tkick [--ban] <ip> - disconnect client, optionally banning it",
+                        "\tunban <ip> - unban client",
+                        "\tbanlist - print banlist",
+                        "\tsource [add|remove|reload|addext|removeext|list] <path|ext>",
+                        "\ttail [n] - print last n lines from the log, default 10",
+                        "\tflush [path] - force DataSource flush, optionally into a specific path",
+                        "\tload [path] - load DataSource, optionally from a specific path",
+                        "\tbackup [path] - backup playlists and songs in cross-version format",
+                        "\trestore [path] - restore playlists and songs from cross-version format",
+                        "\texit - exit server"
+                    });
         }
 
         public void command_clients(string[] args)
@@ -348,12 +354,16 @@ namespace HaMusicServer
 
         public void Run()
         {
-            Console.Write("# ");
+            LineEditor le = new LineEditor("foo")
+            {
+                HeuristicsMode = "csharp"
+            };
+
+            // Prompts the user for input
             while (true)
             {
-                string line = Console.ReadLine();
-                Exec(line);
-                Console.Write("# ");
+                string s = le.Edit("# ", "");
+                Exec(s);
             }
         }
     }
