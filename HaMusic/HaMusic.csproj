@@ -39,6 +39,9 @@
     <ApplicationIcon>HaLogo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GongSolutions.Wpf.DragDrop, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\gong-wpf-dragdrop.1.1.0\lib\net46\GongSolutions.Wpf.DragDrop.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -137,6 +140,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -150,10 +154,6 @@
     <ProjectReference Include="..\HaMusicLib\HaMusicLib.csproj">
       <Project>{86d9286f-a8aa-4784-ba83-9736fef1f84e}</Project>
       <Name>HaMusicLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\gong-wpf-dragdrop\GongSolutions.Wpf.DragDrop\GongSolutions.Wpf.DragDrop %28NET4%29.csproj">
-      <Project>{0c6674cc-6d49-414a-9b41-d4e175028ffb}</Project>
-      <Name>GongSolutions.Wpf.DragDrop %28NET4%29</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
