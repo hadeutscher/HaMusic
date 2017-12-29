@@ -28,7 +28,7 @@ namespace HaMusicServer
         private List<string> libraryPaths = new List<string>();
         private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
         private List<string> extensionWhitelist = new List<string>();
-        private string playerName;
+        private string playerName = null;
         private TimerAsync positionUpdater = new TimerAsync(() => Utils.BroadcastPosition(), 100);
         private TimerAsync databaseSaver = new TimerAsync(() => Utils.SaveSourceStateSafe(), 60000);
         private bool indexerFinished = false;
@@ -104,17 +104,9 @@ namespace HaMusicServer
                     }
                 }
 
-                if (conf.TryGetValue(Consts.PLAYER_KEY, out workingSet) && workingSet.Count == 1)
-                {
-                    playerName = workingSet.First();
-                }
-                else if (defaultPlayer.ContainsKey(Environment.OSVersion.Platform))
+                if (defaultPlayer.ContainsKey(Environment.OSVersion.Platform))
                 {
                     playerName = defaultPlayer[Environment.OSVersion.Platform];
-                }
-                else
-                {
-                    playerName = null;
                 }
             }
             catch (Exception e)
@@ -126,6 +118,11 @@ namespace HaMusicServer
         private void LoadPlayer()
         {
             IMediaPlayerImplementation impl = null;
+
+            if (!string.IsNullOrEmpty(Program.Args.Player))
+            {
+                playerName = Program.Args.Player;
+            }
 
             if (string.IsNullOrEmpty(playerName))
             {
@@ -398,5 +395,6 @@ namespace HaMusicServer
         public List<IPAddress> Banlist { get => banlist; }
         public List<string> LibraryPaths { get => libraryPaths; }
         public List<string> ExtensionWhitelist { get => extensionWhitelist; }
+        public string PlayerName { get => playerName; set => playerName = value; }
     }
 }

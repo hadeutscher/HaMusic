@@ -27,6 +27,5 @@ namespace HaMusicServer
         public const string BANLIST_KEY = "banlist";
         public const string LIBRARIES_KEY = "libraries";
         public const string EXTENSIONS_KEY = "extensions";
-        public const string PLAYER_KEY = "player";
     }
 }

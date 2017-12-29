@@ -21,11 +21,6 @@ namespace HaMusicServer
 {
     public class Shell
     {
-        private struct Command
-        {
-            public Action<string[]> action;
-            public string[] subcommands;
-        }
         private static Regex commandLineParser = new Regex("([^\" ][^ ]*)|(\"[^\"]*\")");
 
         public static string[] CommandLineToArgs(string commandLine)
@@ -41,7 +36,7 @@ namespace HaMusicServer
             }
         }
 
-        public void Exec(string s)
+        public async Task Exec(string s)
         {
             if (string.IsNullOrWhiteSpace(s))
                 return;
@@ -63,7 +58,7 @@ namespace HaMusicServer
                     Console.WriteLine(string.Format("Couldn't find command {0}, try `help`", command));
                     return;
                 }
-                mi.Invoke(this, new object[] { cmd });
+                await (Task)mi.Invoke(this, new object[] { cmd });
             }
             catch (Exception e)
             {
@@ -73,7 +68,7 @@ namespace HaMusicServer
             }
         }
 
-        public void command_help(string[] args)
+        public Task command_help(string[] args)
         {
             WriteLines(new List<string> {
                         string.Format("HaShell [Version {0}]", ServerDataSource.LocalVersion),
@@ -89,11 +84,13 @@ namespace HaMusicServer
                         "\tload [path] - load DataSource, optionally from a specific path",
                         "\tbackup [path] - backup playlists and songs in cross-version format",
                         "\trestore [path] - restore playlists and songs from cross-version format",
+                        "\tplayer - see which player is currently in use",
                         "\texit - exit server"
                     });
+            return Task.FromResult(false);
         }
 
-        public void command_clients(string[] args)
+        public Task command_clients(string[] args)
         {
             List<string> output = new List<string>();
             foreach (ClientAsync c in Program.Server.Clients)
@@ -101,9 +98,10 @@ namespace HaMusicServer
                 output.Add(c.ID);
             }
             WriteLines(output);
+            return Task.FromResult(false);
         }
 
-        public void command_kick(string[] args)
+        public Task command_kick(string[] args)
         {
             bool ban = false;
             IPAddress ipaddr = null;
@@ -119,7 +117,7 @@ namespace HaMusicServer
             if (ipaddr == null)
             {
                 Console.WriteLine("kick: must supply an IP address");
-                return;
+                return Task.FromResult(false);
             }
             foreach (ClientAsync c in Program.Server.Clients)
             {
@@ -133,25 +131,34 @@ namespace HaMusicServer
                 Program.Core.Banlist.Add(ipaddr);
                 Program.Core.WriteConfig();
             }
+            return Task.FromResult(false);
         }
 
-        public void command_unban(string[] args)
+        public Task command_unban(string[] args)
         {
             IPAddress addr = null;
             if (args.Length < 1 || !IPAddress.TryParse(args[0], out addr))
             {
                 Console.WriteLine("unban: must supply an IP address");
-                return;
+                return Task.FromResult(false);
             }
             Program.Core.Banlist.RemoveAll(x => x.Equals(addr));
             Program.Core.WriteConfig();
+            return Task.FromResult(false);
         }
 
-        public void command_banlist(string[] args)
+        public Task command_banlist(string[] args)
         {
             List<string> output;
             output = Program.Core.Banlist.Select(x => x.ToString()).ToList();
             WriteLines(output);
+            return Task.FromResult(false);
+        }
+
+        public Task command_player(string[] args)
+        {
+            Console.WriteLine(Program.Core.PlayerName);
+            return Task.FromResult(false);
         }
 
         public static async Task<string[]> ReadEndLines(string path, int numberOfTokens)
@@ -187,7 +194,7 @@ namespace HaMusicServer
             }
         }
 
-        public async void command_tail(string[] args)
+        public async Task command_tail(string[] args)
         {
             int n;
             if (args.Length == 0 || !int.TryParse(args[0], out n))
@@ -196,30 +203,33 @@ namespace HaMusicServer
             WriteLines((await ReadEndLines(Consts.defaultLogPath, n)).ToList());
         }
 
-        public void command_flush(string[] args)
+        public Task command_flush(string[] args)
         {
             string path = args.Length > 0 ? args[0] : Consts.defaultSourcePath;
             Program.Core.SaveSourceState(path);
+            return Task.FromResult(false);
         }
 
-        public void command_load(string[] args)
+        public Task command_load(string[] args)
         {
             string path = args.Length > 0 ? args[0] : Consts.defaultSourcePath;
             Program.Core.LoadSourceState(path);
+            return Task.FromResult(false);
         }
 
-        public void command_exit(string[] args)
+        public Task command_exit(string[] args)
         {
             Program.Logger.FlushLog();
             Environment.Exit(0);
+            return Task.FromResult(false);
         }
 
-        public void command_source(string[] args)
+        public Task command_source(string[] args)
         {
             if (args.Length < 1)
             {
                 Console.WriteLine("source: not enough arguments, try `help`");
-                return;
+                return Task.FromResult(false);
             }
             switch (args[0])
             {
@@ -230,7 +240,7 @@ namespace HaMusicServer
                     if (args.Length < 2)
                     {
                         Console.WriteLine("source: not enough arguments, try `help`");
-                        return;
+                        return Task.FromResult(false);
                     }
                     break;
                 case "reload":
@@ -238,7 +248,7 @@ namespace HaMusicServer
                     break;
                 default:
                     Console.WriteLine(string.Format("source: unknown operation {0}, try `help`", args[0]));
-                    return;
+                    return Task.FromResult(false);
             }
             switch (args[0])
             {
@@ -281,6 +291,7 @@ namespace HaMusicServer
                     Program.Core.WriteConfig();
                     break;
             }
+            return Task.FromResult(false);
         }
 
         // Protobuf-net is shit so it cant deal with nested list, so we nest LIST CONTAINERS!
@@ -295,12 +306,12 @@ namespace HaMusicServer
             }
         }
 
-        public void command_backup(string[] args)
+        public Task command_backup(string[] args)
         {
             if (args.Length < 1)
             {
                 Console.WriteLine("backup: not enough arguments, try `help`");
-                return;
+                return Task.FromResult(false);
             }
 
             ListContainer<ListContainer<string>> backup = new ListContainer<ListContainer<string>>();
@@ -321,14 +332,15 @@ namespace HaMusicServer
             }
 
             Console.WriteLine(string.Format("Backup written to {0}", args[0]));
+            return Task.FromResult(false);
         }
 
-        public void command_restore(string[] args)
+        public Task command_restore(string[] args)
         {
             if (args.Length < 1)
             {
                 Console.WriteLine("restore: not enough arguments, try `help`");
-                return;
+                return Task.FromResult(false);
             }
 
             ListContainer<ListContainer<string>> backup;
@@ -350,6 +362,7 @@ namespace HaMusicServer
             }
 
             Console.WriteLine("Loaded backup, please run `flush` and `load` to propagate changes");
+            return Task.FromResult(false);
         }
 
         public void Run()
@@ -363,7 +376,7 @@ namespace HaMusicServer
             while (true)
             {
                 string s = le.Edit("# ", "");
-                Exec(s);
+                Exec(s).Wait();
             }
         }
     }

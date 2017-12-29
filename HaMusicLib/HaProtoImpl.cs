@@ -1038,9 +1038,9 @@ namespace HaMusicLib
             byte[] dataBuf = x;
             byte[] lenBuf = BitConverter.GetBytes(dataBuf.Length);
 
-            await stream.WriteAsync(typeBuf, 0, typeBuf.Length);
-            await stream.WriteAsync(lenBuf, 0, lenBuf.Length);
-            await stream.WriteAsync(dataBuf, 0, dataBuf.Length);
+            await Task.WhenAll(stream.WriteAsync(typeBuf, 0, typeBuf.Length),
+                stream.WriteAsync(lenBuf, 0, lenBuf.Length),
+                stream.WriteAsync(dataBuf, 0, dataBuf.Length));
         }
 
         private static async Task SafeSendBlockAsync(NetworkStream stream, byte[] x, int type)
