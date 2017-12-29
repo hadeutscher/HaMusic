@@ -115,18 +115,9 @@ namespace HaMusicServer
             try
             {
                 Dictionary<string, List<string>> conf = new Dictionary<string, List<string>>();
-                lock (banlist)
-                {
-                    conf[Consts.BANLIST_KEY] = banlist.Select(x => x.ToString()).ToList();
-                }
-                lock (libraryPaths)
-                {
-                    conf[Consts.LIBRARIES_KEY] = libraryPaths;
-                }
-                lock (extensionWhitelist)
-                {
-                    conf[Consts.EXTENSIONS_KEY] = extensionWhitelist;
-                }
+                conf[Consts.BANLIST_KEY] = banlist.Select(x => x.ToString()).ToList();
+                conf[Consts.LIBRARIES_KEY] = libraryPaths;
+                conf[Consts.EXTENSIONS_KEY] = extensionWhitelist;
                 WriteConfigInternal(conf);
             }
             catch (Exception e)
@@ -261,14 +252,8 @@ namespace HaMusicServer
                 logger = Program.Logger;
             HaProtoImpl.LIBRARY_RESET result = null;
             List<string> paths = new List<string>(), exts = new List<string>();
-            lock (libraryPaths)
-            {
-                paths = libraryPaths.ToList();
-            }
-            lock (extensionWhitelist)
-            {
-                exts = extensionWhitelist.ToList();
-            }
+            paths = libraryPaths.ToList();
+            exts = extensionWhitelist.ToList();
             List<string> index = Reindex(paths, exts, logger);
             if (index == null)
             {

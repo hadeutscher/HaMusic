@@ -12,7 +12,6 @@ namespace HaMusicServer
     class MPlayerImplementation : IMediaPlayerImplementation
     {
         private MPlayer player;
-        private bool playing = false;
 
         public MPlayerImplementation()
         {

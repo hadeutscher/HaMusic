@@ -34,7 +34,6 @@ namespace HaMusic
         private Object connectLock = new Object();
         private bool internalChanging = false;
 
-        public static string defaultIndexPath = Path.Combine(GetLocalSettingsFolder(), "index.txt");
         public static readonly DependencyProperty SelectedPlaylistItemsProperty =
             DependencyProperty.Register("SelectedPlaylistItems", typeof(IEnumerable<PlaylistItem>), typeof(MainWindow), new PropertyMetadata());
 

@@ -31,45 +31,38 @@ namespace HaMusic.DragDrop
 
         public void DragOver(IDropInfo dropInfo)
         {
-            lock (delayData)
+            FrameworkElement element = (FrameworkElement)dropInfo.VisualTarget;
+            HoverDelayData hdd;
+            if (!delayData.TryGetValue(element, out hdd))
             {
-                FrameworkElement element = (FrameworkElement)dropInfo.VisualTarget;
-                HoverDelayData hdd;
-                if (!delayData.TryGetValue(element, out hdd))
+                hdd = new HoverDelayData();
+                delayData.Add(element, hdd);
+                element.Unloaded += Element_Unloaded;
+            }
+            if (hdd.hoverDragInfo != null && hdd.hoverDragInfo == dropInfo.DragInfo)
+            {
+                int timeDiff = Environment.TickCount - hdd.hoverStartTime;
+                if (timeDiff > 500)
                 {
-                    hdd = new HoverDelayData();
-                    delayData.Add(element, hdd);
-                    element.Unloaded += Element_Unloaded;
-                }
-                if (hdd.hoverDragInfo != null && hdd.hoverDragInfo == dropInfo.DragInfo)
-                {
-                    int timeDiff = Environment.TickCount - hdd.hoverStartTime;
-                    if (timeDiff > 500)
+                    if (timeDiff < 1000)
                     {
-                        if (timeDiff < 1000)
-                        {
-                            if (dropInfo.VisualTarget is FrameworkElement && ((FrameworkElement)dropInfo.VisualTarget).DataContext is Playlist)
-                                data.SelectedPlaylist = (Playlist)((FrameworkElement)dropInfo.VisualTarget).DataContext;
-                        }
-                        hdd.hoverDragInfo = null;
+                        if (dropInfo.VisualTarget is FrameworkElement && ((FrameworkElement)dropInfo.VisualTarget).DataContext is Playlist)
+                            data.SelectedPlaylist = (Playlist)((FrameworkElement)dropInfo.VisualTarget).DataContext;
                     }
-                }
-                else
-                {
-                    hdd.hoverStartTime = Environment.TickCount;
-                    hdd.hoverDragInfo = dropInfo.DragInfo;
+                    hdd.hoverDragInfo = null;
                 }
             }
-            
+            else
+            {
+                hdd.hoverStartTime = Environment.TickCount;
+                hdd.hoverDragInfo = dropInfo.DragInfo;
+            }
         }
 
         private void Element_Unloaded(object sender, RoutedEventArgs e)
         {
-            lock (delayData)
-            {
-                if (sender is UIElement && delayData.ContainsKey((UIElement)sender))
-                    delayData.Remove((UIElement)sender);
-            }
+            if (sender is UIElement && delayData.ContainsKey((UIElement)sender))
+                delayData.Remove((UIElement)sender);
         }
 
         public void Drop(IDropInfo dropInfo)
