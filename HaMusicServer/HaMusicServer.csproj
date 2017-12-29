@@ -129,5 +129,9 @@
       <Name>HaMusicLib</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="MediaPlayer.exe" />
+    <Content Include="WpfMPlayer.exe" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

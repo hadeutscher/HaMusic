@@ -6,6 +6,7 @@
 
 using LibMPlayerCommon;
 using System;
+using System.IO;
 
 namespace HaMusicServer
 {
@@ -47,8 +48,15 @@ namespace HaMusicServer
 
         public int PlaySong(string path)
         {
-            player.Play(path);
-            return player.CurrentPlayingFileLength();
+            try
+            {
+                player.Play(path);
+                return player.CurrentPlayingFileLength();
+            }
+            catch (Exception)
+            {
+                return -1;
+            }
         }
 
         public void SetPlaying(bool playing)
@@ -65,7 +73,7 @@ namespace HaMusicServer
 
         public void SetPos(int time)
         {
-            player.Seek(time, Seek.Relative);
+            player.Seek(time, Seek.Percentage);
         }
 
         public void SetVolume(int vol)

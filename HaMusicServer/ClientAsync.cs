@@ -6,6 +6,7 @@
 
 using HaMusicLib;
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -136,7 +137,7 @@ namespace HaMusicServer
             }
             catch (Exception e)
             {
-                if (e is SocketException && ((SocketException)e).ErrorCode == 0)
+                if (e is IOException)
                     Program.Logger.Log(string.Format("{0} exited normally", id));
                 else
                     Program.Logger.Log(string.Format("Exception in {0} : {1}", id, Utils.GetErrorException(e)));
