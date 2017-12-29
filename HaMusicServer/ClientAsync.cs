@@ -14,12 +14,14 @@ namespace HaMusicServer
 {
     public class ClientAsync
     {
+        private TcpClient client;
         private NetworkStream stream;
         private IPAddress ip;
         private string id;
 
         public ClientAsync(TcpClient client)
         {
+            this.client = client;
             stream = client.GetStream();
             ip = ((IPEndPoint)client.Client.RemoteEndPoint).Address;
             id = ip.ToString();
@@ -55,7 +57,7 @@ namespace HaMusicServer
             try
             {
                 // Try to close the socket, if it's already closed then w/e
-                stream.Close();
+                client.Close();
             }
             catch { }
         }

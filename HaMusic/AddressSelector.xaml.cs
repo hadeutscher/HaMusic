@@ -5,6 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 using HaMusic.Wpf;
+using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
 
@@ -15,7 +16,8 @@ namespace HaMusic
     /// </summary>
     public partial class AddressSelector : Window
     {
-        public string Result = "";
+        public TcpClient Result = null;
+        private static DependencyProperty enabledProperty = DependencyProperty.Register("Enabled", typeof(bool), typeof(AddressSelector), new PropertyMetadata(true));
 
         public AddressSelector()
         {
@@ -25,11 +27,26 @@ namespace HaMusic
             addressBox.Focus();
         }
 
-        public void Confirm()
+        public async void Confirm()
         {
             Properties.Settings.Default.lastAddr = addressBox.Text;
             Properties.Settings.Default.Save();
-            Result = addressBox.Text;
+            Result = new TcpClient();
+            Enabled = false;
+            try
+            {
+                await Result.ConnectAsync(addressBox.Text, 5151);
+            }
+            catch (SocketException)
+            {
+                MessageBox.Show("Could not connect", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            finally
+            {
+                Enabled = true;
+            }
+            
             DialogResult = true;
             Close();
         }
@@ -50,6 +67,12 @@ namespace HaMusic
         public ICommand CancelCommand
         {
             get { return _cancelCommand ?? (_cancelCommand = new RelayCommand(delegate { Cancel(); })); }
+        }
+
+        public bool Enabled
+        {
+            get { return (bool)GetValue(enabledProperty); }
+            private set { SetValue(enabledProperty, value); }
         }
 
         private void Window_KeyDown(object sneder, KeyEventArgs e)

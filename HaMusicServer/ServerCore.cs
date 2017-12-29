@@ -15,11 +15,19 @@ namespace HaMusicServer
 {
     public class ServerCore
     {
+        private static readonly Dictionary<PlatformID, string> defaultPlayer = new Dictionary<PlatformID, string> {
+            { PlatformID.Unix, "mplayer" },
+            { PlatformID.Win32Windows, "naudio" }
+        };
+
+        public MediaPlayer Player;
+
         private ServerDataSource dataSource = new ServerDataSource();
         private List<IPAddress> banlist = new List<IPAddress>();
         private List<string> libraryPaths = new List<string>();
         private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
         private List<string> extensionWhitelist = new List<string>();
+        private string playerName;
         private TimerAsync positionUpdater = new TimerAsync(() => Utils.BroadcastPosition(), 100);
         private TimerAsync databaseSaver = new TimerAsync(() => Utils.SaveSourceStateSafe(), 60000);
         private bool indexerFinished = false;
@@ -27,9 +35,10 @@ namespace HaMusicServer
         public ServerCore()
         {
             DataSource.Playlists.Add(new Playlist());
-            Program.Player.SongChanged += player_SongChanged;
-            Program.Player.PlayingChanged += player_PlayingChanged;
             ReadConfig();
+            LoadPlayer();
+            Player.SongChanged += player_SongChanged;
+            Player.PlayingChanged += player_PlayingChanged;
         }
 
         public void Run()
@@ -88,19 +97,61 @@ namespace HaMusicServer
 
                 if (conf.TryGetValue(Consts.EXTENSIONS_KEY, out workingSet))
                 {
-                    lock (extensionWhitelist)
+                    foreach (string ext in workingSet)
                     {
-                        foreach (string ext in workingSet)
-                        {
-                            extensionWhitelist.Add(ext);
-                        }
+                        extensionWhitelist.Add(ext);
                     }
+                }
+
+                if (conf.TryGetValue(Consts.PLAYER_KEY, out workingSet) && workingSet.Count == 1)
+                {
+                    playerName = workingSet.First();
+                }
+                else if (defaultPlayer.ContainsKey(Environment.OSVersion.Platform))
+                {
+                    playerName = defaultPlayer[Environment.OSVersion.Platform];
+                }
+                else
+                {
+                    playerName = null;
                 }
             }
             catch (Exception e)
             {
                 Program.Logger.Log(Utils.GetErrorException(e));
             }
+        }
+
+        private void LoadPlayer()
+        {
+            IMediaPlayerImplementation impl = null;
+
+            if (string.IsNullOrEmpty(playerName))
+            {
+                Console.WriteLine("There was an error finding an appropriate player to load - loading in silent mode");
+            }
+            else
+            {
+                switch (playerName)
+                {
+                    case "naudio":
+                        impl = new NAudioImplementation();
+                        break;
+                    case "mplayer":
+                        impl = new MPlayerImplementation();
+                        break;
+                    default:
+                        Console.WriteLine("There was an error finding an appropriate player to load - loading in silent mode");
+                        break;
+                }
+            }
+
+            if (impl == null)
+            {
+                impl = new SilentImplementation();
+            }
+
+            Player = new MediaPlayer(impl, 50);
         }
 
         private void WriteConfigInternal(Dictionary<string, List<string>> conf)
@@ -160,10 +211,10 @@ namespace HaMusicServer
             playing = DataSource.Playing;
             Program.Server.BroadcastMessage(HaProtoImpl.Opcode.SETDB, new HaProtoImpl.SETDB() { dataSource = DataSource });
             Program.Mover.OnSetDataSource();
-            Program.Player.OnSongChanged();
-            Program.Player.Playing = playing;
-            Program.Player.Position = pos;
-            Program.Player.Volume = vol;
+            Player.OnSongChanged();
+            Player.Playing = playing;
+            Player.Position = pos;
+            Player.Volume = vol;
         }
 
         public void SaveSourceState(string path)
@@ -324,22 +375,22 @@ namespace HaMusicServer
 
         public void AnnounceIndexChange()
         {
-            Program.Player.OnSongChanged();
+            Player.OnSongChanged();
         }
 
         public void SetPlaying(bool p)
         {
-            Program.Player.Playing = p;
+            Player.Playing = p;
         }
 
         public void SetVolume(int vol)
         {
-            Program.Player.Volume = vol;
+            Player.Volume = vol;
         }
 
         public void SetPosition(int pos)
         {
-            Program.Player.Position = pos;
+            Player.Position = pos;
         }
 
         public ServerDataSource DataSource { get => dataSource; set => dataSource = value; }

@@ -18,7 +18,6 @@ namespace HaMusicServer
         public static Shell Shell;
         public static Logger Logger;
         public static Mover Mover;
-        public static MediaPlayer Player;
 
         private static void ShowHelpAndExit()
         {
@@ -66,7 +65,7 @@ namespace HaMusicServer
             {
                 try
                 {
-                    Program.Core.LoadSourceState(Consts.defaultSourcePath);
+                    Core.LoadSourceState(Consts.defaultSourcePath);
                 }
                 catch (FileNotFoundException)
                 {
@@ -86,7 +85,6 @@ namespace HaMusicServer
         {
             HaProtoImpl.Entity = HaProtoImpl.HaMusicEntity.Server;
             Logger = new Logger();
-            Player = new MediaPlayer(new MPlayerImplementation(), 50);
             Core = new ServerCore();
             Mover = new Mover();
             Server = new ServerAsync();

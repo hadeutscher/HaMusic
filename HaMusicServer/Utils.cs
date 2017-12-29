@@ -47,8 +47,8 @@ namespace HaMusicServer
 
         public static void BroadcastPosition()
         {
-            int pos = Program.Player.Position;
-            int max = Program.Player.Maximum;
+            int pos = Program.Core.Player.Position;
+            int max = Program.Core.Player.Maximum;
             if (Program.Core.DataSource.Position == pos && Program.Core.DataSource.Maximum == max)
                 return;
             Program.Core.DataSource.Position = pos;

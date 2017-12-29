@@ -104,8 +104,7 @@ namespace HaMusic
 
         private void listView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (MouseDoubleClick != null)
-                MouseDoubleClick(sender, e);
+            MouseDoubleClick?.Invoke(sender, e);
         }
 
         public event RoutedEventHandler PlayItemClick;
@@ -115,26 +114,22 @@ namespace HaMusic
 
         private void MenuItem_PlayItem(object sender, RoutedEventArgs e)
         {
-            if (PlayItemClick != null)
-                PlayItemClick(sender, e);
+            PlayItemClick?.Invoke(sender, e);
         }
 
         private void MenuItem_PlayItemAndReturn(object sender, RoutedEventArgs e)
         {
-            if (PlayItemAndReturnClick != null)
-                PlayItemAndReturnClick(sender, e);
+            PlayItemAndReturnClick?.Invoke(sender, e);
         }
 
         private void MenuItem_PlayItemNext(object sender, RoutedEventArgs e)
         {
-            if (PlayItemNextClick != null)
-                PlayItemNextClick(sender, e);
+            PlayItemNextClick?.Invoke(sender, e);
         }
 
         private void MenuItem_PlayItemNextAndReturn(object sender, RoutedEventArgs e)
         {
-            if (PlayItemNextAndReturnClick != null)
-                PlayItemNextAndReturnClick(sender, e);
+            PlayItemNextAndReturnClick?.Invoke(sender, e);
         }
     }
 }
