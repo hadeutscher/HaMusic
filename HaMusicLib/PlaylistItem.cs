@@ -20,6 +20,8 @@ namespace HaMusicLib
 
         private long uid;
         private string item;
+        private string externalName;
+        private string special;
         private bool played = false;
 
         public PlaylistItem()
@@ -53,6 +55,42 @@ namespace HaMusicLib
             {
                 _cachedItemLower = null; // Must do this before setting field, since SetField may invoke external code depending on us
                 SetField(ref item, value);
+            }
+        }
+
+        [ProtoMember(3, IsRequired = true)]
+        public string ExternalName
+        {
+            get
+            {
+                return externalName;
+            }
+
+            set
+            {
+                SetField(ref externalName, value);
+            }
+        }
+
+        [ProtoMember(4, IsRequired = true)]
+        public string Special
+        {
+            get
+            {
+                return special;
+            }
+
+            set
+            {
+                SetField(ref special, value);
+            }
+        }
+
+        public string BestName
+        {
+            get
+            {
+                return string.IsNullOrEmpty(externalName) ? item : externalName;
             }
         }
 

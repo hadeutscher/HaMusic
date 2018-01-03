@@ -152,7 +152,7 @@ namespace HaMusic
                             case HaProtoImpl.Opcode.LIBRARY_REMOVE:
                             case HaProtoImpl.Opcode.LIBRARY_RESET:
                                 // No selection eye candy for library because it's not worth the time it will take to implement
-                                HaProtoImpl.ApplyPacketToDatabase(type, packet, data.ServerDataSource, out foo);
+                                await HaProtoImpl.ApplyPacketToDatabase(type, packet, data.ServerDataSource);
 
                                 // For some reason this doesn't happen automatically and I'm too tired to search why
                                 // mediaBrowser.InvalidateProperty(MediaBrowser.SelectedDataProperty);
@@ -194,7 +194,7 @@ namespace HaMusic
                                     firstIndex = data.SelectedPlaylist.PlaylistItems.IndexOf(selectedItems[0]);
                                 }
 
-                                HaProtoImpl.ApplyPacketToDatabase(type, packet, data.ServerDataSource, out foo);
+                                await HaProtoImpl.ApplyPacketToDatabase(type, packet, data.ServerDataSource);
 
                                 // Check which items still exist
                                 List<PlaylistItem> newSelectedItems = new List<PlaylistItem>();
@@ -246,7 +246,7 @@ namespace HaMusic
                                 }
                                 break;
                             case HaProtoImpl.Opcode.SETMOVE:
-                                HaProtoImpl.ApplyPacketToDatabase(type, packet, data.ServerDataSource, out foo);
+                                await HaProtoImpl.ApplyPacketToDatabase(type, packet, data.ServerDataSource);
                                 break;
                             case HaProtoImpl.Opcode.SKIP:
                                 // We should not be receiving SKIP packets, the server should translate them to SETSONG
@@ -272,7 +272,7 @@ namespace HaMusic
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 Kill();
             }

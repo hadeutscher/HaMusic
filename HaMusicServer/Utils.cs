@@ -7,6 +7,7 @@
 using HaMusicLib;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace HaMusicServer
@@ -18,9 +19,9 @@ namespace HaMusicServer
             return string.Format("{0}: {1}\r\n\r\n{2}", name, e.Message, e.StackTrace);
         }
 
-        public static void ExecutePacketAndBroadcast(HaProtoImpl.Opcode op, HaProtoImpl.HaProtoPacket packet)
+        public static async void ExecutePacketAndBroadcast(HaProtoImpl.Opcode op, HaProtoImpl.HaProtoPacket packet)
         {
-            bool announceIndexChange = packet.ApplyToDatabase(Program.Core.DataSource);
+            bool announceIndexChange = await packet.ApplyToDatabase(Program.Core.DataSource);
             if (announceIndexChange)
             {
                 Program.Core.AnnounceIndexChange();
@@ -28,12 +29,12 @@ namespace HaMusicServer
             Program.Server.BroadcastMessage(op, packet);
         }
 
-        public static void ExecutePacketsAndBroadcast(List<HaProtoImpl.Opcode> ops, List<HaProtoImpl.HaProtoPacket> packets)
+        public static async void ExecutePacketsAndBroadcast(List<HaProtoImpl.Opcode> ops, List<HaProtoImpl.HaProtoPacket> packets)
         {
             bool announceIndexChange = false;
             foreach (HaProtoImpl.HaProtoPacket packet in packets)
             {
-                announceIndexChange |= packet.ApplyToDatabase(Program.Core.DataSource);
+                announceIndexChange |= await packet.ApplyToDatabase(Program.Core.DataSource);
             }
             if (announceIndexChange)
             {
@@ -66,6 +67,17 @@ namespace HaMusicServer
             {
                 Program.Logger.Log(Utils.GetErrorException(ex));
             }
+        }
+
+        public static string Pathify(string x)
+        {
+            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+
+            foreach (char c in invalid)
+            {
+                x = x.Replace(c.ToString(), "_");
+            }
+            return x;
         }
     }
 }

@@ -32,6 +32,7 @@ namespace HaMusicServer
         private TimerAsync positionUpdater = new TimerAsync(() => Utils.BroadcastPosition(), 100);
         private TimerAsync databaseSaver = new TimerAsync(() => Utils.SaveSourceStateSafe(), 60000);
         private bool indexerFinished = false;
+        private Dictionary<string, IPluginEnabler> plugins = new Dictionary<string, IPluginEnabler>();
 
         public ServerCore()
         {
@@ -175,7 +176,6 @@ namespace HaMusicServer
             }
         }
 
-        // TODO: Make Load/Save functions async
         public void LoadSourceState(string path)
         {
             int pos, vol;
@@ -396,5 +396,6 @@ namespace HaMusicServer
         public List<string> LibraryPaths { get => libraryPaths; }
         public List<string> ExtensionWhitelist { get => extensionWhitelist; }
         public string PlayerName { get => playerName; set => playerName = value; }
+        public Dictionary<string, IPluginEnabler> Plugins { get => plugins; set => plugins = value; }
     }
 }

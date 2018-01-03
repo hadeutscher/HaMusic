@@ -75,7 +75,6 @@ namespace HaMusicServer
                     HaProtoImpl.Opcode type = result.Item1;
                     byte[] data = result.Item2;
                     Program.Logger.Log(string.Format("{0}: {1}", id, type.ToString()));
-                    HaProtoImpl.HaProtoPacket packet;
                     switch (type)
                     {
                         case HaProtoImpl.Opcode.GETDB:
@@ -97,7 +96,9 @@ namespace HaMusicServer
                         case HaProtoImpl.Opcode.SETMOVE:
                         case HaProtoImpl.Opcode.REORDER:
                         case HaProtoImpl.Opcode.INJECT:
-                            packet = HaProtoImpl.ApplyPacketToDatabase(type, data, Program.Core.DataSource, out announceIndexChanges);
+                            var result2 = await HaProtoImpl.ApplyPacketToDatabase(type, data, Program.Core.DataSource);
+                            HaProtoImpl.HaProtoPacket packet = result2.Item1;
+                            announceIndexChanges = result2.Item2;
                             Program.Server.BroadcastMessage(type, packet);
                             break;
                         case HaProtoImpl.Opcode.SKIP:
