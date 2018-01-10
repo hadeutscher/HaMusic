@@ -42,7 +42,8 @@ namespace HaMusicServer
         public void BroadcastMessage(HaProtoImpl.Opcode type, HaProtoImpl.HaProtoPacket packet, ClientAsync exempt = null)
         {
             byte[] data = packet.Build();
-            foreach (ClientAsync c in clients)
+            List<ClientAsync> clientsCopy = clients.ToList();
+            foreach (ClientAsync c in clientsCopy)
             {
                 if (c != exempt)
                 {
