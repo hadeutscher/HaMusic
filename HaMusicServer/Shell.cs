@@ -367,10 +367,7 @@ namespace HaMusicServer
 
         public void Run()
         {
-            LineEditor le = new LineEditor("foo")
-            {
-                HeuristicsMode = "csharp"
-            };
+            LineEditor le = new LineEditor("foo");
 
             // Prompts the user for input
             while (true)
