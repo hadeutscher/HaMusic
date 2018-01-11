@@ -10,11 +10,6 @@ namespace HaMusicServer.Plugins
 {
     public class Youtube : HaMusicLib.Pluginability.IPlaylistItemTypeManager
     {
-        static Youtube()
-        {
-            HaProtoImpl.PlaylistItemTypeManagers["youtube"] = new Youtube();
-        }
-
         public Task ItemRemoved(PlaylistItem item)
         {
             File.Delete(item.Item);
@@ -51,7 +46,7 @@ namespace HaMusicServer.Plugins
                 var ext = best.Container.ToString().ToLower();
                 string localPath = Path.Combine(Path.GetTempPath(), Utils.Pathify(title) + "." + ext);
                 await client.DownloadMediaStreamAsync(best, localPath);
-                result.Add(new PlaylistItem() { Special = "youtube", ExternalName = title, Item = path });
+                result.Add(new PlaylistItem() { Special = "youtube", ExternalName = title, Item = localPath });
             }
             return result;
         }

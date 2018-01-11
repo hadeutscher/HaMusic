@@ -189,13 +189,12 @@ namespace HaMusicLib
             {
                 if (IsServer())
                     pathUids = new List<long>();
-                Playlist pl = dataSource.Playlists.FastGet(uid);
-                int i = 0;
+                Playlist pl = uid == -1 ? dataSource.Playlists.First() : dataSource.Playlists.FastGet(uid);
                 int index;
                 if (after == LOCATION_FIRST)
                     index = 0;
                 else if (after == LOCATION_LAST)
-                    index = pl.PlaylistItems.Count() - 1;
+                    index = pl.PlaylistItems.Count();
                 else
                     index = pl.PlaylistItems.IndexOf(pl.PlaylistItems.FastGet(after)) + 1;
                 IEnumerable<PlaylistItem> items;
@@ -206,6 +205,10 @@ namespace HaMusicLib
                     if (!string.IsNullOrEmpty(special))
                     {
                         items = await PlaylistItemTypeManagers[special].ParseItems(paths);
+                        for (int i = 0; i < items.Count(); i++)
+                        {
+                            paths[i] = items.ElementAt(i).Item;
+                        }
                     }
                     else
                     {
@@ -215,13 +218,13 @@ namespace HaMusicLib
                 else
                 {
                     // Client code
-
+                    int i = 0;
                     items = paths.Select(x => new PlaylistItem() { Item = x, UID = pathUids[i++] });
                 }
 
                 foreach (PlaylistItem pi in items)
                 {
-                    pl.PlaylistItems.Insert(index + 1, pi);
+                    pl.PlaylistItems.Insert(index++, pi);
                     if (IsServer())
                         pathUids.Add(pi.UID);
                 }

@@ -41,6 +41,12 @@ namespace HaMusicServer
             LoadPlayer();
             Player.SongChanged += player_SongChanged;
             Player.PlayingChanged += player_PlayingChanged;
+            LoadPlugins();
+        }
+
+        public void LoadPlugins()
+        {
+            HaProtoImpl.PlaylistItemTypeManagers["youtube"] = new Plugins.Youtube();
         }
 
         public void Run()
