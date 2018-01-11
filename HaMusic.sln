@@ -13,7 +13,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibMPlayerCommon", "MPlayer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibImages", "MPlayerControl\LibImages\LibImages.csproj", "{C859FA27-7882-4814-9202-9C9D807C2CE5}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "HaMusicLib.Shared", "HaMusicLib.Shared\HaMusicLib.Shared.shproj", "{EDEBE6DC-D002-4BD2-B437-0B2B5E81207C}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		HaMusicLib.Shared\HaMusicLib.Shared.projitems*{86d9286f-a8aa-4784-ba83-9736fef1f84e}*SharedItemsImports = 4
+		HaMusicLib.Shared\HaMusicLib.Shared.projitems*{edebe6dc-d002-4bd2-b437-0b2b5e81207c}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x86 = Debug|x86

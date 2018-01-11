@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>edebe6dc-d002-4bd2-b437-0b2b5e81207c</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>HaMusicLib.Shared</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)FastAccessList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HaProtoImpl.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Playlist.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PlaylistItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Pluginability\IPlaylistItemTypeManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PropertyNotifierBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ServerDataSource.cs" />
+  </ItemGroup>
+</Project>
